@@ -1,0 +1,23 @@
+.env
+.env.local
+.env.*.local
+
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Generated / large runtime data
+data/live_snapshots/
+data/base_training_cache.json
+
+# Editor / OS
+.DS_Store
+Thumbs.db
+*.swp
+Untitled
