@@ -88,6 +88,8 @@ def _maybe_run_incremental_training() -> None:
                 "Incremental training complete: %s new WC matches",
                 result.get("new_matches_used", 0),
             )
+        elif result and result.get("status") == "skipped":
+            log.debug("Incremental training skipped: %s", result.get("reason"))
     except Exception as exc:
         log.error("Incremental training failed: %s", exc)
 
@@ -118,7 +120,9 @@ def _refresh_fixture_statuses() -> None:
                 mark_fixture_for_training(fid)
                 mark_fixture_final(fid)
             elif old is None:
-                mark_fixture_for_training(fid)
+                state = load_training_state()
+                if fid not in state.get("trained_fixture_ids", []):
+                    mark_fixture_for_training(fid)
 
 
 def morning_init() -> DaySchedule | None:
@@ -132,10 +136,11 @@ def morning_init() -> DaySchedule | None:
 
     wc_fixtures = [f for f in fixtures if f.get("league", {}).get("id") == 1]
     _all_today_fixtures = list(wc_fixtures)
+    trained = set(load_training_state().get("trained_fixture_ids", []))
     for f in wc_fixtures:
         fid = f["fixture"]["id"]
         cached_status[fid] = f["fixture"]["status"]["short"]
-        if f["fixture"]["status"]["short"] in FINAL_STATUSES:
+        if f["fixture"]["status"]["short"] in FINAL_STATUSES and fid not in trained:
             mark_fixture_for_training(fid)
 
     active = [f for f in wc_fixtures if f["fixture"]["status"]["short"] not in SKIP_STATUSES]

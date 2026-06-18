@@ -1,7 +1,7 @@
 {
-  "updated_at": "2026-06-18T17:03:09.121227+00:00",
+  "updated_at": "2026-06-18T20:53:06.142132+00:00",
   "live_meta": {
-    "fetched_at": "2026-06-18T17:03:09.121227+00:00",
+    "fetched_at": "2026-06-18T20:53:06.142132+00:00",
     "fixtures_live": 1,
     "fixtures_updated": 1,
     "poll_interval_seconds": 20,
@@ -321,74 +321,75 @@
         "xg_proxy_away": 1.43
       }
     },
-    "1539004": {
-      "fixture_id": 1539004,
-      "minute": 45,
-      "status": "HT",
+    "1539005": {
+      "fixture_id": 1539005,
+      "minute": 90,
+      "status": "2H",
       "score": {
-        "home": 1,
-        "away": 0
+        "home": 3,
+        "away": 1
       },
       "probabilities": {
-        "home_win": 72.8,
-        "draw": 17.2,
-        "away_win": 10.0
+        "home_win": 82.0,
+        "draw": 9.3,
+        "away_win": 8.7
       },
       "prediction": {
-        "home_win": 0.7279,
-        "draw": 0.1724,
-        "away_win": 0.0997,
-        "projected_home_goals": 1.39,
-        "projected_away_goals": 0.39,
-        "over_2_5": 0.2246,
-        "both_teams_score": 0.2434
+        "home_win": 0.82,
+        "draw": 0.0927,
+        "away_win": 0.0873,
+        "projected_home_goals": 1.64,
+        "projected_away_goals": 0.18,
+        "over_2_5": 1.0,
+        "both_teams_score": 0.1322
       },
       "projected_goals": {
-        "home": 1.39,
-        "away": 0.39
+        "home": 1.64,
+        "away": 0.18
       },
       "over_under": {
         "line": 2.5,
-        "over": 0.2246,
-        "under": 0.7754
+        "over": 1.0,
+        "under": 0.0
       },
       "next_goal": {
-        "home": 0.4607,
-        "away": 0.1295,
-        "none": 0.4098
+        "home": 0.018,
+        "away": 0.002,
+        "none": 0.98
       },
       "confidence": {
-        "score": 0.588,
+        "score": 0.712,
         "label": "medium"
       },
       "momentum": {
-        "home": 53.8,
-        "away": 46.2
+        "home": 89.2,
+        "away": 10.8
       },
-      "adj_lambda_home": 1.393,
-      "adj_lambda_away": 0.391,
+      "adj_lambda_home": 1.641,
+      "adj_lambda_away": 0.179,
       "xg_proxy": {
-        "home": 0.41,
-        "away": 0.11
+        "home": 1.2,
+        "away": 0.19
       },
-      "xg_diff": 0.3,
+      "xg_diff": 1.01,
       "prematch_probabilities": {
-        "home_win": 65.8,
-        "draw": 21.5,
-        "away_win": 12.7
+        "home_win": 72.0,
+        "draw": 17.9,
+        "away_win": 10.1
       },
       "weights": {
-        "pre_match": 0.5,
-        "live": 0.5
+        "pre_match": 0.15,
+        "live": 0.85
       },
       "explanation": {
         "top_factors": [
           "Live xG proxy favors home team",
-          "Current score advantage home"
+          "Current score advantage home",
+          "Away red card",
+          "Live stats boosted home win chance"
         ],
         "risk_factors": [
-          "Missing lineup data",
-          "Models disagree"
+          "Missing lineup data"
         ]
       },
       "data_quality": {
@@ -409,73 +410,73 @@
       },
       "live": {
         "is_live": true,
-        "minute": 45,
+        "minute": 90,
         "score": {
-          "home": 1,
-          "away": 0
+          "home": 3,
+          "away": 1
         },
         "momentum": {
-          "home": 53.8,
-          "away": 46.2
+          "home": 89.2,
+          "away": 10.8
         },
         "xg_proxy": {
-          "home": 0.41,
-          "away": 0.11
+          "home": 1.2,
+          "away": 0.19
         }
       },
       "_stats": {
         "home": {
-          "shots_on_goal": 1,
-          "shots_off_goal": 4,
-          "shots_total": 5,
-          "shots_blocked": 0,
-          "corner_kicks": 2,
-          "offsides": 1,
-          "ball_possession": "39%",
-          "yellow_cards": 0,
-          "red_cards": null,
-          "goalkeeper_saves": null,
-          "total_passes": 155,
-          "passes_accurate": 132,
-          "passes_pct": "85%",
+          "shots_on_goal": 6,
+          "shots_off_goal": 3,
+          "shots_total": 12,
+          "shots_blocked": 3,
+          "corner_kicks": 7,
+          "offsides": 3,
+          "ball_possession": "62%",
+          "yellow_cards": 1,
+          "red_cards": 0,
+          "goalkeeper_saves": 2,
+          "total_passes": 563,
+          "passes_accurate": 497,
+          "passes_pct": "88%",
           "fouls": 7,
-          "expected_goals": "0.41"
+          "expected_goals": "1.20"
         },
         "away": {
-          "shots_on_goal": 0,
-          "shots_off_goal": 2,
+          "shots_on_goal": 2,
+          "shots_off_goal": 1,
           "shots_total": 4,
-          "shots_blocked": 2,
-          "corner_kicks": 3,
-          "offsides": 2,
-          "ball_possession": "61%",
+          "shots_blocked": 1,
+          "corner_kicks": 2,
+          "offsides": 1,
+          "ball_possession": "38%",
           "yellow_cards": 2,
-          "red_cards": null,
-          "goalkeeper_saves": null,
-          "total_passes": 257,
-          "passes_accurate": 231,
-          "passes_pct": "90%",
-          "fouls": 4,
-          "expected_goals": "0.11"
+          "red_cards": 1,
+          "goalkeeper_saves": 3,
+          "total_passes": 349,
+          "passes_accurate": 283,
+          "passes_pct": "81%",
+          "fouls": 16,
+          "expected_goals": "0.19"
         }
       },
-      "home": "Czechia",
-      "away": "South Africa",
-      "home_api": "Czechia",
-      "away_api": "South Africa",
+      "home": "Switzerland",
+      "away": "Bosnia and Herzegovina",
+      "home_api": "Switzerland",
+      "away_api": "Bosnia & Herzegovina",
       "live_stats": {
-        "home_sot": 1,
-        "away_sot": 0,
-        "home_corners": 2,
-        "away_corners": 3,
-        "home_possession": 0.39,
-        "away_possession": 0.61,
-        "home_yellow_cards": 0,
+        "home_sot": 6,
+        "away_sot": 2,
+        "home_corners": 7,
+        "away_corners": 2,
+        "home_possession": 0.62,
+        "away_possession": 0.38,
+        "home_yellow_cards": 1,
         "away_yellow_cards": 2,
         "home_red_cards": 0,
-        "away_red_cards": 0,
-        "xg_proxy_home": 0.41,
-        "xg_proxy_away": 0.11
+        "away_red_cards": 1,
+        "xg_proxy_home": 1.2,
+        "xg_proxy_away": 0.19
       }
     }
   }

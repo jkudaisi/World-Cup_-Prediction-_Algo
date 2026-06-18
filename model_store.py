@@ -37,7 +37,20 @@ INTERNAL_TO_FILE = {
 
 
 def models_exist() -> bool:
-    return (MODELS_DIR / "scaler.pkl").exists() and (MODELS_DIR / "feature_cols.json").exists()
+    """True when scaler, meta.json (feature_cols), and at least one model pair exist."""
+    meta_path = MODELS_DIR / "meta.json"
+    if not meta_path.exists() or not (MODELS_DIR / "scaler.pkl").exists():
+        return False
+    import json
+
+    try:
+        with open(meta_path, encoding="utf-8") as f:
+            meta = json.load(f)
+        if not meta.get("feature_cols"):
+            return False
+    except (OSError, json.JSONDecodeError, TypeError, ValueError):
+        return False
+    return _model_path("poisson", "home").exists() and _model_path("poisson", "away").exists()
 
 
 def _model_path(slug: str, side: str) -> Path:

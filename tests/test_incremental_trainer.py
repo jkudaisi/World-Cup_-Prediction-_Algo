@@ -78,6 +78,22 @@ class TestTrainingStore:
         loaded = load_training_state()
         assert loaded["trained_fixture_ids"] == [1, 2, 3]
 
+    def test_models_exist_uses_meta_json(self, isolated_training):
+        import json
+        import model_store as ms
+
+        assert ms.models_exist() is False
+        ms.MODELS_DIR.mkdir(parents=True, exist_ok=True)
+        (ms.MODELS_DIR / "scaler.pkl").write_bytes(b"")
+        (ms.MODELS_DIR / "meta.json").write_text(
+            json.dumps({"feature_cols": ["elo_h"], "model_versions": {}}),
+            encoding="utf-8",
+        )
+        assert ms.models_exist() is False
+        (ms.MODELS_DIR / "poisson_home.pkl").write_bytes(b"")
+        (ms.MODELS_DIR / "poisson_away.pkl").write_bytes(b"")
+        assert ms.models_exist() is True
+
     def test_append_wc_deduplicates(self, isolated_training):
         row = completed_match_to_training_row(SAMPLE_FIXTURE, SAMPLE_STATS, [])
         assert row is not None
@@ -177,8 +193,22 @@ class TestIncrementalTraining:
         state = load_training_state()
         assert 99001 in state["trained_fixture_ids"]
 
+    def test_pending_skips_already_trained_fixtures(self, isolated_training, monkeypatch):
+        from incremental_trainer import (
+            get_pending_training_ids,
+            mark_fixture_for_training,
+            process_pending_training,
+        )
 
-class TestServerNoRetrainOnPredictions:
+        save_training_state({"trained_fixture_ids": [99001], "last_incremental_run_status": "never"})
+        mark_fixture_for_training(99001)
+        monkeypatch.setattr(it, "run_incremental_training", MagicMock())
+
+        result = process_pending_training()
+
+        assert result is None
+        assert get_pending_training_ids() == set()
+        it.run_incremental_training.assert_not_called()
     def test_predictions_route_readonly(self, flask_client, monkeypatch):
         monkeypatch.setattr("server.save_predictions", MagicMock())
         flask_client.get("/api/predictions")

@@ -430,5 +430,26 @@ def process_pending_training(force_if_pending: bool = True) -> dict[str, Any] | 
     pending = get_pending_training_ids()
     if not pending:
         return None
+
+    state = load_training_state()
+    trained = set(state.get("trained_fixture_ids", []))
+    already_trained = pending & trained
+    if already_trained:
+        clear_pending_training_ids(already_trained)
+        pending -= already_trained
+    if not pending:
+        return None
+
     log.info("Processing %s pending fixture(s) for incremental training", len(pending))
-    return run_incremental_training(force=False, fetch_from_api=True, verbose=False)
+    result = run_incremental_training(force=False, fetch_from_api=True, verbose=False)
+
+    if result and result.get("status") == "skipped":
+        # Nothing new from API — drop queue entries already in training state
+        clear_pending_training_ids(pending & trained)
+        return result
+
+    if result and result.get("status") == "success":
+        updated_trained = set(result.get("training_state", {}).get("trained_fixture_ids", []))
+        clear_pending_training_ids(pending & updated_trained)
+
+    return result
