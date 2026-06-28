@@ -337,8 +337,8 @@ def run_live_cycle(*, force: bool = False) -> dict[str, Any]:
 
         now = datetime.now(timezone.utc).isoformat()
         live_doc = _load_live_predictions()
-        if matches:
-            live_doc["matches"].update(matches)
+        # Keep only fixtures currently in play — never accumulate stale finished matches.
+        live_doc["matches"] = matches
         live_doc["updated_at"] = now
         live_doc["live_meta"] = {
             "fetched_at": now,
@@ -381,20 +381,25 @@ def build_live_api_response() -> dict[str, Any]:
     live_matches = live_doc.get("matches") or {}
 
     for match in pred.get("ml_data", []):
-        fid = match.get("fixture_id")
         for live in live_matches.values():
-            if live.get("home") == match.get("home") and live.get("away") == match.get("away"):
-                match["live_probabilities"] = live.get("probabilities")
-                match["live_momentum"] = live.get("momentum")
-                match["live_confidence"] = live.get("confidence")
-                match["live_adj_lambda_h"] = live.get("adj_lambda_home")
-                match["live_adj_lambda_a"] = live.get("adj_lambda_away")
-                match["live_elapsed"] = live.get("minute")
-                match["live_status"] = "live" if live.get("minute") else match.get("live_status")
-                match["live_score"] = live.get("score")
-                match["live_over_under"] = live.get("over_under")
-                match["live_next_goal"] = live.get("next_goal")
-                break
+            if live.get("home") != match.get("home") or live.get("away") != match.get("away"):
+                continue
+            status = (live.get("status") or "").upper()
+            if status in FINAL_STATUSES:
+                continue
+            if status not in LIVE_STATUSES and not live.get("is_live"):
+                continue
+            match["live_probabilities"] = live.get("probabilities")
+            match["live_momentum"] = live.get("momentum")
+            match["live_confidence"] = live.get("confidence")
+            match["live_adj_lambda_h"] = live.get("adj_lambda_home")
+            match["live_adj_lambda_a"] = live.get("adj_lambda_away")
+            match["live_elapsed"] = live.get("minute")
+            match["live_status"] = "live" if status in LIVE_STATUSES else match.get("live_status")
+            match["live_score"] = live.get("score")
+            match["live_over_under"] = live.get("over_under")
+            match["live_next_goal"] = live.get("next_goal")
+            break
 
     return {
         **pred,
@@ -402,6 +407,52 @@ def build_live_api_response() -> dict[str, Any]:
         "live_meta": live_doc.get("live_meta") or {},
         "live_updated_at": live_doc.get("updated_at"),
     }
+
+
+def prune_stale_live_predictions() -> int:
+    """Drop live prediction rows that are not actually in play on API-Football."""
+    from apifootball_client import get_all_live_fixtures
+    from team_names import resolve_team_name
+
+    live_doc = _load_live_predictions()
+    matches = live_doc.get("matches") or {}
+    if not matches:
+        return 0
+
+    wc_live_teams: set[tuple[str, str]] = set()
+    try:
+        for f in get_all_live_fixtures():
+            if f.get("league", {}).get("id") != 1:
+                continue
+            status = f["fixture"]["status"]["short"]
+            if status not in LIVE_STATUSES:
+                continue
+            home = resolve_team_name(f["teams"]["home"]["name"])
+            away = resolve_team_name(f["teams"]["away"]["name"])
+            wc_live_teams.add((home, away))
+    except Exception as exc:
+        log.warning("Live prune API check failed, using status filter: %s", exc)
+        wc_live_teams = None
+
+    if wc_live_teams is not None:
+        kept = {
+            fid: row
+            for fid, row in matches.items()
+            if (row.get("home"), row.get("away")) in wc_live_teams
+        }
+    else:
+        kept = {
+            fid: row
+            for fid, row in matches.items()
+            if (row.get("status") or "").upper() in LIVE_STATUSES
+        }
+
+    removed = len(matches) - len(kept)
+    if removed:
+        live_doc["matches"] = kept
+        _save_live_predictions(live_doc)
+        log.info("Pruned %s stale live prediction(s)", removed)
+    return removed
 
 
 def mark_fixture_final(fixture_id: int) -> None:

@@ -14,6 +14,8 @@ from incremental_trainer import (
     completed_match_to_training_row,
     fetch_new_completed_world_cup_matches,
     run_incremental_training,
+    scan_live_snapshots_for_completed_matches,
+    snapshot_to_training_row,
 )
 from training_store import append_wc_matches, load_training_state, save_training_state
 
@@ -123,6 +125,158 @@ class TestCompletedMatchRow:
         fx = dict(SAMPLE_FIXTURE)
         fx["teams"] = {"home": {"name": "Atlantis"}, "away": {"name": "Portugal"}}
         assert completed_match_to_training_row(fx, SAMPLE_STATS, []) is None
+
+
+class TestTeamStatsUpdate:
+    def test_update_team_stats_from_match_ema(self):
+        import copy
+        from wc2026_ml_pipeline import TEAM_STATS, update_team_stats_from_match
+
+        backup = copy.deepcopy(TEAM_STATS)
+        try:
+            before = {
+                "portugal_form": TEAM_STATS["Portugal"]["form"],
+                "portugal_xg": TEAM_STATS["Portugal"]["xg"],
+                "portugal_xga": TEAM_STATS["Portugal"]["xga"],
+                "drc_xga": TEAM_STATS["DRC"]["xga"],
+            }
+            match = {
+                "home_team": "Portugal",
+                "away_team": "DRC",
+                "goals_h": 2,
+                "goals_a": 1,
+                "home_xg_proxy": 1.8,
+                "away_xg_proxy": 0.9,
+            }
+            update_team_stats_from_match(match)
+
+            assert TEAM_STATS["Portugal"]["form"] == pytest.approx(0.75 * before["portugal_form"] + 0.25 * 3.0, rel=1e-3)
+            assert TEAM_STATS["Portugal"]["xg"] == pytest.approx(0.75 * before["portugal_xg"] + 0.25 * 1.8, rel=1e-3)
+            assert TEAM_STATS["Portugal"]["xga"] == pytest.approx(0.75 * before["portugal_xga"] + 0.25 * 1.0, rel=1e-3)
+            assert TEAM_STATS["DRC"]["xga"] == pytest.approx(0.75 * before["drc_xga"] + 0.25 * 2.0, rel=1e-3)
+        finally:
+            TEAM_STATS.clear()
+            TEAM_STATS.update(backup)
+
+    def test_apply_team_stats_on_scan(self, isolated_training, tmp_path, monkeypatch):
+        import copy
+        import live_snapshot_store as lss
+        from wc2026_ml_pipeline import TEAM_STATS, update_team_stats_from_match
+
+        backup = copy.deepcopy(TEAM_STATS)
+        try:
+            monkeypatch.setattr(it, "update_team_stats_from_match", update_team_stats_from_match)
+            monkeypatch.setattr(lss, "SNAPSHOT_DIR", tmp_path / "snapshots")
+            snap_dir = tmp_path / "snapshots"
+            snap_dir.mkdir(parents=True)
+            completed = {
+                "fixture_id": 99002,
+                "snapshot_time": "2026-06-17T20:00:00+00:00",
+                "minute": 90,
+                "status": "2H",
+                "score": {"home": 2, "away": 1},
+                "stats": SAMPLE_STATS,
+                "events": [],
+                "home_name": "Portugal",
+                "away_name": "Congo DR",
+                "home_team_id": 10,
+                "away_team_id": 20,
+            }
+            (snap_dir / "99002.json").write_text(json.dumps([completed]), encoding="utf-8")
+
+            before_xg = TEAM_STATS["Portugal"]["xg"]
+            scan_live_snapshots_for_completed_matches(snapshot_dir=snap_dir)
+            assert TEAM_STATS["Portugal"]["xg"] != before_xg
+        finally:
+            TEAM_STATS.clear()
+            TEAM_STATS.update(backup)
+
+
+class TestSnapshotCompletedMatches:
+    SAMPLE_SNAPSHOT = {
+        "fixture_id": 99002,
+        "snapshot_time": "2026-06-17T20:00:00+00:00",
+        "minute": 90,
+        "status": "2H",
+        "score": {"home": 2, "away": 1},
+        "stats": SAMPLE_STATS,
+        "events": [],
+        "home_name": "Portugal",
+        "away_name": "Congo DR",
+        "home_team_id": 10,
+        "away_team_id": 20,
+    }
+
+    def test_snapshot_to_training_row_2h_at_90(self):
+        row = snapshot_to_training_row(self.SAMPLE_SNAPSHOT)
+        assert row is not None
+        assert row["fixture_id"] == 99002
+        assert row["goals_h"] == 2
+        assert row["goals_a"] == 1
+        assert row["source"] == "live_snapshot"
+
+    def test_scan_skips_existing_and_incomplete(self, isolated_training, tmp_path, monkeypatch):
+        import live_snapshot_store as lss
+
+        monkeypatch.setattr(lss, "SNAPSHOT_DIR", tmp_path / "snapshots")
+        snap_dir = tmp_path / "snapshots"
+        snap_dir.mkdir(parents=True)
+
+        completed = dict(self.SAMPLE_SNAPSHOT)
+        (snap_dir / "99002.json").write_text(
+            json.dumps([completed]), encoding="utf-8",
+        )
+        incomplete = dict(completed)
+        incomplete.update({"fixture_id": 99003, "minute": 70, "status": "2H"})
+        (snap_dir / "99003.json").write_text(
+            json.dumps([incomplete]), encoding="utf-8",
+        )
+
+        append_wc_matches([
+            snapshot_to_training_row(completed),
+        ])
+
+        added = scan_live_snapshots_for_completed_matches(snapshot_dir=snap_dir)
+        assert added == []
+
+        from training_store import load_wc_matches
+        assert len(load_wc_matches()) == 1
+
+    def test_scan_ignores_placeholder_rows_without_goals(self, isolated_training, tmp_path, monkeypatch):
+        import live_snapshot_store as lss
+
+        monkeypatch.setattr(lss, "SNAPSHOT_DIR", tmp_path / "snapshots")
+        snap_dir = tmp_path / "snapshots"
+        snap_dir.mkdir(parents=True)
+
+        append_wc_matches([{"fixture_id": 99002, "home_team": "Portugal", "away_team": "DRC"}])
+
+        completed = dict(self.SAMPLE_SNAPSHOT)
+        (snap_dir / "99002.json").write_text(
+            json.dumps([completed]), encoding="utf-8",
+        )
+
+        added = scan_live_snapshots_for_completed_matches(snapshot_dir=snap_dir)
+        assert len(added) == 1
+        assert added[0]["goals_h"] == 2
+
+    def test_scan_appends_new_completed(self, isolated_training, tmp_path, monkeypatch):
+        import live_snapshot_store as lss
+
+        monkeypatch.setattr(lss, "SNAPSHOT_DIR", tmp_path / "snapshots")
+        snap_dir = tmp_path / "snapshots"
+        snap_dir.mkdir(parents=True)
+        completed = dict(self.SAMPLE_SNAPSHOT)
+        (snap_dir / "99002.json").write_text(
+            json.dumps([completed]), encoding="utf-8",
+        )
+
+        added = scan_live_snapshots_for_completed_matches(snapshot_dir=snap_dir)
+        assert len(added) == 1
+        assert added[0]["fixture_id"] == 99002
+
+        from training_store import load_wc_matches
+        assert len(load_wc_matches()) == 1
 
 
 class TestFetchNewMatches:

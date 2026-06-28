@@ -4,10 +4,13 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 from pathlib import Path
 from typing import Any
 
-from training_store import atomic_write_json, load_json
+from training_store import atomic_write_json
+
+log = logging.getLogger(__name__)
 
 ROOT = Path(__file__).parent
 SNAPSHOT_DIR = ROOT / "data" / "live_snapshots"
@@ -17,8 +20,50 @@ def _snapshot_path(fixture_id: int) -> Path:
     return SNAPSHOT_DIR / f"{fixture_id}.json"
 
 
+def load_snapshot_file(path: Path) -> list[dict[str, Any]]:
+    """Load a snapshot JSON file (list of polling snapshots)."""
+    if not path.exists():
+        return []
+    try:
+        with open(path, encoding="utf-8-sig", errors="replace") as f:
+            data = json.load(f)
+    except (json.JSONDecodeError, OSError) as exc:
+        log.warning("Failed to load snapshot file %s: %s", path, exc)
+        return []
+    if not isinstance(data, list):
+        log.warning("Snapshot file %s is not a list — skipping", path)
+        return []
+    return data
+
+
 def load_snapshots(fixture_id: int) -> list[dict[str, Any]]:
-    return load_json(_snapshot_path(fixture_id), [])
+    return load_snapshot_file(_snapshot_path(fixture_id))
+
+
+def is_snapshot_completed(snapshot: dict[str, Any]) -> bool:
+    """True when polling captured a finished match (FT or 2H at/after 90')."""
+    status = (snapshot.get("status") or "").upper()
+    try:
+        minute = int(snapshot.get("minute") or 0)
+    except (TypeError, ValueError):
+        minute = 0
+    return status == "FT" or (status == "2H" and minute >= 90)
+
+
+def get_final_completed_snapshot(
+    snapshots: list[dict[str, Any]],
+) -> dict[str, Any] | None:
+    """Return the last completed snapshot in a polling history, if any."""
+    for snap in reversed(snapshots):
+        if is_snapshot_completed(snap):
+            return snap
+    return None
+
+
+def iter_snapshot_files() -> list[Path]:
+    if not SNAPSHOT_DIR.exists():
+        return []
+    return sorted(SNAPSHOT_DIR.glob("*.json"))
 
 
 def snapshot_fingerprint(snapshot: dict[str, Any]) -> str:

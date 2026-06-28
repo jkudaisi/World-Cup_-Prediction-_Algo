@@ -67,6 +67,71 @@ TEAM_STATS = {
     "Panama":                 dict(elo=1540,rank=34,xg=1.05,xga=1.30,yc=1.9,rc=0.09,sq_val=110,wc_apps=2, titles=0,form=1.1,press=9.3, dribble=3.8,aerial=47),
 }
 
+# EMA weight for rolling form / xG updates after each completed WC match
+_TEAM_STATS_EMA_ALPHA = 0.25
+
+
+def _observed_match_xg(match_row: dict, side: str) -> float:
+    """Attack xG for home/away from match row, falling back to goals scored."""
+    if side == "home":
+        for key in ("home_expected_goals", "home_xg_proxy"):
+            val = match_row.get(key)
+            if val is not None:
+                return float(val)
+        return float(match_row["goals_h"])
+    for key in ("away_expected_goals", "away_xg_proxy"):
+        val = match_row.get(key)
+        if val is not None:
+            return float(val)
+    return float(match_row["goals_a"])
+
+
+def _match_form_points(goals_for: int, goals_against: int) -> float:
+    if goals_for > goals_against:
+        return 3.0
+    if goals_for == goals_against:
+        return 1.0
+    return 0.0
+
+
+def _ema_update(current: float, observed: float, alpha: float = _TEAM_STATS_EMA_ALPHA) -> float:
+    return round((1.0 - alpha) * current + alpha * observed, 3)
+
+
+def update_team_stats_from_match(match_row: dict) -> None:
+    """
+    Mutate TEAM_STATS in place after a completed WC match.
+
+    Updates form (W/D/L points), attacking xg, and defensive xga for both teams
+    using an exponential moving average of the actual result.
+    """
+    home = match_row.get("home_team")
+    away = match_row.get("away_team")
+    if not home or not away:
+        return
+    if home not in TEAM_STATS or away not in TEAM_STATS:
+        return
+
+    gh = match_row.get("goals_h")
+    ga = match_row.get("goals_a")
+    if gh is None or ga is None:
+        return
+
+    gh, ga = int(gh), int(ga)
+    home_xg = _observed_match_xg(match_row, "home")
+    away_xg = _observed_match_xg(match_row, "away")
+
+    home_stats = TEAM_STATS[home]
+    home_stats["form"] = _ema_update(home_stats["form"], _match_form_points(gh, ga))
+    home_stats["xg"] = _ema_update(home_stats["xg"], home_xg)
+    home_stats["xga"] = _ema_update(home_stats["xga"], float(ga))
+
+    away_stats = TEAM_STATS[away]
+    away_stats["form"] = _ema_update(away_stats["form"], _match_form_points(ga, gh))
+    away_stats["xg"] = _ema_update(away_stats["xg"], away_xg)
+    away_stats["xga"] = _ema_update(away_stats["xga"], float(gh))
+
+
 # ── 2. GROUP STAGE FIXTURES (from matches.csv) ────────────────────────────────
 ID_MAP = {
     1:"Mexico",2:"South Africa",3:"South Korea",4:"Czechia",

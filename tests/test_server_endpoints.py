@@ -20,6 +20,11 @@ ALL_ROUTES = [
     ("GET", "/api/live-snapshots/12345", 200),
     ("GET", "/api/training-state", 200),
     ("GET", "/api/status", 200),
+    ("GET", "/api/trading/opportunities", 200),
+    ("GET", "/api/trading/paper", 200),
+    ("GET", "/api/trading/logs", 200),
+    ("GET", "/api/trading/exposure", 200),
+    ("GET", "/api/kalshi/unmapped", 200),
 ]
 
 
@@ -34,13 +39,23 @@ class TestAllRoutesReachable:
         if path == "/api/today":
             monkeypatch.setattr(
                 "scheduler.get_today_view",
-                lambda: {"date": "2026-06-17", "matches": [], "n_matches": 0, "live_count": 0},
+                lambda refresh=False: {"date": "2026-06-17", "matches": [], "n_matches": 0, "live_count": 0},
             )
         if path == "/api/live":
             monkeypatch.setattr("server.run_live_cycle", lambda **k: {"live_count": 0})
             monkeypatch.setattr(
                 "server.build_live_api_response",
                 lambda: {**MINIMAL_PREDICTIONS, "live_meta": {}, "live_predictions": {}},
+            )
+        if path == "/api/trading/opportunities":
+            monkeypatch.setattr(
+                "server.get_opportunities",
+                lambda refresh=False: {"opportunities": [], "config": {}, "risk": {}, "paper": {}},
+            )
+        if path == "/api/kalshi/unmapped":
+            monkeypatch.setattr(
+                "server.list_unmapped_fixtures",
+                lambda ml: [{"home_team": "Mexico", "away_team": "South Africa", "date": "2026-06-11", "fixture_id": None}],
             )
 
         response = flask_client.open(path, method=method)
@@ -106,7 +121,7 @@ class TestToday:
     def test_today_view_structure(self, flask_client, monkeypatch):
         monkeypatch.setattr(
             "scheduler.get_today_view",
-            lambda: {
+            lambda refresh=False: {
                 "date": "2026-06-17",
                 "matches": [{
                     "fixture_id": 12345,
@@ -120,6 +135,9 @@ class TestToday:
                 }],
                 "n_matches": 1,
                 "live_count": 1,
+                "finished_count": 0,
+                "upcoming_count": 0,
+                "active_count": 1,
                 "api_budget_remaining": 7500,
                 "daily_limit": 7500,
                 "scheduler_active": True,

@@ -1,6 +1,9 @@
+# ── Secrets (never commit) ──
 .env
 .env.local
 .env.*.local
+*.pem
+**/kalshi*.pem
 
 __pycache__/
 *.py[cod]

@@ -1,0 +1,40 @@
+{
+  "results": [
+    {
+      "timestamp": "2026-06-28T02:59:09.394678+00:00",
+      "order_id": "87991e3d-8a2b-4526-a56a-df8846695d12",
+      "status": "submitted",
+      "ticker": "KXWCBTTS-26JUN27DZAAUT-BTTS"
+    },
+    {
+      "timestamp": "2026-06-28T02:59:13.010182+00:00",
+      "order_id": "cb7c8c55-75a8-4302-bd80-5f3984cae0d3",
+      "status": "submitted",
+      "ticker": "KXWCGAME-26JUN27JORARG-ARG"
+    },
+    {
+      "timestamp": "2026-06-28T03:22:53.618452+00:00",
+      "order_id": "0b60b35f-22f2-4912-b21c-59fe8a7acfed",
+      "status": "submitted",
+      "ticker": "KXWCTOTAL-26JUN27DZAAUT-4"
+    },
+    {
+      "timestamp": "2026-06-28T03:33:29.258365+00:00",
+      "order_id": "1777222e-067d-406c-b7cd-21a1b9c6ad79",
+      "status": "submitted",
+      "ticker": "KXWCGAME-26JUN27DZAAUT-TIE"
+    },
+    {
+      "timestamp": "2026-06-28T03:33:29.709035+00:00",
+      "order_id": "51910f90-55f6-4d86-a3c5-37fe4fb35da6",
+      "status": "submitted",
+      "ticker": "KXWCGAME-26JUN27DZAAUT-AUT"
+    },
+    {
+      "timestamp": "2026-06-28T03:33:30.891181+00:00",
+      "order_id": "a8a72661-4e2e-4281-a532-1eb0a642fede",
+      "status": "submitted",
+      "ticker": "KXWCTOTAL-26JUN27JORARG-4"
+    }
+  ]
+}

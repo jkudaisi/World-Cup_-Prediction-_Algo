@@ -85,6 +85,18 @@ def test_outcome_probs_from_lambdas():
     assert pytest.approx(sum(probs.values()), rel=1e-3) == 1.0
 
 
+def test_over_under_multiple_lines():
+    from ensemble import build_over_under_payload
+
+    payload = build_over_under_payload(1.8, 1.6, 0, 0)
+    assert payload["2.5"]["over"] > payload["3.5"]["over"]
+    assert pytest.approx(payload["2.5"]["over"] + payload["2.5"]["under"], rel=1e-3) == 1.0
+
+    live = build_over_under_payload(0.4, 0.3, 2, 1)
+    assert live["2.5"]["over"] == 1.0
+    assert 0.0 < live["3.5"]["over"] < 1.0
+
+
 def test_load_model_weights():
     w = load_model_weights()
     assert pytest.approx(sum(w.values()), rel=1e-2) == 1.0
@@ -101,3 +113,36 @@ def test_backtest_runs(tmp_path, monkeypatch):
     result = bt.run_backtest(n_synthetic=400, holdout_frac=0.25)
     assert "recommended_weights" in result
     assert (tmp_path / "backtest_results.json").exists()
+    if result.get("wc_fixture_ids"):
+        assert result["mode"] == "synthetic_train_wc_eval"
+        assert result["results"]["n_test"] == len(result["wc_eval_fixture_ids"])
+
+
+def test_backtest_wc_only(tmp_path, monkeypatch):
+    import backtest_models as bt
+
+    monkeypatch.setattr(bt, "BACKTEST_RESULTS_PATH", tmp_path / "backtest_results.json")
+    monkeypatch.setattr("ensemble.WEIGHTS_PATH", tmp_path / "model_weights.json")
+
+    sample_rows = []
+    for i, fid in enumerate([1001, 1002, 1003, 1004]):
+        row = {
+            "fixture_id": fid,
+            "date": f"2026-06-{11 + i}",
+            "home_team": "Mexico",
+            "away_team": "South Africa",
+            "goals_h": 2 if i % 2 == 0 else 1,
+            "goals_a": 0,
+            "lambda_h": 1.5,
+            "lambda_a": 0.9,
+        }
+        row.update({k: row.get(k, 1.0) for k in bt.get_feature_cols() if k not in row})
+        sample_rows.append(row)
+
+    monkeypatch.setattr(bt, "load_wc_matches", lambda: sample_rows)
+
+    result = bt.run_backtest(wc_only=True, holdout_frac=0.25, n_synthetic=100)
+    assert result["mode"] == "wc_only"
+    assert len(result["wc_train_fixture_ids"]) == 3
+    assert len(result["wc_eval_fixture_ids"]) == 1
+    assert (tmp_path / "model_weights.json").exists()

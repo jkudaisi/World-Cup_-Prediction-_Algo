@@ -1,0 +1,146 @@
+{
+  "_comment": "Manual Kalshi ticker overrides. Key format: HomeTeam|AwayTeam|YYYY-MM-DD or mn:21",
+  "mn:21": {
+    "home_win": "",
+    "draw": "",
+    "away_win": "",
+    "over_0_5": "",
+    "over_1_5": "",
+    "over_2_5": "",
+    "over_3_5": "",
+    "btts_yes": "",
+    "btts_no": ""
+  },
+  "DRC|Uzbekistan|2026-06-27": {
+    "away_win": "KXWCGAME-26JUN27CODUZB-UZB",
+    "draw": "KXWCGAME-26JUN27CODUZB-TIE",
+    "home_win": "KXWCGAME-26JUN27CODUZB-COD",
+    "btts_yes": "KXWCBTTS-26JUN27CODUZB-BTTS",
+    "over_4_5": "KXWCTOTAL-26JUN27CODUZB-5",
+    "over_3_5": "KXWCTOTAL-26JUN27CODUZB-4",
+    "over_2_5": "KXWCTOTAL-26JUN27CODUZB-3",
+    "over_1_5": "KXWCTOTAL-26JUN27CODUZB-2",
+    "over_0_5": "KXWCTOTAL-26JUN27CODUZB-1"
+  },
+  "mn:70": {
+    "away_win": "KXWCGAME-26JUN27CODUZB-UZB",
+    "draw": "KXWCGAME-26JUN27CODUZB-TIE",
+    "home_win": "KXWCGAME-26JUN27CODUZB-COD",
+    "btts_yes": "KXWCBTTS-26JUN27CODUZB-BTTS",
+    "over_4_5": "KXWCTOTAL-26JUN27CODUZB-5",
+    "over_3_5": "KXWCTOTAL-26JUN27CODUZB-4",
+    "over_2_5": "KXWCTOTAL-26JUN27CODUZB-3",
+    "over_1_5": "KXWCTOTAL-26JUN27CODUZB-2",
+    "over_0_5": "KXWCTOTAL-26JUN27CODUZB-1"
+  },
+  "Colombia|Portugal|2026-06-27": {
+    "draw": "KXWCGAME-26JUN27COLPOR-TIE",
+    "away_win": "KXWCGAME-26JUN27COLPOR-POR",
+    "home_win": "KXWCGAME-26JUN27COLPOR-COL",
+    "btts_yes": "KXWCBTTS-26JUN27COLPOR-BTTS",
+    "over_4_5": "KXWCTOTAL-26JUN27COLPOR-5",
+    "over_3_5": "KXWCTOTAL-26JUN27COLPOR-4",
+    "over_2_5": "KXWCTOTAL-26JUN27COLPOR-3",
+    "over_1_5": "KXWCTOTAL-26JUN27COLPOR-2",
+    "over_0_5": "KXWCTOTAL-26JUN27COLPOR-1"
+  },
+  "mn:69": {
+    "draw": "KXWCGAME-26JUN27COLPOR-TIE",
+    "away_win": "KXWCGAME-26JUN27COLPOR-POR",
+    "home_win": "KXWCGAME-26JUN27COLPOR-COL",
+    "btts_yes": "KXWCBTTS-26JUN27COLPOR-BTTS",
+    "over_4_5": "KXWCTOTAL-26JUN27COLPOR-5",
+    "over_3_5": "KXWCTOTAL-26JUN27COLPOR-4",
+    "over_2_5": "KXWCTOTAL-26JUN27COLPOR-3",
+    "over_1_5": "KXWCTOTAL-26JUN27COLPOR-2",
+    "over_0_5": "KXWCTOTAL-26JUN27COLPOR-1"
+  },
+  "Croatia|Ghana|2026-06-27": {
+    "draw": "KXWCGAME-26JUN27CROGHA-TIE",
+    "away_win": "KXWCGAME-26JUN27CROGHA-GHA",
+    "home_win": "KXWCGAME-26JUN27CROGHA-CRO",
+    "btts_yes": "KXWCBTTS-26JUN27CROGHA-BTTS",
+    "over_4_5": "KXWCTOTAL-26JUN27CROGHA-5",
+    "over_3_5": "KXWCTOTAL-26JUN27CROGHA-4",
+    "over_2_5": "KXWCTOTAL-26JUN27CROGHA-3",
+    "over_1_5": "KXWCTOTAL-26JUN27CROGHA-2",
+    "over_0_5": "KXWCTOTAL-26JUN27CROGHA-1"
+  },
+  "mn:68": {
+    "draw": "KXWCGAME-26JUN27CROGHA-TIE",
+    "away_win": "KXWCGAME-26JUN27CROGHA-GHA",
+    "home_win": "KXWCGAME-26JUN27CROGHA-CRO",
+    "btts_yes": "KXWCBTTS-26JUN27CROGHA-BTTS",
+    "over_4_5": "KXWCTOTAL-26JUN27CROGHA-5",
+    "over_3_5": "KXWCTOTAL-26JUN27CROGHA-4",
+    "over_2_5": "KXWCTOTAL-26JUN27CROGHA-3",
+    "over_1_5": "KXWCTOTAL-26JUN27CROGHA-2",
+    "over_0_5": "KXWCTOTAL-26JUN27CROGHA-1"
+  },
+  "Algeria|Austria|2026-06-27": {
+    "draw": "KXWCGAME-26JUN27DZAAUT-TIE",
+    "home_win": "KXWCGAME-26JUN27DZAAUT-DZA",
+    "away_win": "KXWCGAME-26JUN27DZAAUT-AUT",
+    "btts_yes": "KXWCBTTS-26JUN27DZAAUT-BTTS",
+    "over_4_5": "KXWCTOTAL-26JUN27DZAAUT-5",
+    "over_3_5": "KXWCTOTAL-26JUN27DZAAUT-4",
+    "over_2_5": "KXWCTOTAL-26JUN27DZAAUT-3",
+    "over_1_5": "KXWCTOTAL-26JUN27DZAAUT-2",
+    "over_0_5": "KXWCTOTAL-26JUN27DZAAUT-1"
+  },
+  "mn:71": {
+    "draw": "KXWCGAME-26JUN27DZAAUT-TIE",
+    "home_win": "KXWCGAME-26JUN27DZAAUT-DZA",
+    "away_win": "KXWCGAME-26JUN27DZAAUT-AUT",
+    "btts_yes": "KXWCBTTS-26JUN27DZAAUT-BTTS",
+    "over_4_5": "KXWCTOTAL-26JUN27DZAAUT-5",
+    "over_3_5": "KXWCTOTAL-26JUN27DZAAUT-4",
+    "over_2_5": "KXWCTOTAL-26JUN27DZAAUT-3",
+    "over_1_5": "KXWCTOTAL-26JUN27DZAAUT-2",
+    "over_0_5": "KXWCTOTAL-26JUN27DZAAUT-1"
+  },
+  "Jordan|Argentina|2026-06-27": {
+    "draw": "KXWCGAME-26JUN27JORARG-TIE",
+    "home_win": "KXWCGAME-26JUN27JORARG-JOR",
+    "away_win": "KXWCGAME-26JUN27JORARG-ARG",
+    "btts_yes": "KXWCBTTS-26JUN27JORARG-BTTS",
+    "over_4_5": "KXWCTOTAL-26JUN27JORARG-5",
+    "over_3_5": "KXWCTOTAL-26JUN27JORARG-4",
+    "over_2_5": "KXWCTOTAL-26JUN27JORARG-3",
+    "over_1_5": "KXWCTOTAL-26JUN27JORARG-2",
+    "over_0_5": "KXWCTOTAL-26JUN27JORARG-1"
+  },
+  "mn:72": {
+    "draw": "KXWCGAME-26JUN27JORARG-TIE",
+    "home_win": "KXWCGAME-26JUN27JORARG-JOR",
+    "away_win": "KXWCGAME-26JUN27JORARG-ARG",
+    "btts_yes": "KXWCBTTS-26JUN27JORARG-BTTS",
+    "over_4_5": "KXWCTOTAL-26JUN27JORARG-5",
+    "over_3_5": "KXWCTOTAL-26JUN27JORARG-4",
+    "over_2_5": "KXWCTOTAL-26JUN27JORARG-3",
+    "over_1_5": "KXWCTOTAL-26JUN27JORARG-2",
+    "over_0_5": "KXWCTOTAL-26JUN27JORARG-1"
+  },
+  "Panama|England|2026-06-27": {
+    "draw": "KXWCGAME-26JUN27PANENG-TIE",
+    "home_win": "KXWCGAME-26JUN27PANENG-PAN",
+    "away_win": "KXWCGAME-26JUN27PANENG-ENG",
+    "btts_yes": "KXWCBTTS-26JUN27PANENG-BTTS",
+    "over_4_5": "KXWCTOTAL-26JUN27PANENG-5",
+    "over_3_5": "KXWCTOTAL-26JUN27PANENG-4",
+    "over_2_5": "KXWCTOTAL-26JUN27PANENG-3",
+    "over_1_5": "KXWCTOTAL-26JUN27PANENG-2",
+    "over_0_5": "KXWCTOTAL-26JUN27PANENG-1"
+  },
+  "mn:67": {
+    "draw": "KXWCGAME-26JUN27PANENG-TIE",
+    "home_win": "KXWCGAME-26JUN27PANENG-PAN",
+    "away_win": "KXWCGAME-26JUN27PANENG-ENG",
+    "btts_yes": "KXWCBTTS-26JUN27PANENG-BTTS",
+    "over_4_5": "KXWCTOTAL-26JUN27PANENG-5",
+    "over_3_5": "KXWCTOTAL-26JUN27PANENG-4",
+    "over_2_5": "KXWCTOTAL-26JUN27PANENG-3",
+    "over_1_5": "KXWCTOTAL-26JUN27PANENG-2",
+    "over_0_5": "KXWCTOTAL-26JUN27PANENG-1"
+  }
+}

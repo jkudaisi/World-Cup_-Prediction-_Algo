@@ -23,7 +23,7 @@ def reset_scheduler_state(monkeypatch):
 
 class TestMorningInit:
     def test_builds_schedule_from_fixtures(self, monkeypatch):
-        monkeypatch.setattr(sched, "get_today_fixtures", lambda d: [SAMPLE_FIXTURE])
+        monkeypatch.setattr(sched, "_fetch_wc_fixtures_for_local_day", lambda: [SAMPLE_FIXTURE])
         day = sched.morning_init()
         assert day is not None
         assert day.n_matches == 1
@@ -33,7 +33,7 @@ class TestMorningInit:
         finished = dict(SAMPLE_FIXTURE)
         finished["fixture"] = dict(finished["fixture"])
         finished["fixture"]["status"] = {"short": "FT", "elapsed": 90}
-        monkeypatch.setattr(sched, "get_today_fixtures", lambda d: [finished])
+        monkeypatch.setattr(sched, "_fetch_wc_fixtures_for_local_day", lambda: [finished])
         day = sched.morning_init()
         assert day.n_matches == 0
 
@@ -57,21 +57,26 @@ class TestAnyMatchWindow:
 
 class TestGetTodayView:
     def test_uses_schedule_fixtures(self, monkeypatch):
+        from datetime import date as date_cls
+
+        today = date_cls.today().strftime("%Y-%m-%d")
         sched.schedule = sched.DaySchedule(
-            date="2026-06-17", fixtures=[SAMPLE_FIXTURE], n_matches=1,
+            date=today, fixtures=[SAMPLE_FIXTURE], n_matches=1,
         )
         sched._all_today_fixtures = [SAMPLE_FIXTURE]
         sched.cached_status[12345] = "1H"
         view = sched.get_today_view()
         assert view["n_matches"] == 1
         assert view["matches"][0]["fixture_id"] == 12345
+        assert view["live_count"] == 1
 
     def test_fetches_when_no_schedule(self, monkeypatch):
-        monkeypatch.setattr(sched, "get_today_fixtures", lambda d: [SAMPLE_FIXTURE])
+        monkeypatch.setattr(sched, "_fetch_wc_fixtures_for_local_day", lambda: [SAMPLE_FIXTURE])
         import config
         monkeypatch.setattr(config, "APIFOOTBALL_KEY", "test-key")
         view = sched.get_today_view()
         assert view["n_matches"] == 1
+        assert "local_timezone" in view
 
 
 class TestGetSchedulerStatus:

@@ -7,4 +7,5 @@ lightgbm>=4.0
 python-dotenv>=1.0
 pytest>=7.0
 requests>=2.31
+cryptography>=42.0
 # API-Football client uses requests (already included above)

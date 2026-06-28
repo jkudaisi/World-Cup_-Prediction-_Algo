@@ -50,6 +50,10 @@ def test_update_live_prediction_changes_with_minute():
     late = lp.update_live_prediction_from_snapshot(snap_late, base)
     assert early["probabilities"]["home_win"] != late["probabilities"]["home_win"]
     assert "over_under" in late
+    assert late["over_under"]["2.5"]["over"] is not None
+    assert late["over_under"]["3.5"]["over"] is not None
+    assert late["prediction"]["over_3_5"] is not None
+    assert late["over_under"]["2.5"]["over"] >= late["over_under"]["3.5"]["over"]
     assert "next_goal" in late
     assert late["confidence"]["score"] >= early["confidence"]["score"]
 
@@ -135,3 +139,42 @@ def test_ingest_updates_probabilities(tmp_path, monkeypatch):
     assert saved["ml_data"][0]["live_probabilities"]["home_win"] > 0
     conf = saved["ml_data"][0]["live_confidence"]
     assert conf is not None
+
+
+@pytest.mark.parametrize(
+    "status,minute,expected",
+    [
+        ("FT", 90, True),
+        ("2H", 90, True),
+        ("2H", 95, True),
+        ("2H", 89, False),
+        ("1H", 45, False),
+        ("HT", 45, False),
+    ],
+)
+def test_is_snapshot_completed(status, minute, expected):
+    snap = {"status": status, "minute": minute}
+    assert lss.is_snapshot_completed(snap) is expected
+
+
+def test_get_final_completed_snapshot(tmp_path):
+    snaps = [
+        {"status": "1H", "minute": 20},
+        {"status": "2H", "minute": 84},
+        {"status": "2H", "minute": 90, "score": {"home": 2, "away": 1}},
+    ]
+    final = lss.get_final_completed_snapshot(snaps)
+    assert final is not None
+    assert final["minute"] == 90
+    assert lss.get_final_completed_snapshot([{"status": "2H", "minute": 70}]) is None
+
+
+def test_load_snapshot_file_utf8_sig(tmp_path):
+    path = tmp_path / "123.json"
+    path.write_text(
+        '[{"fixture_id": 123, "status": "1H", "minute": 10}]',
+        encoding="utf-8-sig",
+    )
+    loaded = lss.load_snapshot_file(path)
+    assert len(loaded) == 1
+    assert loaded[0]["fixture_id"] == 123

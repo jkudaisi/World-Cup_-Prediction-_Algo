@@ -1,62 +1,62 @@
 {
   "weights": {
-    "Poisson Regression": 0.1452,
-    "Ridge Regression": 0.1448,
-    "Random Forest": 0.1447,
-    "Gradient Boosting": 0.1437,
-    "XGBoost": 0.1423,
-    "LightGBM": 0.1425,
-    "Neural Network": 0.1368
+    "Poisson Regression": 0.1584,
+    "Ridge Regression": 0.1239,
+    "Random Forest": 0.1557,
+    "Gradient Boosting": 0.1416,
+    "XGBoost": 0.142,
+    "LightGBM": 0.1338,
+    "Neural Network": 0.1446
   },
   "metrics": {
     "Poisson Regression": {
-      "accuracy": 0.532,
-      "log_loss": 1.0154,
-      "brier_score": 0.2134,
-      "goal_mae": 0.955,
-      "n_test": 1000
+      "accuracy": 0.4286,
+      "log_loss": 1.006,
+      "brier_score": 0.2295,
+      "goal_mae": 0.9773,
+      "n_test": 14
     },
     "Ridge Regression": {
-      "accuracy": 0.524,
-      "log_loss": 1.0177,
-      "brier_score": 0.2137,
-      "goal_mae": 0.958,
-      "n_test": 1000
+      "accuracy": 0.2857,
+      "log_loss": 1.2865,
+      "brier_score": 0.3196,
+      "goal_mae": 1.4247,
+      "n_test": 14
     },
     "Random Forest": {
-      "accuracy": 0.521,
-      "log_loss": 1.0189,
-      "brier_score": 0.2126,
-      "goal_mae": 0.9612,
-      "n_test": 1000
+      "accuracy": 0.4286,
+      "log_loss": 1.0234,
+      "brier_score": 0.2364,
+      "goal_mae": 1.041,
+      "n_test": 14
     },
     "Gradient Boosting": {
-      "accuracy": 0.511,
-      "log_loss": 1.0261,
-      "brier_score": 0.2148,
-      "goal_mae": 0.9831,
-      "n_test": 1000
+      "accuracy": 0.5,
+      "log_loss": 1.126,
+      "brier_score": 0.2538,
+      "goal_mae": 1.1425,
+      "n_test": 14
     },
     "XGBoost": {
-      "accuracy": 0.481,
-      "log_loss": 1.036,
-      "brier_score": 0.2181,
-      "goal_mae": 0.9927,
-      "n_test": 1000
+      "accuracy": 0.5714,
+      "log_loss": 1.1222,
+      "brier_score": 0.2616,
+      "goal_mae": 1.1051,
+      "n_test": 14
     },
     "LightGBM": {
-      "accuracy": 0.487,
-      "log_loss": 1.0341,
-      "brier_score": 0.217,
-      "goal_mae": 0.9907,
-      "n_test": 1000
+      "accuracy": 0.5,
+      "log_loss": 1.1916,
+      "brier_score": 0.2363,
+      "goal_mae": 1.1764,
+      "n_test": 14
     },
     "Neural Network": {
-      "accuracy": 0.471,
-      "log_loss": 1.0775,
-      "brier_score": 0.2253,
-      "goal_mae": 1.0775,
-      "n_test": 1000
+      "accuracy": 0.5,
+      "log_loss": 1.1024,
+      "brier_score": 0.2703,
+      "goal_mae": 1.1465,
+      "n_test": 14
     }
   },
   "source": "backtest"

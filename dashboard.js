@@ -10,6 +10,10 @@ let LIVE_POLL_INTERVAL = null;
 const LIVE_POLL_MS = 20000;
 const DAILY_API_LIMIT = 7500;
 let TODAY_POLL_INTERVAL = null;
+let TODAY_TRADES_OPEN = false;
+let TODAY_TRADES_POLL_INTERVAL = null;
+let TODAY_VIEW_CACHE = null;
+const TODAY_TRADES_POLL_MS = 20000;
 let TEAM_ALIAS_LOOKUP = null;
 
 async function loadTeamAliases() {
@@ -116,9 +120,17 @@ function formatLiveProbs(probs, homeName, awayName) {
 
 function formatLiveExtras(overUnder, nextGoal, homeName, awayName) {
   const parts = [];
-  if (overUnder && overUnder.over != null) {
-    const line = overUnder.line != null ? overUnder.line : 2.5;
-    parts.push(`O/U ${line}: Over ${Math.round(overUnder.over * 100)}% · Under ${Math.round(overUnder.under * 100)}%`);
+  if (overUnder) {
+    const lineKeys = ['2.5', '3.5'].filter(k => overUnder[k] && overUnder[k].over != null);
+    if (lineKeys.length) {
+      for (const key of lineKeys) {
+        const row = overUnder[key];
+        parts.push(`O/U ${key}: Over ${Math.round(row.over * 100)}% · Under ${Math.round(row.under * 100)}%`);
+      }
+    } else if (overUnder.over != null) {
+      const line = overUnder.line != null ? overUnder.line : 2.5;
+      parts.push(`O/U ${line}: Over ${Math.round(overUnder.over * 100)}% · Under ${Math.round(overUnder.under * 100)}%`);
+    }
   }
   if (nextGoal && (nextGoal.home != null || nextGoal.away != null)) {
     const homeShort = (homeName || 'Home').split(' ')[0];
@@ -130,6 +142,23 @@ function formatLiveExtras(overUnder, nextGoal, homeName, awayName) {
   }
   if (!parts.length) return '';
   return `<div class="live-extras">${parts.map(p => `<span>${p}</span>`).join('')}</div>`;
+}
+
+function formatPrematchOU(prediction) {
+  if (!prediction) return '';
+  const ou = prediction.over_under;
+  if (ou && (ou['2.5'] || ou['3.5'])) {
+    return formatLiveExtras(ou, null, '', '');
+  }
+  const parts = [];
+  if (prediction.over_2_5 != null) {
+    parts.push(`O/U 2.5: Over ${Math.round(prediction.over_2_5 * 100)}% · Under ${Math.round((1 - prediction.over_2_5) * 100)}%`);
+  }
+  if (prediction.over_3_5 != null) {
+    parts.push(`O/U 3.5: Over ${Math.round(prediction.over_3_5 * 100)}% · Under ${Math.round((1 - prediction.over_3_5) * 100)}%`);
+  }
+  if (!parts.length) return '';
+  return `<div class="live-extras prematch-ou">${parts.map(p => `<span>${p}</span>`).join('')}</div>`;
 }
 
 function buildLiveBadge(m) {
@@ -249,6 +278,7 @@ function buildMatchCard(m) {
         ${scoreHTML}
         <div class="${v.cls} verdict-pill">${v.txt}</div>
         ${agree ? '<div style="font-size:9px;color:#4ade80;margin-top:4px">all 7 agree</div>' : ''}
+        ${formatPrematchOU(m.prediction)}
       </div>
       <div class="match-team right">
         <div class="team-flag">${m.away_flag}</div>
@@ -421,6 +451,7 @@ function buildTodayCard(m) {
   const hasScore = m.score.home != null || m.score.away != null;
   const sc = statusClass(m.status);
   const live = m.live;
+  const isFinished = ['FT', 'AET', 'PEN'].includes((m.status || '').toUpperCase());
 
   const livePanel = live && m.is_live ? `
     <div class="today-live-panel">
@@ -455,7 +486,7 @@ function buildTodayCard(m) {
     ? `<div class="today-ml-pred" style="text-align:center;padding:0 1.5rem 1rem">ML prediction: ${pred.ens_h}–${pred.ens_a}</div>`
     : '';
 
-  return `<div class="today-card${m.is_live ? ' live' : ''}">
+  return `<div class="today-card${m.is_live ? ' live' : ''}${isFinished ? ' finished' : ''}">
     <div class="today-card-head">
       <div class="today-team">
         ${teamNameHTML(m.home.name, m.ml_home)}
@@ -477,10 +508,32 @@ function buildTodayCard(m) {
   </div>`;
 }
 
+let TODAY_SHOW_FINISHED = false;
+
+function partitionTodayMatches(matches) {
+  const live = [];
+  const upcoming = [];
+  const finished = [];
+  for (const m of matches || []) {
+    const s = (m.status || 'NS').toUpperCase();
+    if (['1H', 'HT', '2H', 'ET', 'P', 'LIVE', 'BT'].includes(s)) live.push(m);
+    else if (['FT', 'AET', 'PEN'].includes(s)) finished.push(m);
+    else upcoming.push(m);
+  }
+  return { live, upcoming, finished };
+}
+
+function toggleTodayShowFinished() {
+  const cb = document.getElementById('today-show-finished');
+  TODAY_SHOW_FINISHED = !!(cb && cb.checked);
+  if (TODAY_VIEW_CACHE) renderTodayView(TODAY_VIEW_CACHE);
+}
+
 function renderTodayView(data) {
   const dateLabel = document.getElementById('today-date-label');
   const metaLabel = document.getElementById('today-meta-label');
   const content = document.getElementById('today-content');
+  const toolbar = document.getElementById('today-toolbar');
 
   const displayDate = data.date
     ? new Date(data.date + 'T12:00:00').toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
@@ -488,25 +541,345 @@ function renderTodayView(data) {
   dateLabel.textContent = displayDate;
 
   const limit = data.daily_limit || DAILY_API_LIMIT;
-  const livePart = data.live_count > 0 ? `${data.live_count} live · ` : '';
+  const parts = partitionTodayMatches(data.matches);
+  const liveN = data.live_count != null ? data.live_count : parts.live.length;
+  const upcomingN = data.upcoming_count != null ? data.upcoming_count : parts.upcoming.length;
+  const finishedN = data.finished_count != null ? data.finished_count : parts.finished.length;
+  const metaBits = [];
+  if (liveN) metaBits.push(`${liveN} live`);
+  if (upcomingN) metaBits.push(`${upcomingN} upcoming`);
+  if (finishedN) metaBits.push(`${finishedN} finished earlier`);
+  const tzLabel = data.local_timezone ? (' · ' + data.local_timezone) : '';
   metaLabel.textContent = data.n_matches
-    ? `${livePart}${data.n_matches} match${data.n_matches !== 1 ? 'es' : ''} · ${data.api_budget_remaining}/${limit} API calls left`
-    : 'No World Cup matches scheduled for today';
+    ? `${metaBits.join(' · ')} · ${data.api_budget_remaining}/${limit} API calls left${tzLabel}`
+    : ('No World Cup matches scheduled for today' + tzLabel);
 
   if (!data.n_matches) {
+    if (toolbar) toolbar.style.display = 'none';
     content.innerHTML = `<div class="today-empty">
       <div style="font-size:40px">⚽</div>
       <p>No WC 2026 fixtures today.${data.scheduler_active ? '' : ' Scheduler will load fixtures when the server starts.'}</p>
     </div>`;
+    TODAY_VIEW_CACHE = data;
     return;
   }
 
-  content.innerHTML = `<div class="today-grid">${data.matches.map(buildTodayCard).join('')}</div>`;
+  if (toolbar) {
+    toolbar.style.display = finishedN ? 'flex' : 'none';
+    const cb = document.getElementById('today-show-finished');
+    if (cb) cb.checked = TODAY_SHOW_FINISHED;
+  }
+
+  let html = '';
+  if (parts.live.length) {
+    html += `<div class="today-section-head live"><h3>● Live now</h3><span>${parts.live.length} match${parts.live.length !== 1 ? 'es' : ''}</span></div>`;
+    html += `<div class="today-grid">${parts.live.map(buildTodayCard).join('')}</div>`;
+  }
+  if (parts.upcoming.length) {
+    html += `<div class="today-section-head"><h3>Upcoming today</h3><span>${parts.upcoming.length} match${parts.upcoming.length !== 1 ? 'es' : ''}</span></div>`;
+    html += `<div class="today-grid">${parts.upcoming.map(buildTodayCard).join('')}</div>`;
+  }
+  if (parts.finished.length && TODAY_SHOW_FINISHED) {
+    html += `<div class="today-section-head"><h3>Finished earlier today</h3><span>${parts.finished.length} match${parts.finished.length !== 1 ? 'es' : ''}</span></div>`;
+    html += `<div class="today-grid">${parts.finished.map(buildTodayCard).join('')}</div>`;
+  } else if (parts.finished.length && !TODAY_SHOW_FINISHED) {
+    html += `<div style="font-size:11px;color:var(--dim);margin-top:8px">${parts.finished.length} finished match${parts.finished.length !== 1 ? 'es' : ''} hidden — enable “Show finished matches” to view.</div>`;
+  }
+  if (!parts.live.length && !parts.upcoming.length && parts.finished.length && !TODAY_SHOW_FINISHED) {
+    html = `<div class="today-empty"><p>All of today's matches have finished. Enable “Show finished matches” to review results.</p></div>`;
+  }
+
+  content.innerHTML = html || `<div class="today-empty"><p>No active matches right now.</p></div>`;
+  TODAY_VIEW_CACHE = data;
+  if (TODAY_TRADES_OPEN && TODAY_TRADES_CACHE) {
+    TODAY_TRADES_CACHE.today = data;
+    renderTodayTradesPanel(TODAY_TRADES_CACHE);
+  }
 }
 
-async function fetchTodayView() {
+function teamsMatchKey(home, away) {
+  return normalizeTeamName(home || '') + '|' + normalizeTeamName(away || '');
+}
+
+function findTradingFixtureForMatch(match, fixtures) {
+  const key = teamsMatchKey(match.ml_home || match.home?.name, match.ml_away || match.away?.name);
+  return (fixtures || []).find(f => teamsMatchKey(f.home, f.away) === key);
+}
+
+function kalshiByTicker(fixture) {
+  const map = {};
+  for (const o of fixture?.opportunities || []) {
+    if (o.ticker) map[o.ticker] = o;
+  }
+  return map;
+}
+
+function estUnrealizedPnl(trade, yesCents) {
+  if (trade.unrealized_pnl != null) return trade.unrealized_pnl;
+  if (trade.status !== 'open') return null;
+  const entry = Number(trade.entry_price_cents);
+  const count = Number(trade.count || 1);
+  const side = (trade.side || 'yes').toLowerCase();
+  if (trade.mark_side_cents != null) {
+    return Math.round((Number(trade.mark_side_cents) - entry) * count) / 100;
+  }
+  if (yesCents == null) return null;
+  const currentPrice = side === 'yes' ? yesCents : (100 - yesCents);
+  return Math.round((currentPrice - entry) * count) / 100;
+}
+
+function enrichLivePositionMarks(position, fixtures) {
+  if (!position) return position;
+  if (position.status !== 'open') return position;
+  if (position.unrealized_pnl != null || position.mark_side_cents != null) {
+    return position.outcome_decided
+      ? { ...position, unrealized_pnl: position.unrealized_pnl }
+      : position;
+  }
+  const fx = (fixtures || []).find(f =>
+    (f.fixture_key && f.fixture_key === position.fixture_key) ||
+    (f.home === position.home && f.away === position.away)
+  );
+  const opp = (fx?.opportunities || []).find(o =>
+    o.market_type === position.market_type ||
+    (o.ticker && o.ticker === position.ticker)
+  );
+  const yesCents = opp?.kalshi_pct;
+  if (yesCents == null) return position;
+  if (opp?.spread != null && opp.spread >= 50) return position;
+  const unrealized = estUnrealizedPnl(position, yesCents);
+  return unrealized != null ? { ...position, unrealized_pnl: unrealized } : position;
+}
+
+function recentLiveTradesList(data) {
+  const live = (data && data.live) || {};
+  const fixtures = (data && (data._merged || data.fixtures)) || [];
+  return (live.positions || [])
+    .map(p => enrichLivePositionMarks(p, fixtures))
+    .sort((a, b) => {
+      const ta = a.closed_at || a.opened_at || '';
+      const tb = b.closed_at || b.opened_at || '';
+      return tb.localeCompare(ta);
+    })
+    .slice(0, 15);
+}
+
+function buildTodayTradeRow(row) {
+  const pnl = row.pnl != null ? (row.pnl >= 0 ? '+' : '') + '$' + row.pnl : (row.estPnl != null ? (row.estPnl >= 0 ? '+' : '') + '$' + row.estPnl.toFixed(2) : '—');
+  const pnlStyle = (row.pnl != null && row.pnl < 0) || (row.estPnl != null && row.estPnl < 0)
+    ? ' style="color:#f87171"' : ((row.pnl > 0 || row.estPnl > 0) ? ' class="rec-trade"' : '');
+  const tagCls = row.kind === 'signal' ? 'trade' : (row.status === 'open' ? 'open' : 'settled');
+  const tagLbl = row.kind === 'signal' ? 'SIGNAL' : (row.status || 'open').toUpperCase();
+  return '<tr>' +
+    '<td><span class="today-trades-tag ' + tagCls + '">' + esc(tagLbl) + '</span></td>' +
+    '<td>' + esc(row.market || row.market_type || '') + '</td>' +
+    '<td>' + esc(row.side || '—') + '</td>' +
+    '<td>' + (row.entry_price_cents != null ? row.entry_price_cents + '¢' : '—') + '</td>' +
+    '<td>' + (row.current_kalshi_pct != null ? row.current_kalshi_pct + '%' : '—') + '</td>' +
+    '<td>' + edgeStr(row.edge_at_entry != null ? row.edge_at_entry : row.edge) + '</td>' +
+    '<td' + pnlStyle + '>' + pnl + '</td>' +
+    '<td style="color:var(--dim);font-size:10px">' + esc(row.note || '') + '</td>' +
+  '</tr>';
+}
+
+function buildTodayTradesMatchBlock(match, trades, fixture) {
+  const home = match.ml_home || match.home?.name || '';
+  const away = match.ml_away || match.away?.name || '';
+  const sh = match.score?.home != null ? match.score.home : '—';
+  const sa = match.score?.away != null ? match.score.away : '—';
+  const liveCls = match.is_live ? ' live' : '';
+  const minute = match.is_live && match.elapsed != null ? match.elapsed + "'" : statusLabel(match.status, match.elapsed);
+  const kalshiMap = kalshiByTicker(fixture);
+  const rows = [];
+
+  for (const t of trades) {
+    const cur = t.ticker ? kalshiMap[t.ticker] : null;
+    const currentCents = cur?.kalshi_pct != null ? cur.kalshi_pct : null;
+    const estPnl = t.status === 'open' ? estUnrealizedPnl(t, currentCents) : null;
+    rows.push({
+      kind: 'trade',
+      market: (t.market_type || '').replace(/_/g, ' '),
+      side: t.side,
+      entry_price_cents: t.entry_price_cents,
+      current_kalshi_pct: currentCents,
+      edge_at_entry: t.edge_at_entry,
+      pnl: t.status === 'settled' ? t.pnl : null,
+      estPnl,
+      status: t.status,
+      note: t.ticker ? t.ticker : '',
+    });
+  }
+
+  const tradedKeys = new Set(trades.map(t => (t.ticker || '') + '|' + (t.side || '')));
+  for (const o of (fixture?.opportunities || [])) {
+    if (o.recommendation !== 'TRADE') continue;
+    const key = (o.ticker || o.market_type) + '|' + (o.side || 'yes');
+    if (tradedKeys.has(key)) continue;
+    rows.push({
+      kind: 'signal',
+      market: o.market,
+      side: o.side || 'yes',
+      entry_price_cents: o.kalshi_pct,
+      current_kalshi_pct: o.kalshi_pct,
+      edge: o.edge,
+      note: (o.reason || '').replace(/^TRADE: /, ''),
+    });
+  }
+
+  const body = rows.length
+    ? '<table class="today-trades-table"><thead><tr><th></th><th>Market</th><th>Side</th><th>Entry</th><th>Now</th><th>Edge</th><th>P/L</th><th>Notes</th></tr></thead><tbody>' +
+      rows.map(buildTodayTradeRow).join('') + '</tbody></table>'
+    : '<div class="today-trades-empty">No trades or signals for this match — run Paper Scan on the Trading tab.</div>';
+
+  return '<div class="today-trades-match' + liveCls + '">' +
+    '<div class="today-trades-match-head">' +
+      '<div class="today-trades-match-teams">' + esc(home) + ' vs ' + esc(away) + '</div>' +
+      '<div class="today-trades-match-meta">' +
+        '<span style="font-family:monospace;color:var(--gold);margin-right:10px">' + sh + '–' + sa + '</span>' +
+        esc(minute) + (rows.length ? ' · ' + rows.length + ' position' + (rows.length !== 1 ? 's' : '') : '') +
+      '</div>' +
+    '</div>' + body +
+  '</div>';
+}
+
+let TODAY_TRADES_CACHE = null;
+
+function renderTodayTradesPanel(cache) {
+  const summaryEl = document.getElementById('today-trades-summary');
+  const contentEl = document.getElementById('today-trades-content');
+  if (!summaryEl || !contentEl) return;
+
+  const data = cache || TODAY_TRADES_CACHE;
+  if (!data || !data.today) {
+    summaryEl.innerHTML = 'No today data — refresh fixtures first.';
+    contentEl.innerHTML = '';
+    return;
+  }
+
+  const today = TODAY_VIEW_CACHE || data.today;
+  const allTrades = data.paper?.trades || [];
+  const fixtures = data.trading?.fixtures || data.trading?._merged || [];
+  const matches = today.matches || [];
+
+  if (!matches.length) {
+    summaryEl.innerHTML = 'No matches scheduled today.';
+    contentEl.innerHTML = '';
+    return;
+  }
+
+  let openCount = 0;
+  let signalCount = 0;
+  let blocks = '';
+
+  for (const m of matches) {
+    const s = (m.status || '').toUpperCase();
+    if (['FT', 'AET', 'PEN'].includes(s) && !TODAY_SHOW_FINISHED) continue;
+    const key = teamsMatchKey(m.ml_home || m.home?.name, m.ml_away || m.away?.name);
+    const matchTrades = allTrades.filter(t =>
+      teamsMatchKey(t.home, t.away) === key
+    );
+    openCount += matchTrades.filter(t => t.status === 'open').length;
+    const fixture = findTradingFixtureForMatch(m, fixtures);
+    if (fixture) signalCount += (fixture.opportunities || []).filter(o => o.recommendation === 'TRADE').length;
+    blocks += buildTodayTradesMatchBlock(m, matchTrades, fixture);
+  }
+
+  const updated = data.fetched_at ? new Date(data.fetched_at).toLocaleTimeString() : 'just now';
+  summaryEl.innerHTML =
+    '<span><b>' + openCount + '</b> open trades</span>' +
+    '<span><b>' + signalCount + '</b> live signals</span>' +
+    '<span><b>' + matches.length + '</b> matches today</span>' +
+    '<span style="margin-left:auto">Updated ' + esc(updated) + ' · auto-refresh 20s</span>' +
+    '<button class="today-trades-btn" style="margin-left:8px" onclick="fetchTodayTradesPanel(true)">↻ Refresh trades</button>' +
+    '<button class="today-trades-btn" onclick="runPaperScanForToday()">Run Paper Scan</button>';
+
+  contentEl.innerHTML = blocks;
+}
+
+async function fetchTodayTradesPanel(forceRefresh) {
   try {
-    const res = await fetch('/api/today');
+    const tradingUrl = '/api/trading/opportunities' + (forceRefresh ? '?refresh=1' : '');
+    const [todayRes, paperRes, tradingRes] = await Promise.all([
+      fetch('/api/today'),
+      fetch('/api/trading/paper'),
+      fetch(tradingUrl),
+    ]);
+    const today = todayRes.ok ? await todayRes.json() : TODAY_VIEW_CACHE;
+    const paper = paperRes.ok ? await paperRes.json() : { trades: [] };
+    const trading = tradingRes.ok ? await tradingRes.json() : {};
+    if (today && trading.fixtures) {
+      trading._merged = applyTodayApiToFixtures(
+        enrichFixturesFromML(mergeTodayIntoFixtures(trading.fixtures, today)),
+        today
+      );
+    }
+    TODAY_TRADES_CACHE = {
+      today,
+      paper,
+      trading,
+      fetched_at: Date.now(),
+    };
+    if (today) TODAY_VIEW_CACHE = today;
+    renderTodayTradesPanel(TODAY_TRADES_CACHE);
+  } catch (e) {
+    const summaryEl = document.getElementById('today-trades-summary');
+    const contentEl = document.getElementById('today-trades-content');
+    if (summaryEl) summaryEl.textContent = 'Failed to load trades: ' + e.message;
+    if (contentEl) contentEl.innerHTML = '';
+  }
+}
+
+function toggleTodayTrades() {
+  TODAY_TRADES_OPEN = !TODAY_TRADES_OPEN;
+  const btn = document.getElementById('today-trades-btn');
+  const panel = document.getElementById('today-trades-panel');
+  if (btn) {
+    btn.classList.toggle('active', TODAY_TRADES_OPEN);
+    btn.textContent = TODAY_TRADES_OPEN ? '📊 Hide Trades' : '📊 Track Trades';
+  }
+  if (panel) panel.classList.toggle('open', TODAY_TRADES_OPEN);
+  if (TODAY_TRADES_OPEN) {
+    fetchTodayTradesPanel(false);
+    startTodayTradesPolling();
+  } else {
+    stopTodayTradesPolling();
+  }
+}
+
+function startTodayTradesPolling() {
+  stopTodayTradesPolling();
+  if (!TODAY_TRADES_OPEN) return;
+  TODAY_TRADES_POLL_INTERVAL = setInterval(() => {
+    const view = document.getElementById('view-today');
+    if (view && view.style.display !== 'none' && TODAY_TRADES_OPEN) {
+      fetchTodayView();
+      fetchTodayTradesPanel(false);
+    }
+  }, TODAY_TRADES_POLL_MS);
+}
+
+function stopTodayTradesPolling() {
+  if (TODAY_TRADES_POLL_INTERVAL) {
+    clearInterval(TODAY_TRADES_POLL_INTERVAL);
+    TODAY_TRADES_POLL_INTERVAL = null;
+  }
+}
+
+async function runPaperScanForToday() {
+  try {
+    const res = await fetch('/api/trading/paper/run', { method: 'POST' });
+    const data = await res.json();
+    setRunStatus('Paper scan: ' + (data.executed != null ? data.executed + ' trades placed' : data.status), 'ok');
+    await fetchTodayTradesPanel(true);
+  } catch (e) {
+    setRunStatus('Paper scan failed', 'err');
+  }
+}
+
+async function fetchTodayView(forceRefresh) {
+  try {
+    const url = '/api/today' + (forceRefresh ? '?refresh=1' : '');
+    const res = await fetch(url);
     if (!res.ok) {
       if (res.status === 404) {
         throw new Error(
@@ -528,7 +901,10 @@ function startTodayPolling() {
   if (TODAY_POLL_INTERVAL) return;
   TODAY_POLL_INTERVAL = setInterval(() => {
     const view = document.getElementById('view-today');
-    if (view && view.style.display !== 'none') fetchTodayView();
+    if (view && view.style.display !== 'none') {
+      fetchTodayView();
+      if (TODAY_TRADES_OPEN) fetchTodayTradesPanel(false);
+    }
   }, 30000);
 }
 
@@ -666,9 +1042,889 @@ function showView(v, btn) {
   if (v === 'today') {
     fetchTodayView();
     startTodayPolling();
+    if (TODAY_TRADES_OPEN) startTodayTradesPolling();
   } else {
     stopTodayPolling();
+    stopTodayTradesPolling();
   }
+  if (v === 'trading') {
+    fetchTrading(false);
+    startTradingPolling();
+  } else {
+    stopTradingPolling();
+  }
+}
+
+let TRADING_POLL_INTERVAL = null;
+const TRADING_POLL_MS = 30000;
+let TRADING_DATA = null;
+let TRADING_TODAY = null;
+let TRADING_TAB = 'now';
+let TRADING_SEARCH = '';
+
+const TRADING_TAB_HINTS = {
+  now: 'Open positions and matches with buy signals — your main trading view.',
+  ideas: 'Matches where the model sees enough edge vs Kalshi to buy.',
+  linked: 'All matches linked to Kalshi markets (can be traded).',
+  live: 'Matches in play or kicking off today — live scores when API quota allows.',
+  all: 'Full tournament schedule — search by team name or match #.',
+};
+
+function toggleTradingHelp(el) {
+  const body = el && el.nextElementSibling;
+  if (body) body.classList.toggle('open');
+}
+
+function toggleMatchCardDetails(btn) {
+  const card = btn.closest('.trading-match-card');
+  if (!card) return;
+  const details = card.querySelector('.tmc-details');
+  if (!details) return;
+  const open = details.classList.toggle('open');
+  btn.textContent = open ? '▲ Hide details' : '▼ Show markets & details';
+}
+
+function isLiveTradingMode(cfg) {
+  return !!(cfg && cfg.can_place_live_orders && cfg.auto_live_trading);
+}
+
+function marketLabel(mt) {
+  return (mt || '').replace(/_/g, ' ');
+}
+
+function recLabel(rec) {
+  return rec === 'TRADE' ? 'Buy' : 'Pass';
+}
+
+function getOpenPositions(data) {
+  const cfg = (data && data.config) || {};
+  const fixtures = (data && (data._merged || data.fixtures)) || [];
+  const live = (((data && data.live) || {}).open_positions || [])
+    .map(p => enrichLivePositionMarks(p, fixtures));
+  const paper = ((data && data.paper) || {}).open_positions || [];
+  if (isLiveTradingMode(cfg)) {
+    return live.map(p => ({ ...p, _mode: 'live' }));
+  }
+  if (cfg.auto_paper_trading || cfg.dry_run) {
+    return paper.map(p => ({ ...p, _mode: 'paper' }));
+  }
+  return [
+    ...live.map(p => ({ ...p, _mode: 'live' })),
+    ...paper.map(p => ({ ...p, _mode: 'paper' })),
+  ];
+}
+
+function fixtureHasOpenPosition(f, data) {
+  const positions = getOpenPositions(data || TRADING_DATA);
+  return positions.some(p =>
+    (p.home === f.home && p.away === f.away) ||
+    (p.fixture_key && p.fixture_key === f.fixture_key)
+  );
+}
+
+function formatPnl(v) {
+  if (v == null || isNaN(v)) return '—';
+  return (v >= 0 ? '+' : '') + '$' + Number(v).toFixed(2);
+}
+
+function pnlClass(v) {
+  if (v == null || v === 0) return '';
+  return v > 0 ? 'pos' : 'neg';
+}
+
+function renderPositionRow(p) {
+  const match = esc((p.home || '') + ' vs ' + (p.away || ''));
+  const bet = marketLabel(p.market_type) + ' · ' + esc((p.side || 'yes').toUpperCase()) +
+    ' @ ' + (p.entry_price_cents != null ? p.entry_price_cents + '¢' : '—');
+  const upnl = p.unrealized_pnl != null ? p.unrealized_pnl
+    : (p.mark_side_cents != null && p.entry_price_cents != null
+      ? ((p.mark_side_cents - p.entry_price_cents) * (p.count || 1) / 100)
+      : (p.current_market_cents != null && p.entry_price_cents != null
+        ? ((p.current_market_cents - p.entry_price_cents) * (p.count || 1) / 100)
+        : null));
+  const lostTag = p.outcome_decided && p.outcome_won === false ? ' · LOST' : '';
+  const modeTag = p._mode === 'live' ? 'LIVE' : 'PAPER';
+  return '<div class="trading-position-row">' +
+    '<div><div class="trading-position-match">' + match + '</div>' +
+    '<div class="trading-position-detail">' + bet + ' · ' + modeTag + lostTag + '</div></div>' +
+    '<div class="trading-position-pnl ' + pnlClass(upnl) + '">' + formatPnl(upnl) + '</div>' +
+  '</div>';
+}
+
+function accountStats(data) {
+  const risk = (data && data.risk) || {};
+  const cfg = (data && data.config) || {};
+  const useKalshi = risk.bankroll_source === 'kalshi';
+  return {
+    useKalshi,
+    total: useKalshi
+      ? (risk.account_total != null ? risk.account_total : risk.bankroll)
+      : (risk.bankroll != null ? risk.bankroll : cfg.bankroll),
+    cash: useKalshi ? risk.available_cash : null,
+    inPositions: useKalshi
+      ? risk.in_positions
+      : (risk.open_exposure != null ? risk.open_exposure : 0),
+  };
+}
+
+function renderTradingSummary(data) {
+  const el = document.getElementById('trading-summary');
+  if (!el || !data) return;
+  const cfg = data.config || {};
+  const risk = data.risk || {};
+  const acct = accountStats(data);
+  const positions = getOpenPositions(data);
+  const fixtures = data._merged || data.fixtures || [];
+  const mappedN = data.kalshi_discovered_count != null && data.kalshi_discovered_count > 0
+    ? data.kalshi_discovered_count
+    : (data.mapped_fixture_count != null
+      ? data.mapped_fixture_count
+      : fixtures.filter(f => (f.mapped_markets || 0) > 0).length);
+
+  const watchList = fixtures.filter(f => {
+    const hasSignal = (f.opportunities || []).some(o => o.recommendation === 'TRADE');
+    return hasSignal && (f.mapped_markets || 0) > 0 && !fixtureHasOpenPosition(f, data);
+  }).slice(0, 5);
+
+  const modeLabel = isLiveTradingMode(cfg)
+    ? 'LIVE TRADING'
+    : (cfg.auto_paper_trading ? 'PAPER TRADING' : 'TRADING OFF');
+  const dailyPnl = risk.daily_pnl != null ? risk.daily_pnl : 0;
+
+  let html = '<div class="trading-summary-top">' +
+    '<div class="trading-summary-stats">' +
+      '<span><b>' + esc(modeLabel) + '</b></span>' +
+      '<span>' + (acct.useKalshi ? 'Account' : 'Bankroll') + ' <b>$' + Number(acct.total).toFixed(2) + '</b>' +
+        (acct.useKalshi ? ' <span style="color:var(--dim);font-size:10px">(Kalshi)</span>' : '') + '</span>';
+  if (acct.useKalshi && acct.cash != null) {
+    html += '<span>Cash <b>$' + Number(acct.cash).toFixed(2) + '</b></span>';
+  }
+  html += '<span>In positions <b>$' + Number(acct.inPositions || 0).toFixed(2) + '</b></span>' +
+      '<span>Today <b class="' + pnlClass(dailyPnl) + '">' + formatPnl(dailyPnl) + '</b></span>' +
+      '<span><b>' + mappedN + '</b> of 72 on Kalshi</span>' +
+    '</div></div>';
+
+  html += '<div class="trading-summary-block">' +
+    '<div class="trading-summary-label">Trading now (' + positions.length + ')</div>';
+  if (positions.length) {
+    html += positions.map(renderPositionRow).join('');
+  } else {
+    html += '<div class="trading-empty-inline">No open trades — waiting for buy signals on linked Kalshi games.</div>';
+  }
+  html += '</div>';
+
+  if (watchList.length) {
+    html += '<div class="trading-summary-block">' +
+      '<div class="trading-summary-label">Watching — buy signals, no position yet (' + watchList.length + ')</div>';
+    html += watchList.map(f => {
+      const best = (f.opportunities || [])
+        .filter(o => o.recommendation === 'TRADE')
+        .sort((a, b) => (b.edge || 0) - (a.edge || 0))[0];
+      if (!best) return '';
+      return '<div class="trading-watch-row">' +
+        '<b>' + esc(f.home + ' vs ' + f.away) + '</b> · ' +
+        esc(best.market || marketLabel(best.market_type)) + ' · edge ' + edgeStr(best.edge) +
+      '</div>';
+    }).join('');
+    html += '</div>';
+  }
+
+  el.innerHTML = html;
+}
+
+function startTradingPolling() {
+  stopTradingPolling();
+  TRADING_POLL_INTERVAL = setInterval(() => fetchTrading(false), TRADING_POLL_MS);
+}
+function stopTradingPolling() {
+  if (TRADING_POLL_INTERVAL) { clearInterval(TRADING_POLL_INTERVAL); TRADING_POLL_INTERVAL = null; }
+}
+
+function setTradingTab(tab, btn) {
+  TRADING_TAB = tab;
+  document.querySelectorAll('.trading-tab').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  const searchWrap = document.getElementById('trading-search-wrap');
+  if (searchWrap) searchWrap.style.display = tab === 'all' ? 'block' : 'none';
+  const hint = document.getElementById('trading-tab-hint');
+  if (hint) hint.textContent = TRADING_TAB_HINTS[tab] || '';
+  renderTradingMatchList();
+}
+
+function filterTradingMatches(q) {
+  TRADING_SEARCH = (q || '').toLowerCase().trim();
+  renderTradingMatchList();
+}
+
+function pct(v) {
+  if (v == null || isNaN(v)) return '—';
+  return (v <= 1 ? v * 100 : v).toFixed(1) + '%';
+}
+
+function edgeStr(v) {
+  if (v == null || isNaN(v)) return '—';
+  const p = v <= 1 ? v * 100 : v;
+  return (p >= 0 ? '+' : '') + p.toFixed(1) + '%';
+}
+
+function todayISO() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
+}
+
+function kickoffLocalDate(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
+}
+
+function parseFixtureDate(f) {
+  return f.match_date || (f.mapping && f.mapping.date) || '';
+}
+
+function formatKickoff(iso) {
+  if (!iso) return '';
+  try {
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  } catch (e) { return ''; }
+}
+
+function enrichFixturesFromML(fixtures) {
+  if (!ML_DATA.length) return fixtures;
+  const byMn = {};
+  const byTeams = {};
+  for (const m of ML_DATA) {
+    byMn[m.mn] = m;
+    byTeams[m.home + '|' + m.away] = m;
+  }
+  return fixtures.map(f => {
+    const ml = byMn[f.mn] || byTeams[f.home + '|' + f.away];
+    if (!ml) return f;
+    return {
+      ...f,
+      group: f.group || ml.group,
+      home_flag: f.home_flag || ml.home_flag,
+      away_flag: f.away_flag || ml.away_flag,
+      match_date: f.match_date || parseFixtureDate(f),
+    };
+  });
+}
+
+function mergeTodayIntoFixtures(fixtures, todayData) {
+  const byTeams = {};
+  if (todayData && todayData.matches) {
+    for (const m of todayData.matches) {
+      const key = (m.ml_home || m.home?.name) + '|' + (m.ml_away || m.away?.name);
+      byTeams[key] = m;
+      const nk = normalizeTeamName(m.ml_home || m.home?.name) + '|' + normalizeTeamName(m.ml_away || m.away?.name);
+      byTeams[nk] = m;
+    }
+  }
+  return fixtures.map(f => {
+    const key = f.home + '|' + f.away;
+    const nk = normalizeTeamName(f.home) + '|' + normalizeTeamName(f.away);
+    const t = byTeams[key] || byTeams[nk];
+    if (!t) return { ...f, is_today: false, live_api: false };
+    const kickDate = t.kickoff ? String(t.kickoff).slice(0, 10) : parseFixtureDate(f);
+    return {
+      ...f,
+      live_api: t.is_live,
+      status: t.status,
+      elapsed: t.elapsed,
+      score: t.score,
+      kickoff: t.kickoff,
+      is_today: true,
+      match_date: kickDate || f.match_date,
+      venue: t.venue,
+    };
+  });
+}
+
+function applyTodayApiToFixtures(fixtures, todayData) {
+  const merged = mergeTodayIntoFixtures(fixtures, todayData);
+  if (!todayData || !todayData.matches) return merged;
+  const todayKeys = new Set();
+  for (const m of todayData.matches) {
+    const h = m.ml_home || m.home?.name;
+    const a = m.ml_away || m.away?.name;
+    todayKeys.add(h + '|' + a);
+    todayKeys.add(normalizeTeamName(h) + '|' + normalizeTeamName(a));
+  }
+  return merged.map(f => {
+    const key = f.home + '|' + f.away;
+    const nk = normalizeTeamName(f.home) + '|' + normalizeTeamName(f.away);
+    const onToday = todayKeys.has(key) || todayKeys.has(nk);
+    const kickoffToday = f.kickoff && kickoffLocalDate(f.kickoff) === todayISO();
+    const liveNow = f.live_api === true || classifyFixture(f).isLive;
+    if (!onToday && !kickoffToday && !liveNow) {
+      return { ...f, is_today: false, live_api: false, live: false };
+    }
+    return { ...f, is_today: true, live_api: f.live_api || liveNow, live: f.live || liveNow };
+  });
+}
+
+function classifyFixture(f) {
+  const status = (f.status || '').toUpperCase();
+  const isFinished = ['FT', 'AET', 'PEN'].includes(status);
+  const onToday = f.is_today === true;
+  const isLive = onToday && (
+    f.live_api === true ||
+    ['1H', 'HT', '2H', 'ET', 'P', 'LIVE', 'BT'].includes(status)
+  );
+  const isToday = onToday && !isFinished && !isLive;
+  const date = parseFixtureDate(f);
+  const td = todayISO();
+  const isFuture = date && date > td;
+  const isPast = !onToday && ((date && date < td) || isFinished);
+  return { isLive, isToday, isFuture, isPast, isFinished, date, onToday };
+}
+
+function fixtureMatchesSearch(f, q) {
+  if (!q) return true;
+  const hay = [f.home, f.away, String(f.mn), f.group, parseFixtureDate(f)].join(' ').toLowerCase();
+  return hay.includes(q);
+}
+
+function buildMatchCard(f, opts) {
+  opts = opts || {};
+  const compact = opts.compact !== false && (opts.compact === true || TRADING_TAB === 'now' || TRADING_TAB === 'ideas' || TRADING_TAB === 'linked');
+  const oc = f.outcomes || (f.goal_markets && f.goal_markets.outcomes) || {};
+  const gm = f.goal_markets || {};
+  const cls = classifyFixture(f);
+  const hw = (oc.home_win || 0) * 100;
+  const dr = (oc.draw || 0) * 100;
+  const aw = (oc.away_win || 0) * 100;
+  let opps = f.opportunities || [];
+  if (opts.ideasOnly) opps = opps.filter(o => o.recommendation === 'TRADE');
+  const tradeCount = f.trade_ideas != null ? f.trade_ideas : opps.filter(o => o.recommendation === 'TRADE').length;
+  const mapped = f.mapped_markets != null ? f.mapped_markets : opps.filter(o => o.ticker).length;
+  const hasPos = fixtureHasOpenPosition(f, TRADING_DATA);
+  const cardCls = ['trading-match-card', cls.isLive ? 'live-match' : '', (tradeCount > 0 || hasPos) ? 'has-trade' : ''].filter(Boolean).join(' ');
+
+  let badge = '<span class="tmc-badge tmc-badge-future">Scheduled</span>';
+  if (cls.isLive) badge = '<span class="tmc-badge tmc-badge-live">● Live</span>';
+  else if (cls.isToday) badge = '<span class="tmc-badge tmc-badge-prematch">Today</span>';
+  if (mapped === 0) badge += ' <span class="tmc-badge tmc-badge-unmapped">No Kalshi link</span>';
+  if (hasPos) badge += ' <span class="tmc-badge tmc-badge-live">In trade</span>';
+
+  const scoreH = f.score && f.score.home != null ? f.score.home : '—';
+  const scoreA = f.score && f.score.away != null ? f.score.away : '—';
+  const minute = cls.isLive && f.elapsed != null ? f.elapsed + "'" : (f.status && !cls.isLive && cls.isToday ? f.status : '');
+  const kickoffStr = !cls.isLive && f.kickoff ? formatKickoff(f.kickoff) : '';
+
+  const oppsRows = opps.map(o => {
+    const recCls = o.recommendation === 'TRADE' ? 'rec-trade' : 'rec-skip';
+    const rowCls = o.recommendation === 'TRADE' ? 'row-trade' : 'row-skip';
+    const shortReason = (o.reason || '').replace(/^SKIP: /, '').replace(/^TRADE: /, '');
+    return '<tr class="' + rowCls + '">' +
+      '<td>' + esc(o.market) + (o.ticker && !compact ? '<br><span style="color:var(--dim);font-size:9px">' + esc(o.ticker) + '</span>' : '') + '</td>' +
+      '<td>' + pct(o.model_probability) + '</td>' +
+      '<td>' + (o.kalshi_pct != null ? o.kalshi_pct + '%' : '—') + '</td>' +
+      '<td>' + edgeStr(o.edge) + '</td>' +
+      '<td class="' + recCls + '">' + esc(recLabel(o.recommendation)) + '</td>' +
+      '<td style="white-space:normal;max-width:140px;color:var(--muted)">' + esc(shortReason) + '</td>' +
+    '</tr>';
+  }).join('');
+
+  const exact = (gm.exact_score_top_5 || []).slice(0, 3).map(e => e.score + ' ' + pct(e.probability)).join(' · ');
+  const metaParts = [
+    '<span>#' + f.mn + '</span>',
+    f.group ? '<span>Group ' + esc(f.group) + '</span>' : '',
+    parseFixtureDate(f) ? '<span>' + esc(parseFixtureDate(f)) + '</span>' : '',
+    kickoffStr ? '<span>Kickoff ' + esc(kickoffStr) + '</span>' : '',
+    f.confidence != null ? '<span>Conf ' + pct(f.confidence) + '</span>' : '',
+  ].filter(Boolean).join('');
+
+  const oppsLabel = opts.ideasOnly
+    ? 'Buy signals (' + opps.length + ')'
+    : 'Markets (' + tradeCount + ' buy, ' + mapped + ' on Kalshi)';
+
+  const bestTrade = (f.opportunities || [])
+    .filter(o => o.recommendation === 'TRADE')
+    .sort((a, b) => (b.edge || 0) - (a.edge || 0))[0];
+  const positions = getOpenPositions(TRADING_DATA).filter(p => p.home === f.home && p.away === f.away);
+  let summaryLine = '';
+  if (positions.length) {
+    const p = positions[0];
+    const upnl = p.unrealized_pnl != null ? p.unrealized_pnl : null;
+    summaryLine = '<b>In trade:</b> ' + esc(marketLabel(p.market_type)) + ' ' + esc((p.side || '').toUpperCase()) +
+      ' @ ' + (p.entry_price_cents || '—') + '¢' +
+      (upnl != null ? ' · ' + formatPnl(upnl) : '');
+  } else if (bestTrade) {
+    summaryLine = '<b>Signal:</b> ' + esc(bestTrade.market || marketLabel(bestTrade.market_type)) +
+      ' · model ' + pct(bestTrade.model_probability) + ' vs market ' +
+      (bestTrade.kalshi_pct != null ? bestTrade.kalshi_pct + '%' : '—') +
+      ' · edge ' + edgeStr(bestTrade.edge);
+  } else if (mapped === 0) {
+    summaryLine = 'Not linked to Kalshi — cannot trade this match yet.';
+  } else {
+    summaryLine = 'On Kalshi (' + mapped + ' markets) — no buy signal right now.';
+  }
+
+  const detailsBody =
+    '<div class="tmc-section-label">Model outcome probabilities</div>' +
+    '<div class="tmc-outcome-bar">' +
+      '<div class="tmc-outcome-bar-h" style="width:' + hw + '%"></div>' +
+      '<div class="tmc-outcome-bar-d" style="width:' + dr + '%"></div>' +
+      '<div class="tmc-outcome-bar-a" style="width:' + aw + '%"></div>' +
+    '</div>' +
+    '<div class="tmc-outcome-labels">' +
+      '<span><b style="color:#60a5fa">' + esc(f.home.split(' ')[0]) + '</b> ' + hw.toFixed(1) + '%</span>' +
+      '<span>Draw <b>' + dr.toFixed(1) + '%</b></span>' +
+      '<span><b style="color:#f87171">' + esc(f.away.split(' ')[0]) + '</b> ' + aw.toFixed(1) + '%</span>' +
+    '</div>' +
+    '<div class="tmc-section-label">Goal markets (model)</div>' +
+    '<div class="tmc-goals">' +
+      goalChip('Over 0.5', gm.over_0_5) + goalChip('Over 1.5', gm.over_1_5) +
+      goalChip('Over 2.5', gm.over_2_5) + goalChip('Over 3.5', gm.over_3_5) +
+      goalChip('BTTS', gm.btts_yes) +
+      goalChip(f.home.split(' ')[0] + ' O0.5', gm.home_over_0_5) +
+      goalChip(f.away.split(' ')[0] + ' O0.5', gm.away_over_0_5) +
+    '</div>' +
+    (exact ? '<div style="font-size:10px;color:var(--dim);margin-bottom:10px">Top scores: ' + esc(exact) + '</div>' : '') +
+    renderMatchPaperTrades(f) +
+    '<div class="tmc-section-label">' + oppsLabel + '</div>' +
+    (oppsRows
+      ? '<table class="tmc-opps-table"><thead><tr><th>Market</th><th>Model</th><th>Kalshi</th><th>Edge</th><th>Action</th><th>Why</th></tr></thead><tbody>' + oppsRows + '</tbody></table>'
+      : '<div class="tmc-opps-empty">' + (opts.ideasOnly ? 'No buy signals for this match' : 'No markets scanned') + '</div>');
+
+  return '<div class="' + cardCls + '" data-mn="' + f.mn + '">' +
+    '<div class="tmc-header">' +
+      '<div class="tmc-teams">' +
+        '<div class="tmc-team-row"><span class="tmc-flag">' + esc(f.home_flag || '⚽') + '</span><span>' + esc(f.home) + '</span></div>' +
+        '<div class="tmc-team-row"><span class="tmc-flag">' + esc(f.away_flag || '⚽') + '</span><span>' + esc(f.away) + '</span></div>' +
+        '<div class="tmc-meta">' + metaParts + '</div>' +
+      '</div>' +
+      '<div class="tmc-status">' +
+        badge +
+        (cls.isLive || f.is_today ? '<div class="tmc-score">' + scoreH + ' – ' + scoreA + '</div>' : '') +
+        (minute ? '<div class="tmc-minute">' + esc(String(minute)) + '</div>' : '') +
+      '</div>' +
+    '</div>' +
+    (compact
+      ? '<div class="tmc-summary-line">' + summaryLine + '</div>' +
+        '<button type="button" class="tmc-expand-btn" onclick="toggleMatchCardDetails(this)">▼ Show markets & details</button>' +
+        '<div class="tmc-details tmc-body">' + detailsBody + '</div>'
+      : '<div class="tmc-body">' + detailsBody + '</div>') +
+  '</div>';
+}
+
+function goalChip(lbl, p) {
+  return '<div class="tmc-goal-chip"><span class="lbl">' + esc(lbl) + '</span><span class="val">' + pct(p) + '</span></div>';
+}
+
+function renderMatchPaperTrades(f) {
+  const positions = getOpenPositions(TRADING_DATA).filter(t =>
+    t.home === f.home && t.away === f.away
+  );
+  if (!positions.length) return '';
+  const rows = positions.map(t => {
+    const nowM = t.current_side_probability != null ? pct(t.current_side_probability)
+      : pct(t.current_model_probability);
+    const upnl = t.unrealized_pnl != null ? formatPnl(t.unrealized_pnl) : '—';
+    const tag = t._mode === 'live' ? 'LIVE' : 'PAPER';
+    return '<span class="tmc-paper-chip">' + esc(marketLabel(t.market_type)) + ' ' +
+      esc(t.side) + ' @ ' + (t.entry_price_cents || '—') + '¢ · ' + tag + ' · ' + upnl + '</span>';
+  }).join('');
+  return '<div class="tmc-section-label">Your open trades</div><div class="tmc-paper-chips">' + rows + '</div>';
+}
+
+function fixturesForTab(fixtures) {
+  const td = todayISO();
+  let list = fixtures.filter(f => fixtureMatchesSearch(f, TRADING_SEARCH));
+  if (TRADING_TAB === 'now') {
+    list = list.filter(f => {
+      const hasSignal = (f.opportunities || []).some(o => o.recommendation === 'TRADE');
+      const mapped = (f.mapped_markets || 0) > 0;
+      return fixtureHasOpenPosition(f, TRADING_DATA) || (mapped && hasSignal);
+    });
+    list.sort((a, b) => {
+      const ap = fixtureHasOpenPosition(a, TRADING_DATA) ? 0 : 1;
+      const bp = fixtureHasOpenPosition(b, TRADING_DATA) ? 0 : 1;
+      if (ap !== bp) return ap - bp;
+      return maxTradeEdge(b) - maxTradeEdge(a) || (a.mn - b.mn);
+    });
+  } else if (TRADING_TAB === 'linked') {
+    list = list.filter(f => (f.mapped_markets || 0) > 0);
+    list.sort((a, b) => parseFixtureDate(a).localeCompare(parseFixtureDate(b)) || (a.mn - b.mn));
+  } else if (TRADING_TAB === 'live') {
+    list = list.filter(f => f.is_today === true);
+    list = list.filter(f => {
+      const c = classifyFixture(f);
+      return c.isLive || c.isToday;
+    });
+    list.sort((a, b) => {
+      const al = classifyFixture(a).isLive ? 0 : 1;
+      const bl = classifyFixture(b).isLive ? 0 : 1;
+      if (al !== bl) return al - bl;
+      return (a.mn || 0) - (b.mn || 0);
+    });
+  } else if (TRADING_TAB === 'ideas') {
+    list = list.filter(f => (f.opportunities || []).some(o => o.recommendation === 'TRADE'));
+    list.sort((a, b) => maxTradeEdge(b) - maxTradeEdge(a) || (a.mn - b.mn));
+  } else {
+    list.sort((a, b) => (a.mn || 0) - (b.mn || 0));
+  }
+  return list;
+}
+
+function maxTradeEdge(f) {
+  let best = -Infinity;
+  for (const o of f.opportunities || []) {
+    if (o.recommendation !== 'TRADE' || o.edge == null) continue;
+    const e = o.edge <= 1 ? o.edge : o.edge / 100;
+    if (e > best) best = e;
+  }
+  return best === -Infinity ? 0 : best;
+}
+
+function renderMatchCards(list, cardOpts) {
+  cardOpts = cardOpts || {};
+  return list.map(f => buildMatchCard(f, cardOpts)).join('');
+}
+
+function updateTabCounts(fixtures) {
+  let nowCount = 0, ideasCount = 0, linkedCount = 0, liveCount = 0;
+  for (const f of fixtures) {
+    const c = classifyFixture(f);
+    const mapped = (f.mapped_markets || 0) > 0;
+    const hasSignal = (f.opportunities || []).some(o => o.recommendation === 'TRADE');
+    if (fixtureHasOpenPosition(f, TRADING_DATA) || (mapped && hasSignal)) nowCount++;
+    if (hasSignal) ideasCount++;
+    if (mapped) linkedCount++;
+    if (f.is_today && (c.isLive || c.isToday)) liveCount++;
+  }
+  const set = (id, n) => { const el = document.getElementById(id); if (el) el.textContent = n ? '(' + n + ')' : ''; };
+  set('tab-count-now', nowCount);
+  set('tab-count-ideas', ideasCount);
+  set('tab-count-linked', linkedCount);
+  set('tab-count-live', liveCount);
+}
+
+function renderTradingMatchList() {
+  const el = document.getElementById('trading-match-list');
+  if (!el || !TRADING_DATA) return;
+  const fixtures = TRADING_DATA._merged || TRADING_DATA.fixtures || [];
+  updateTabCounts(fixtures);
+  const list = fixturesForTab(fixtures);
+  if (!list.length) {
+    const msgs = {
+      now: 'Nothing to trade right now — check On Kalshi tab or click Link Kalshi Games.',
+      live: 'No live or today matches. Check On Kalshi or All tabs.',
+      ideas: 'No buy signals right now — model edge not high enough vs Kalshi.',
+      linked: 'No Kalshi-linked games — click Link Kalshi Games in the header.',
+      all: TRADING_SEARCH ? 'No matches match your search.' : 'No fixtures loaded.',
+    };
+    el.innerHTML = '<div class="trading-empty">' + (msgs[TRADING_TAB] || 'No matches') + '</div>';
+    return;
+  }
+  const cardOpts = {
+    ideasOnly: TRADING_TAB === 'ideas',
+    compact: TRADING_TAB !== 'all' && TRADING_TAB !== 'live',
+  };
+  if (TRADING_TAB === 'live') {
+    const liveList = list.filter(f => classifyFixture(f).isLive);
+    const todayList = list.filter(f => !classifyFixture(f).isLive);
+    let html = '';
+    if (liveList.length) {
+      html += '<div class="trading-section-head"><h3>● Live now</h3><span>' + liveList.length + ' match' + (liveList.length !== 1 ? 'es' : '') + '</span></div>';
+      html += renderMatchCards(liveList, cardOpts);
+    }
+    if (todayList.length) {
+      html += '<div class="trading-section-head"><h3>Today\'s matches</h3><span>' + todayList.length + ' match' + (todayList.length !== 1 ? 'es' : '') + '</span></div>';
+      html += renderMatchCards(todayList, cardOpts);
+    }
+    el.innerHTML = html;
+  } else if (TRADING_TAB === 'linked') {
+    let html = '<div class="trading-section-head"><h3>On Kalshi</h3><span>' + list.length + ' match' + (list.length !== 1 ? 'es' : '') + ' linked</span></div>';
+    html += renderMatchCards(list, cardOpts);
+    el.innerHTML = html;
+  } else {
+    el.innerHTML = renderMatchCards(list, cardOpts);
+  }
+}
+
+let TRADING_DISCOVERY = null;
+
+async function discoverKalshiMarkets(force) {
+  const list = document.getElementById('trading-discover-list');
+  try {
+    const url = '/api/kalshi/discover' + (force ? '?refresh=1' : '');
+    const res = await fetch(url);
+    let data;
+    try {
+      data = await res.json();
+    } catch (parseErr) {
+      throw new Error(res.status === 404
+        ? 'Discovery API not found — restart server.py to load the latest code'
+        : 'Invalid response from server (HTTP ' + res.status + ')');
+    }
+    if (!res.ok) {
+      throw new Error(data.error || data.message || ('HTTP ' + res.status));
+    }
+    if (data.status === 'error') {
+      throw new Error(data.error || 'Discovery error');
+    }
+    TRADING_DISCOVERY = data;
+    renderKalshiDiscovery(data);
+    return data;
+  } catch (e) {
+    if (list) {
+      list.innerHTML = '<div style="color:#f87171;padding:8px;line-height:1.4">' +
+        esc(e.message || 'Discovery failed') + '</div>';
+    }
+    return null;
+  }
+}
+
+function renderKalshiDiscovery(d) {
+  if (!d) return;
+  const grid = document.getElementById('trading-discover-grid');
+  const meta = document.getElementById('trading-discover-meta');
+  const list = document.getElementById('trading-discover-list');
+  if (meta) {
+    const when = d.discovered_at ? ('Updated ' + d.discovered_at.replace('T', ' ').slice(0, 19) + ' UTC · ') : '';
+    meta.textContent = when + (d.matched_fixtures || 0) + ' matches you can trade · ' +
+      (d.game_events || 0) + ' total on Kalshi';
+  }
+  if (grid) {
+    grid.innerHTML = [
+      statCard(String(d.matched_fixtures != null ? d.matched_fixtures : '—'), 'Tradeable'),
+      statCard(String(d.unmapped_kalshi_games != null ? d.unmapped_kalshi_games : '—'), 'Not in model'),
+    ].join('');
+  }
+  if (list) {
+    const rows = (d.matched || []).slice(0, 12);
+    if (!rows.length) {
+      list.innerHTML = '<div style="color:var(--muted);padding:8px">No linked games — click Link Kalshi Games</div>';
+      return;
+    }
+    list.innerHTML = rows.map(r => {
+      const kalshiHref = r.kalshi_url || (
+        r.kalshi_event_ticker
+          ? 'https://kalshi.com/markets/kxwcgame/world-cup-game/' + r.kalshi_event_ticker.toLowerCase()
+          : (d.kalshi_wc_url || 'https://kalshi.com/category/sports/soccer/fifa-world-cup/world-cup/games')
+      );
+      return '<div class="trading-position-row" style="margin-bottom:4px">' +
+        '<div><a href="' + kalshiHref + '" target="_blank" rel="noopener" class="trading-position-match" style="color:var(--gold2);text-decoration:none">' +
+        esc(r.home + ' vs ' + r.away) + '</a>' +
+        '<div class="trading-position-detail">' + esc(r.date || '') +
+        (r.mn ? ' · #' + r.mn : '') + ' · ' + (r.mapped_markets || 0) + ' markets</div></div></div>';
+    }).join('');
+  }
+}
+
+async function fetchTrading(refresh) {
+  try {
+    if (refresh) {
+      const cfg = (TRADING_DATA && TRADING_DATA.config) || {};
+      if (cfg.can_place_live_orders) {
+        await discoverKalshiMarkets(true);
+      } else {
+        try {
+          await fetch('/api/trading/paper/run', { method: 'POST' });
+        } catch (e) { /* paper scan optional */ }
+      }
+    } else if (!TRADING_DISCOVERY) {
+      discoverKalshiMarkets(false);
+    }
+    let url = '/api/trading/opportunities' + (refresh ? '?refresh=1' : '');
+    let tRes = await fetch(url);
+    if (refresh && !tRes.ok) {
+      url = '/api/trading/opportunities';
+      tRes = await fetch(url);
+    }
+    const [todayRes] = await Promise.all([
+      fetch('/api/today').catch(() => null),
+    ]);
+    const data = await tRes.json();
+    if (!tRes.ok || !data.fixtures) {
+      throw new Error(data.error || 'Trading data unavailable');
+    }
+    let todayData = null;
+    if (todayRes && todayRes.ok) todayData = await todayRes.json();
+    TRADING_DATA = data;
+    TRADING_TODAY = todayData;
+    const merged = applyTodayApiToFixtures(
+      enrichFixturesFromML(mergeTodayIntoFixtures(data.fixtures || [], todayData)),
+      todayData
+    );
+    data._merged = merged;
+    renderTrading(data);
+    if (data.refresh_error) {
+      setRunStatus('Prices from cache — live refresh failed (Kalshi busy). Retry in a few seconds.', 'warn');
+    } else if (refresh) {
+      setRunStatus('Trading data refreshed', 'ok');
+    }
+  } catch (e) {
+    const el = document.getElementById('trading-match-list');
+    if (el) el.innerHTML = '<div class="trading-empty" style="color:var(--red)">Failed to load trading data: ' + esc(e.message) + '</div>';
+  }
+}
+
+function renderTrading(data) {
+  const cfg = data.config || {};
+  const risk = data.risk || {};
+  const paper = data.paper || {};
+  const live = data.live || {};
+  const liveMode = isLiveTradingMode(cfg);
+  const positions = getOpenPositions(data);
+
+  const acct = accountStats(data);
+
+  const title = document.getElementById('trading-title');
+  if (title) title.textContent = liveMode ? 'Live Kalshi Trading' : 'Kalshi Trading';
+
+  const scanBtn = document.getElementById('trading-scan-btn');
+  if (scanBtn) scanBtn.style.display = (!liveMode && cfg.auto_paper_trading) ? '' : 'none';
+
+  const badges = document.getElementById('trading-badges');
+  if (badges) {
+    badges.innerHTML = [
+      cfg.kill_switch ? '<span class="trading-badge badge-live">TRADING STOPPED</span>' : '',
+      liveMode ? '<span class="trading-badge badge-live">LIVE · REAL MONEY</span>' : '',
+      !liveMode && cfg.auto_paper_trading ? '<span class="trading-badge badge-paper">PAPER MODE</span>' : '',
+      cfg.dry_run && !liveMode ? '<span class="trading-badge badge-dry">DRY RUN</span>' : '',
+      cfg.kalshi_credentials_configured ? '<span class="trading-badge badge-paper">Kalshi connected</span>' : '',
+    ].filter(Boolean).join(' ');
+  }
+
+  const sub = document.getElementById('trading-sub');
+  if (sub) {
+    const mappedN = data.mapped_fixture_count != null ? data.mapped_fixture_count : 0;
+    const openN = positions.length;
+    const acctLabel = acct.useKalshi
+      ? ('Kalshi account $' + Number(acct.total).toFixed(2))
+      : ('Bankroll $' + Number(acct.total).toFixed(2));
+    sub.textContent = (data.updated_at_iso ? 'Updated ' + data.updated_at_iso.replace('T', ' ').slice(0, 19) + ' UTC · ' : '') +
+      acctLabel + ' · ' +
+      openN + ' open trade' + (openN !== 1 ? 's' : '') + ' · ' +
+      mappedN + ' matches on Kalshi';
+  }
+
+  renderTradingSummary(data);
+
+  const activeTitle = document.getElementById('trading-active-title');
+  if (activeTitle) activeTitle.textContent = liveMode ? 'Active Live Trades' : 'Active Trades';
+
+  const activeList = document.getElementById('trading-active-list');
+  if (activeList) {
+    activeList.innerHTML = positions.length
+      ? positions.map(renderPositionRow).join('')
+      : '<div class="trading-empty-inline">No open trades</div>';
+  }
+
+  const riskGrid = document.getElementById('trading-risk-grid');
+  if (riskGrid) {
+    if (acct.useKalshi) {
+      riskGrid.innerHTML = [
+        statCard('$' + Number(acct.total).toFixed(2), 'Account total'),
+        statCard('$' + Number(acct.cash != null ? acct.cash : acct.total).toFixed(2), 'Cash'),
+        statCard('$' + Number(acct.inPositions || 0).toFixed(2), 'In positions'),
+        statCard(formatPnl(risk.daily_pnl != null ? risk.daily_pnl : 0), 'Today P/L'),
+      ].join('');
+    } else {
+      riskGrid.innerHTML = [
+        statCard('$' + Number(acct.total).toFixed(2), 'Bankroll'),
+        statCard('$' + Number(acct.inPositions || 0).toFixed(2), 'At risk'),
+        statCard(formatPnl(risk.daily_pnl != null ? risk.daily_pnl : 0), 'Today P/L'),
+        statCard(String(positions.length), 'Open'),
+      ].join('');
+    }
+  }
+
+  const paperGrid = document.getElementById('trading-paper-grid');
+  if (paperGrid) {
+    if (liveMode && acct.useKalshi) {
+      const kPos = (risk.kalshi_account && risk.kalshi_account.open_position_count) || 0;
+      paperGrid.innerHTML = [
+        statCard(String(kPos), 'Kalshi positions'),
+        statCard(String(positions.length), 'Tracked locally'),
+      ].join('');
+    } else if (liveMode) {
+      paperGrid.innerHTML = [
+        statCard(String(live.open_trades != null ? live.open_trades : positions.length), 'Live open'),
+        statCard(String((live.positions || []).filter(p => p.status === 'closed').length), 'Live closed'),
+      ].join('');
+    } else {
+      paperGrid.innerHTML = [
+        statCard('$' + (paper.equity != null ? paper.equity : paper.bankroll != null ? paper.bankroll : '0'), 'Equity'),
+        statCard(formatPnl(paper.unrealized_pnl != null ? paper.unrealized_pnl : 0), 'Unrealized'),
+        statCard(String(paper.open_trades != null ? paper.open_trades : 0), 'Open'),
+        statCard(String(paper.num_trades != null ? paper.num_trades : 0), 'Closed'),
+      ].join('');
+    }
+  }
+
+  const recentTitle = document.getElementById('trading-recent-title');
+  if (recentTitle) recentTitle.textContent = liveMode ? 'Recent Live Trades' : 'Recent Trades';
+
+  const recent = document.getElementById('trading-recent-trades');
+  let recentTrades = paper.recent_trades || [];
+  if (liveMode) {
+    recentTrades = recentLiveTradesList(data);
+  }
+  if (recent) {
+    recent.innerHTML = recentTrades.length ? recentTrades.map(t => {
+      const isOpen = t.status === 'open';
+      const pnl = !isOpen && t.pnl != null
+        ? formatPnl(t.pnl)
+        : (isOpen && t.unrealized_pnl != null ? formatPnl(t.unrealized_pnl) + ' est' : '—');
+      const statusLbl = isOpen ? 'Open' : esc(t.exit_reason || t.status || 'Closed');
+      return '<tr>' +
+        '<td style="white-space:normal">' + esc((t.home || '') + ' vs ' + (t.away || '')) +
+          '<br><span style="color:var(--dim);font-size:9px">' + esc(marketLabel(t.market_type)) + ' · ' +
+          esc((t.side || 'yes').toUpperCase()) + ' @ ' + (t.entry_price_cents || '—') + '¢ · $' +
+          Number(t.cost || t.stake || 0).toFixed(2) + '</span></td>' +
+        '<td>' + statusLbl + '</td>' +
+        '<td class="' + pnlClass(isOpen ? t.unrealized_pnl : t.pnl) + '">' + pnl + '</td>' +
+      '</tr>';
+    }).join('') : '<tr><td colspan="3" style="color:var(--muted)">No trades yet</td></tr>';
+  }
+
+  renderTradingMatchList();
+}
+
+function statCard(val, lbl) {
+  return '<div class="trading-stat"><div class="trading-stat-val">' + val + '</div><div class="trading-stat-lbl">' + lbl + '</div></div>';
+}
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+async function runPaperScan() {
+  try {
+    const res = await fetch('/api/trading/paper/run', { method: 'POST' });
+    const data = await res.json();
+    const msg = [
+      data.executed != null ? data.executed + ' entered' : null,
+      data.closed != null ? data.closed + ' closed' : null,
+      data.marked != null ? data.marked + ' marked' : null,
+    ].filter(Boolean).join(', ') || data.status;
+    alert('Paper scan: ' + msg);
+    fetchTrading(true);
+  } catch (e) { alert('Paper scan failed'); }
+}
+
+async function toggleKillSwitch(on) {
+  try {
+    await fetch('/api/trading/kill-switch', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ active: on }),
+    });
+    fetchTrading(true);
+  } catch (e) { alert('Kill switch failed'); }
 }
 
 function goToMatch(mn) {

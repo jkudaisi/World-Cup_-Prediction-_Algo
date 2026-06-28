@@ -11,11 +11,16 @@ from datetime import date, datetime, timedelta, timezone
 from apifootball_client import (
     APIFootballError,
     calls_remaining,
-    get_today_fixtures,
 )
 from incremental_trainer import mark_fixture_for_training, process_pending_training
 from live_call_manager import REFRESH_INTERVAL
 from live_updater import mark_fixture_final, run_live_cycle
+from local_schedule import (
+    display_timezone_label,
+    local_today_iso,
+    merge_live_wc_fixtures,
+    parse_kickoff_utc,
+)
 from team_names import resolve_team_name
 from training_store import load_training_state
 
@@ -26,6 +31,7 @@ RESERVE_CALLS = 5
 SKIP_STATUSES = frozenset({"FT", "AET", "PEN", "PST", "CANC", "TBD"})
 FINAL_STATUSES = frozenset({"FT", "AET", "PEN"})
 LIVE_STATUSES = frozenset({"1H", "HT", "2H", "ET", "P", "LIVE", "BT"})
+UPCOMING_STATUSES = frozenset({"NS", "TBD", "SUSP", "INT"})
 
 schedule: "DaySchedule | None" = None
 cached_status: dict[int, str] = {}
@@ -48,13 +54,7 @@ class DaySchedule:
 
 
 def parse_kickoff(fixture: dict) -> datetime:
-    raw = fixture["fixture"]["date"]
-    if raw.endswith("Z"):
-        raw = raw.replace("Z", "+00:00")
-    dt = datetime.fromisoformat(raw)
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(timezone.utc)
+    return parse_kickoff_utc(fixture)
 
 
 def _sync_final_fixtures_for_training() -> None:
@@ -94,20 +94,23 @@ def _maybe_run_incremental_training() -> None:
         log.error("Incremental training failed: %s", exc)
 
 
-def _refresh_fixture_statuses() -> None:
-    """Detect FT transitions (~1 API call/minute max)."""
+def _refresh_fixture_statuses(*, force: bool = False) -> None:
+    """Detect FT transitions (~1 API call/minute max, or forced on manual refresh)."""
     global _last_status_refresh
     now = datetime.now(timezone.utc)
-    if _last_status_refresh and (now - _last_status_refresh) < STATUS_REFRESH_INTERVAL:
+    if (
+        not force
+        and _last_status_refresh
+        and (now - _last_status_refresh) < STATUS_REFRESH_INTERVAL
+    ):
         return
     _last_status_refresh = now
-    today = date.today().strftime("%Y-%m-%d")
     try:
-        fixtures = get_today_fixtures(today)
+        fixtures = _fetch_wc_fixtures_for_local_day()
     except APIFootballError as exc:
         log.warning("Status refresh failed: %s", exc)
         return
-    wc = [f for f in fixtures if f.get("league", {}).get("id") == 1]
+    wc = fixtures
     _all_today_fixtures[:] = wc
     for f in wc:
         fid = f["fixture"]["id"]
@@ -127,14 +130,13 @@ def _refresh_fixture_statuses() -> None:
 
 def morning_init() -> DaySchedule | None:
     global _all_today_fixtures
-    today = date.today().strftime("%Y-%m-%d")
+    today = local_today_iso()
     try:
-        fixtures = get_today_fixtures(today)
+        wc_fixtures = _fetch_wc_fixtures_for_local_day()
     except APIFootballError as exc:
         log.error("morning_init failed: %s", exc)
         return None
 
-    wc_fixtures = [f for f in fixtures if f.get("league", {}).get("id") == 1]
     _all_today_fixtures = list(wc_fixtures)
     trained = set(load_training_state().get("trained_fixture_ids", []))
     for f in wc_fixtures:
@@ -144,7 +146,10 @@ def morning_init() -> DaySchedule | None:
             mark_fixture_for_training(fid)
 
     active = [f for f in wc_fixtures if f["fixture"]["status"]["short"] not in SKIP_STATUSES]
-    log.info("Day init: %s WC fixtures today (%s active)", len(wc_fixtures), len(active))
+    log.info(
+        "Day init: %s WC fixtures on local %s (%s active, tz %s)",
+        len(wc_fixtures), today, len(active), display_timezone_label(),
+    )
     return DaySchedule(date=today, fixtures=wc_fixtures, n_matches=len(active))
 
 
@@ -165,7 +170,7 @@ def _any_match_window() -> bool:
 def run_scheduler() -> None:
     global schedule
     while True:
-        now_date = date.today().strftime("%Y-%m-%d")
+        now_date = local_today_iso()
 
         if schedule is None or schedule.date != now_date:
             log.info("Running morning init for %s", now_date)
@@ -188,6 +193,11 @@ def run_scheduler() -> None:
                         "[live] %s matches in play, %s updated, %s calls left",
                         result["live_count"], result.get("updated", 0), calls_remaining(),
                     )
+                try:
+                    from trading_service import refresh_trading_cycle
+                    refresh_trading_cycle()
+                except Exception as trade_exc:
+                    log.debug("Trading refresh skipped: %s", trade_exc)
             except Exception as exc:
                 log.exception("Live cycle failed: %s", exc)
             _maybe_run_incremental_training()
@@ -201,6 +211,11 @@ def start_scheduler() -> None:
     global _scheduler_thread
     if _scheduler_thread is not None and _scheduler_thread.is_alive():
         return
+    try:
+        from live_updater import prune_stale_live_predictions
+        prune_stale_live_predictions()
+    except Exception as exc:
+        log.debug("Live prediction prune skipped: %s", exc)
     _scheduler_thread = threading.Thread(
         target=run_scheduler, daemon=True, name="wc2026-scheduler",
     )
@@ -217,7 +232,8 @@ def get_scheduler_status() -> dict:
     from live_updater import get_live_status
     live_status = get_live_status()
     return {
-        "date": schedule.date if schedule else None,
+        "date": schedule.date if schedule else local_today_iso(),
+        "local_timezone": display_timezone_label(),
         "n_matches": schedule.n_matches if schedule else 0,
         "live_poll_interval_seconds": REFRESH_INTERVAL,
         "live_cycles": schedule.live_cycles if schedule else 0,
@@ -230,7 +246,41 @@ def get_scheduler_status() -> dict:
     }
 
 
-def get_today_view() -> dict:
+def _fetch_wc_fixtures_for_local_day() -> list[dict]:
+    """Load World Cup fixtures for the local calendar day (+ merge live=all)."""
+    from local_schedule import fetch_wc_fixtures_for_local_day
+
+    wc = merge_live_wc_fixtures(fetch_wc_fixtures_for_local_day())
+    for f in wc:
+        fid = f["fixture"]["id"]
+        cached_status[fid] = f["fixture"]["status"]["short"]
+    return wc
+
+
+def _fetch_wc_fixtures_for_date(date_str: str) -> list[dict]:
+    """Legacy: load by API date string (prefer _fetch_wc_fixtures_for_local_day)."""
+    from apifootball_client import get_today_fixtures
+
+    raw = get_today_fixtures(date_str)
+    wc = [f for f in raw if f.get("league", {}).get("id") == 1]
+    for f in wc:
+        fid = f["fixture"]["id"]
+        cached_status[fid] = f["fixture"]["status"]["short"]
+    return wc
+
+
+def _today_match_sort_key(entry: dict) -> tuple:
+    status = (entry.get("status") or "NS").upper()
+    if status in LIVE_STATUSES:
+        bucket = 0
+    elif status in FINAL_STATUSES:
+        bucket = 2
+    else:
+        bucket = 1
+    return bucket, entry.get("kickoff") or ""
+
+
+def get_today_view(*, refresh: bool = False) -> dict:
     """Today's WC fixtures merged with live predictions."""
     global schedule, _today_view_fetched, _all_today_fixtures
     from apifootball_client import DAILY_LIMIT
@@ -238,25 +288,35 @@ def get_today_view() -> dict:
     from live_trainer import get_live_state
     from live_updater import _load_live_predictions, extract_display_stats
 
-    today = date.today().strftime("%Y-%m-%d")
+    today = local_today_iso()
     fixtures: list[dict] = []
-    if _all_today_fixtures and schedule and schedule.date == today:
+    if refresh and APIFOOTBALL_KEY:
+        try:
+            fixtures = _fetch_wc_fixtures_for_local_day()
+            _all_today_fixtures = list(fixtures)
+            _today_view_fetched = today
+            active = [f for f in fixtures if f["fixture"]["status"]["short"] not in SKIP_STATUSES]
+            schedule = DaySchedule(date=today, fixtures=fixtures, n_matches=len(active))
+        except APIFootballError as exc:
+            log.warning("get_today_view refresh failed: %s", exc)
+    elif _all_today_fixtures and schedule and schedule.date == today:
         fixtures = list(_all_today_fixtures)
     elif schedule and schedule.date == today:
         fixtures = list(schedule.fixtures)
     elif _today_view_fetched != today and APIFOOTBALL_KEY:
         try:
-            raw = get_today_fixtures(today)
-            fixtures = [f for f in raw if f.get("league", {}).get("id") == 1]
+            fixtures = _fetch_wc_fixtures_for_local_day()
             _all_today_fixtures = list(fixtures)
-            for f in fixtures:
-                cached_status[f["fixture"]["id"]] = f["fixture"]["status"]["short"]
             _today_view_fetched = today
             if schedule is None or schedule.date != today:
                 active = [f for f in fixtures if f["fixture"]["status"]["short"] not in SKIP_STATUSES]
                 schedule = DaySchedule(date=today, fixtures=fixtures, n_matches=len(active))
         except APIFootballError as exc:
             log.warning("get_today_view fetch failed: %s", exc)
+    elif refresh:
+        _refresh_fixture_statuses(force=True)
+        if _all_today_fixtures and schedule and schedule.date == today:
+            fixtures = list(_all_today_fixtures)
 
     live_doc = _load_live_predictions()
     live_by_teams = {
@@ -322,13 +382,24 @@ def get_today_view() -> dict:
 
         matches.append(entry)
 
-    matches.sort(key=lambda m: m["kickoff"])
+    matches.sort(key=_today_match_sort_key)
+
+    live_count = sum(1 for m in matches if m["is_live"])
+    finished_count = sum(
+        1 for m in matches if (m.get("status") or "").upper() in FINAL_STATUSES
+    )
+    upcoming_count = len(matches) - live_count - finished_count
 
     return {
         "date": today,
+        "local_date": today,
+        "local_timezone": display_timezone_label(),
         "matches": matches,
         "n_matches": len(matches),
-        "live_count": sum(1 for m in matches if m["is_live"]),
+        "live_count": live_count,
+        "finished_count": finished_count,
+        "upcoming_count": max(0, upcoming_count),
+        "active_count": live_count + max(0, upcoming_count),
         "api_budget_remaining": calls_remaining(),
         "daily_limit": DAILY_LIMIT,
         "scheduler_active": is_scheduler_running(),

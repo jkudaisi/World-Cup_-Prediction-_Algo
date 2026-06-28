@@ -8,6 +8,7 @@ from typing import Any
 from calibration import calibrate_outcome_probs, compute_confidence, normalize_outcome_probs
 from ensemble import (
     both_teams_score_prob,
+    build_over_under_payload,
     outcome_probs_from_lambdas,
     over_under_prob,
     weighted_ensemble_goals,
@@ -245,7 +246,7 @@ def update_live_prediction_from_snapshot(
     )
     explanation = _build_explanation(snapshot, live_feats, prematch, blended, base_prediction)
 
-    ou = over_under_prob(rem_lh, rem_la, cur_h, cur_a)
+    ou_payload = build_over_under_payload(rem_lh, rem_la, cur_h, cur_a)
     btts = both_teams_score_prob(adj_lh, adj_la)
 
     return {
@@ -264,11 +265,12 @@ def update_live_prediction_from_snapshot(
             "away_win": round(blended["away_win"], 4),
             "projected_home_goals": round(adj_lh, 2),
             "projected_away_goals": round(adj_la, 2),
-            "over_2_5": ou,
+            "over_2_5": ou_payload["2.5"]["over"],
+            "over_3_5": ou_payload["3.5"]["over"],
             "both_teams_score": btts,
         },
         "projected_goals": {"home": round(adj_lh, 2), "away": round(adj_la, 2)},
-        "over_under": {"line": 2.5, "over": ou, "under": round(1 - ou, 4)},
+        "over_under": ou_payload,
         "next_goal": _next_goal_prob(rem_lh, rem_la),
         "confidence": conf,
         "momentum": momentum,

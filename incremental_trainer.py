@@ -37,6 +37,7 @@ from wc2026_ml_pipeline import (
     get_feature_cols,
     predict_all_fixtures,
     train_models_from_frame,
+    update_team_stats_from_match,
 )
 from feature_builder import build_features, calc_xg_proxy, sample_weight_for_row
 
@@ -48,6 +49,12 @@ SKIP_REASON = "No new completed World Cup matches since last training run"
 PREDICTIONS_PATH = Path(__file__).parent / "predictions.json"
 
 _pending_training_ids: set[int] = set()
+
+
+def _apply_team_stats_updates(rows: list[dict[str, Any]]) -> None:
+    """Refresh TEAM_STATS form/xg/xga after each newly ingested WC match."""
+    for row in rows:
+        update_team_stats_from_match(row)
 
 
 def _parse_possession(val: Any) -> float:
@@ -148,6 +155,141 @@ def completed_match_to_training_row(
         "source": "world_cup",
     }
     return row
+
+
+def snapshot_to_training_row(snapshot: dict[str, Any]) -> dict[str, Any] | None:
+    """Convert a final live polling snapshot into a WC training row."""
+    home_raw = snapshot.get("home_name") or ""
+    away_raw = snapshot.get("away_name") or ""
+    home = resolve_team_name(home_raw)
+    away = resolve_team_name(away_raw)
+
+    if home not in TEAM_STATS or away not in TEAM_STATS:
+        log.warning("Unknown teams in snapshot: %s vs %s", home_raw, away_raw)
+        return None
+
+    score = snapshot.get("score") or {}
+    gh = score.get("home")
+    ga = score.get("away")
+    if gh is None or ga is None:
+        return None
+
+    gh, ga = int(gh), int(ga)
+    fixture_id = snapshot.get("fixture_id")
+    if fixture_id is None:
+        return None
+
+    stats = snapshot.get("stats") or {}
+    events = snapshot.get("events") or []
+    hs = stats.get("home") or {}
+    aws = stats.get("away") or {}
+    home_id = snapshot.get("home_team_id")
+    away_id = snapshot.get("away_team_id")
+    snap_time = snapshot.get("snapshot_time") or ""
+
+    feats = build_features(home, away)
+    row: dict[str, Any] = {
+        **feats,
+        "goals_h": gh,
+        "goals_a": ga,
+        "fixture_id": int(fixture_id),
+        "date": snap_time[:10] if len(snap_time) >= 10 else "",
+        "home_team": home,
+        "away_team": away,
+        "home_win": int(gh > ga),
+        "draw": int(gh == ga),
+        "away_win": int(gh < ga),
+        "scoreline": f"{gh}-{ga}",
+        "used_for_training": False,
+        "source_timestamp": utc_now_iso(),
+        "home_possession": _parse_possession(hs.get("ball_possession")),
+        "away_possession": _parse_possession(aws.get("ball_possession")),
+        "home_shots_total": _int_or(hs.get("shots_total")),
+        "away_shots_total": _int_or(aws.get("shots_total")),
+        "home_shots_on_target": _int_or(hs.get("shots_on_goal")),
+        "away_shots_on_target": _int_or(aws.get("shots_on_goal")),
+        "home_corners": _int_or(hs.get("corner_kicks")),
+        "away_corners": _int_or(aws.get("corner_kicks")),
+        "home_fouls": _int_or(hs.get("fouls")),
+        "away_fouls": _int_or(aws.get("fouls")),
+        "home_yellow_cards": _int_or(hs.get("yellow_cards")),
+        "away_yellow_cards": _int_or(aws.get("yellow_cards")),
+        "home_red_cards": _int_or(hs.get("red_cards")),
+        "away_red_cards": _int_or(aws.get("red_cards")),
+        "home_xg_proxy": round(calc_xg_proxy(hs, events, home_id), 3),
+        "away_xg_proxy": round(calc_xg_proxy(aws, events, away_id), 3),
+        "home_expected_goals": _float_or(hs.get("expected_goals"), calc_xg_proxy(hs, events, home_id)),
+        "away_expected_goals": _float_or(aws.get("expected_goals"), calc_xg_proxy(aws, events, away_id)),
+        "source": "live_snapshot",
+    }
+    return row
+
+
+def scan_live_snapshots_for_completed_matches(
+    snapshot_dir: Path | None = None,
+) -> list[dict[str, Any]]:
+    """
+    Scan live snapshot files for newly completed matches and append them to
+    world_cup_completed_matches.json (skipping fixture_ids already present).
+    """
+    from live_snapshot_store import (
+        SNAPSHOT_DIR,
+        get_final_completed_snapshot,
+        load_snapshot_file,
+    )
+
+    directory = snapshot_dir or SNAPSHOT_DIR
+    existing_ids = {
+        int(m["fixture_id"])
+        for m in load_wc_matches()
+        if m.get("fixture_id") is not None
+        and m.get("goals_h") is not None
+        and m.get("goals_a") is not None
+    }
+    new_rows: list[dict[str, Any]] = []
+
+    if not directory.exists():
+        log.info("No snapshot directory at %s", directory)
+        return new_rows
+
+    for path in sorted(directory.glob("*.json")):
+        snapshots = load_snapshot_file(path)
+        final = get_final_completed_snapshot(snapshots)
+        if final is None:
+            continue
+
+        try:
+            fid = int(final.get("fixture_id") or path.stem)
+        except (TypeError, ValueError):
+            log.warning("Could not parse fixture id from %s", path.name)
+            continue
+
+        if fid in existing_ids:
+            continue
+
+        row = snapshot_to_training_row(final)
+        if row is None:
+            continue
+
+        row["fixture_id"] = fid
+        new_rows.append(row)
+        existing_ids.add(fid)
+        log.info(
+            "Completed match from snapshot: %s vs %s (%s) fixture %s",
+            row.get("home_team"),
+            row.get("away_team"),
+            row.get("scoreline"),
+            fid,
+        )
+
+    if new_rows:
+        append_wc_matches(new_rows)
+        _apply_team_stats_updates(new_rows)
+        log.info("Appended %s completed match(es) from live snapshots", len(new_rows))
+    else:
+        log.info("No new completed matches found in live snapshots")
+
+    return new_rows
 
 
 def fetch_completed_world_cup_fixtures() -> list[dict]:
@@ -340,6 +482,7 @@ def run_incremental_training(
 
     if new_rows:
         append_wc_matches(new_rows)
+        _apply_team_stats_updates(new_rows)
         for row in new_rows:
             trained_ids.add(int(row["fixture_id"]))
 
@@ -453,3 +596,12 @@ def process_pending_training(force_if_pending: bool = True) -> dict[str, Any] | 
         clear_pending_training_ids(pending & updated_trained)
 
     return result
+
+
+if __name__ == "__main__":
+    import sys
+
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(message)s")
+    added = scan_live_snapshots_for_completed_matches()
+    print(f"Added {len(added)} match(es) from live snapshots")
+    sys.exit(0)

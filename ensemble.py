@@ -11,6 +11,7 @@ import numpy as np
 
 from calibration import calibrate_outcome_probs, compute_confidence, normalize_outcome_probs
 from feature_builder import build_features
+from score_matrix import build_score_matrix
 
 ROOT = Path(__file__).parent
 WEIGHTS_PATH = ROOT / "model_weights.json"
@@ -102,6 +103,34 @@ def over_under_prob(lambda_h: float, lambda_a: float, score_h: int, score_a: int
     return round(min(1.0, max(0.0, over)), 4)
 
 
+DEFAULT_OU_LINES = (2.5, 3.5)
+
+
+def build_over_under_payload(
+    lambda_h: float,
+    lambda_a: float,
+    score_h: int = 0,
+    score_a: int = 0,
+    lines: tuple[float, ...] = DEFAULT_OU_LINES,
+) -> dict[str, Any]:
+    """Over/under probabilities for multiple goal lines (uses current score in live context)."""
+    by_line: dict[str, dict[str, float]] = {}
+    for line in lines:
+        over = over_under_prob(lambda_h, lambda_a, score_h, score_a, line=line)
+        by_line[str(line)] = {
+            "line": line,
+            "over": over,
+            "under": round(1.0 - over, 4),
+        }
+    primary = by_line.get("2.5") or next(iter(by_line.values()))
+    return {
+        **by_line,
+        "line": primary["line"],
+        "over": primary["over"],
+        "under": primary["under"],
+    }
+
+
 def weighted_ensemble_goals(
     model_preds: dict[str, tuple[float, float]],
     weights: dict[str, float] | None = None,
@@ -145,8 +174,11 @@ def build_prediction_envelope(
     _score = _live.get("score") or {}
     cur_h = int(_live.get("score_home", _score.get("home", 0)))
     cur_a = int(_live.get("score_away", _score.get("away", 0)))
-    ou = over_under_prob(rh, ra, cur_h, cur_a)
+    ou_payload = build_over_under_payload(rh, ra, cur_h, cur_a)
+    ou_25 = ou_payload["2.5"]["over"]
+    ou_35 = ou_payload["3.5"]["over"]
     btts = both_teams_score_prob(rh, ra)
+    score_matrix = build_score_matrix(rh, ra, score_h=cur_h, score_a=cur_a)
 
     top_factors = []
     risk_factors = []
@@ -191,8 +223,14 @@ def build_prediction_envelope(
             "away_win": probs["away_win"],
             "projected_home_goals": round(rh, 2),
             "projected_away_goals": round(ra, 2),
-            "over_2_5": ou,
+            "over_2_5": ou_25,
+            "over_3_5": ou_35,
             "both_teams_score": btts,
+            "over_under": ou_payload,
+            "score_matrix": {
+                "top_exact_scores": score_matrix["top_exact_scores"],
+                "score_matrix": score_matrix["score_matrix"],
+            },
         },
         "live": live,
         "confidence": {

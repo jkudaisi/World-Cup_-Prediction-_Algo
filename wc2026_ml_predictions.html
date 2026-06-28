@@ -205,6 +205,160 @@ a{color:inherit;text-decoration:none}
 .today-ml-pred{font-size:11px;color:var(--dim);margin-top:4px}
 .today-empty{text-align:center;padding:3rem 2rem;color:var(--muted)}
 .today-empty p{margin-top:.5rem;font-size:14px}
+.today-header-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.today-trades-btn{background:var(--s2);border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer}
+.today-trades-btn:hover{border-color:var(--gold-dim);color:var(--gold2)}
+.today-trades-btn.active{background:rgba(124,110,224,.15);border-color:var(--gold-dim);color:var(--gold2)}
+.today-trades-panel{display:none;background:var(--s1);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:1.25rem}
+.today-trades-panel.open{display:block}
+.today-trades-summary{display:flex;gap:1rem;flex-wrap:wrap;margin-bottom:1rem;font-size:12px;color:var(--muted)}
+.today-trades-summary b{color:var(--gold);font-size:16px;margin-right:4px}
+.today-trades-match{background:var(--s2);border:1px solid var(--border);border-radius:10px;margin-bottom:10px;overflow:hidden}
+.today-trades-match.live{border-color:rgba(34,197,94,.35)}
+.today-trades-match-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--border);flex-wrap:wrap}
+.today-trades-match-teams{font-size:13px;font-weight:700}
+.today-trades-match-meta{font-size:11px;color:var(--muted)}
+.today-trades-table{width:100%;border-collapse:collapse;font-size:11px}
+.today-trades-table th,.today-trades-table td{padding:7px 10px;text-align:left;border-top:1px solid var(--border)}
+.today-trades-table th{color:var(--muted);font-weight:600;background:rgba(0,0,0,.12)}
+.today-trades-empty{padding:10px 14px;font-size:11px;color:var(--dim)}
+.today-trades-tag{display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;letter-spacing:.04em}
+.today-trades-tag.open{background:rgba(59,130,246,.15);color:#60a5fa}
+.today-trades-tag.trade{background:rgba(34,197,94,.15);color:#4ade80}
+.today-trades-tag.settled{background:rgba(107,114,128,.15);color:#9ca3af}
+.today-section-head{display:flex;align-items:center;justify-content:space-between;margin:1.25rem 0 10px}
+.today-section-head:first-child{margin-top:0}
+.today-section-head h3{font-size:13px;font-weight:700;color:var(--text)}
+.today-section-head span{font-size:11px;color:var(--muted)}
+.today-section-head.live h3{color:#4ade80}
+.today-card.finished{opacity:.72}
+.today-card.finished .today-score{color:var(--muted)}
+.today-toolbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px;font-size:12px;color:var(--muted)}
+.today-toolbar label{display:flex;align-items:center;gap:6px;cursor:pointer;user-select:none}
+.today-toolbar input{accent-color:var(--gold)}
+
+/* TRADING */
+.trading-header{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;margin-bottom:1.25rem;flex-wrap:wrap}
+.trading-title{font-size:18px;font-weight:700}
+.trading-sub{font-size:12px;color:var(--muted);margin-top:4px}
+.trading-actions{display:flex;gap:8px;flex-wrap:wrap}
+.trading-btn{background:var(--s2);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer}
+.trading-btn:hover{border-color:var(--gold-dim);color:var(--gold2)}
+.trading-btn.danger{border-color:rgba(239,68,68,.4);color:#f87171}
+.trading-btn.ok{border-color:rgba(34,197,94,.4);color:#4ade80}
+.trading-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;margin-bottom:1.25rem}
+.trading-stat{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:12px}
+.trading-stat-val{font-size:20px;font-weight:800;color:var(--gold)}
+.trading-stat-lbl{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:4px}
+.trading-section{margin-bottom:1.5rem}
+.trading-section-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px}
+.trading-table-wrap{overflow:auto;border:1px solid var(--border);border-radius:8px;background:var(--s1)}
+.trading-table{width:100%;border-collapse:collapse;font-size:11px}
+.trading-table th,.trading-table td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--border);white-space:nowrap}
+.trading-table th{color:var(--muted);font-weight:600;background:var(--s2);position:sticky;top:0}
+.trading-table tr:last-child td{border-bottom:none}
+.rec-trade{color:#4ade80;font-weight:700}
+.rec-skip{color:var(--muted)}
+.trading-badge{display:inline-block;padding:2px 6px;border-radius:4px;font-size:9px;font-weight:700;letter-spacing:.04em}
+.badge-paper{background:rgba(59,130,246,.15);color:#60a5fa;border:1px solid rgba(59,130,246,.25)}
+.badge-live{background:rgba(239,68,68,.12);color:#f87171;border:1px solid rgba(239,68,68,.25)}
+.badge-dry{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.25)}
+.fixture-card{background:var(--s1);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:10px}
+.fixture-card h4{font-size:13px;margin-bottom:8px;color:var(--gold2)}
+.market-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:6px;font-size:10px}
+.market-grid span{background:var(--s2);padding:4px 6px;border-radius:4px;color:var(--muted)}
+.market-grid b{color:var(--text)}
+
+.trading-layout{display:grid;grid-template-columns:1fr 320px;gap:1.25rem;align-items:start}
+@media(max-width:1100px){.trading-layout{grid-template-columns:1fr}}
+.trading-main{min-width:0}
+.trading-sidebar-panel{position:sticky;top:60px}
+.trading-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
+.trading-tab{background:var(--s2);border:1px solid var(--border);color:var(--muted);padding:7px 14px;border-radius:8px;font-size:11px;font-weight:600;cursor:pointer}
+.trading-tab:hover{color:var(--text);border-color:var(--border2)}
+.trading-tab.active{background:var(--s3);color:var(--gold2);border-color:var(--gold-dim)}
+.trading-tab .tab-count{opacity:.7;margin-left:4px;font-weight:400}
+.trading-tab-hint{font-size:11px;color:var(--dim);margin:-4px 0 12px;line-height:1.45}
+.trading-search-wrap{margin-bottom:12px}
+.trading-search-wrap input{width:100%;max-width:320px;background:var(--s2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:8px 12px;font-size:12px;outline:none}
+.trading-match-card{background:var(--s1);border:1px solid var(--border);border-radius:10px;margin-bottom:12px;overflow:hidden}
+.trading-match-card.live-match{border-color:rgba(34,197,94,.35);box-shadow:0 0 0 1px rgba(34,197,94,.08)}
+.trading-match-card.has-trade{border-color:rgba(34,197,94,.25)}
+.tmc-header{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:14px 16px;background:var(--s2);border-bottom:1px solid var(--border)}
+.tmc-teams{flex:1;min-width:0}
+.tmc-team-row{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;margin-bottom:4px}
+.tmc-team-row:last-child{margin-bottom:0}
+.tmc-flag{font-size:18px;line-height:1}
+.tmc-meta{font-size:10px;color:var(--muted);margin-top:6px;display:flex;flex-wrap:wrap;gap:8px}
+.tmc-meta span{background:var(--s1);padding:2px 6px;border-radius:4px}
+.tmc-status{text-align:right;flex-shrink:0}
+.tmc-score{font-size:22px;font-weight:800;color:var(--gold);font-family:monospace;line-height:1.1}
+.tmc-minute{font-size:11px;color:#4ade80;margin-top:4px}
+.tmc-badge{display:inline-block;padding:3px 8px;border-radius:5px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em}
+.tmc-badge-live{background:rgba(34,197,94,.15);color:#4ade80;border:1px solid rgba(34,197,94,.3)}
+.tmc-badge-prematch{background:rgba(59,130,246,.12);color:#60a5fa;border:1px solid rgba(59,130,246,.25)}
+.tmc-badge-future{background:rgba(107,114,128,.12);color:#9ca3af;border:1px solid rgba(107,114,128,.2)}
+.tmc-badge-unmapped{background:rgba(245,158,11,.12);color:#fbbf24;border:1px solid rgba(245,158,11,.25)}
+.tmc-body{padding:12px 16px}
+.tmc-section-label{font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px;font-weight:700}
+.tmc-outcome-bar{display:flex;height:8px;border-radius:4px;overflow:hidden;background:var(--border);margin-bottom:6px}
+.tmc-outcome-bar-h{background:#60a5fa;flex:0 0 auto}
+.tmc-outcome-bar-d{background:#6b7280;flex:0 0 auto}
+.tmc-outcome-bar-a{background:#f87171;flex:0 0 auto}
+.tmc-outcome-labels{display:flex;gap:12px;font-size:10px;color:var(--muted);margin-bottom:12px;flex-wrap:wrap}
+.tmc-outcome-labels b{color:var(--text)}
+.tmc-goals{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:6px;margin-bottom:12px}
+.tmc-goal-chip{background:var(--s2);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:10px}
+.tmc-goal-chip .lbl{color:var(--muted);display:block;margin-bottom:2px}
+.tmc-goal-chip .val{font-weight:700;color:var(--text)}
+.tmc-opps-table{width:100%;border-collapse:collapse;font-size:10px}
+.tmc-opps-table th,.tmc-opps-table td{padding:6px 8px;text-align:left;border-top:1px solid var(--border)}
+.tmc-opps-table th{color:var(--muted);font-weight:600;background:rgba(0,0,0,.15)}
+.tmc-paper-chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.tmc-paper-chip{font-size:10px;padding:4px 8px;border-radius:6px;background:rgba(59,130,246,.12);color:#93c5fd;border:1px solid rgba(59,130,246,.2)}
+.tmc-opps-table tr.row-trade td{background:rgba(34,197,94,.06)}
+.tmc-opps-table tr.row-skip td{color:var(--dim)}
+.trading-panel{background:var(--s1);border:1px solid var(--border);border-radius:10px;padding:14px;margin-bottom:12px}
+.trading-panel-title{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px}
+.trading-empty{padding:2rem;text-align:center;color:var(--muted);font-size:13px}
+.trading-section-block{margin-bottom:1.5rem}
+.trading-section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.trading-section-head h3{font-size:13px;font-weight:700;color:var(--text)}
+.trading-section-head span{font-size:11px;color:var(--muted)}
+
+/* Trading summary hero */
+.trading-summary{background:linear-gradient(135deg,rgba(212,168,83,.08),rgba(59,130,246,.06));border:1px solid var(--border);border-radius:12px;padding:16px 18px;margin-bottom:1.25rem}
+.trading-summary-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.trading-summary-stats{display:flex;gap:16px;flex-wrap:wrap;font-size:12px;color:var(--muted)}
+.trading-summary-stats b{color:var(--text);font-weight:700}
+.trading-summary-stats .pos{color:#4ade80}
+.trading-summary-stats .neg{color:#f87171}
+.trading-summary-block{margin-bottom:10px}
+.trading-summary-block:last-child{margin-bottom:0}
+.trading-summary-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.trading-position-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 10px;background:var(--s1);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;font-size:12px}
+.trading-position-row:last-child{margin-bottom:0}
+.trading-position-match{font-weight:600;color:var(--text)}
+.trading-position-detail{font-size:10px;color:var(--muted);margin-top:2px}
+.trading-position-pnl{font-weight:700;font-family:monospace;white-space:nowrap}
+.trading-position-pnl.pos{color:#4ade80}
+.trading-position-pnl.neg{color:#f87171}
+.trading-watch-row{font-size:11px;color:var(--muted);padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.trading-watch-row:last-child{border-bottom:none}
+.trading-watch-row b{color:var(--gold2)}
+.trading-empty-inline{font-size:12px;color:var(--dim);padding:4px 0}
+
+/* Compact match cards */
+.tmc-summary-line{font-size:12px;color:var(--muted);padding:10px 16px;border-top:1px solid var(--border);line-height:1.5}
+.tmc-summary-line b{color:var(--text)}
+.tmc-expand-btn{background:none;border:none;color:var(--gold2);font-size:10px;font-weight:600;cursor:pointer;padding:8px 16px;width:100%;text-align:left;border-top:1px solid var(--border)}
+.tmc-expand-btn:hover{background:rgba(212,168,83,.06)}
+.tmc-details{display:none}
+.tmc-details.open{display:block}
+.trading-sidebar-actions{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.trading-help-toggle{font-size:10px;color:var(--dim);cursor:pointer;text-decoration:underline;margin-top:8px;display:inline-block}
+.trading-help-body{display:none;font-size:11px;color:var(--muted);line-height:1.55;margin-top:8px}
+.trading-help-body.open{display:block}
 
 /* SCROLLBAR */
 ::-webkit-scrollbar{width:4px;height:4px}
@@ -232,6 +386,7 @@ a{color:inherit;text-decoration:none}
     <button onclick="showView('today',this)">Today</button>
     <button onclick="showView('all',this)">All 72</button>
     <button onclick="showView('stats',this)">Model Stats</button>
+    <button onclick="showView('trading',this)">Trading</button>
   </div>
   <div class="topbar-right">
     <div id="budget-bar" style="display:none">
@@ -298,9 +453,19 @@ a{color:inherit;text-decoration:none}
       <div class="today-date" id="today-date-label">Today's Matches</div>
       <div class="today-meta" id="today-meta-label">Loading…</div>
     </div>
-    <button class="live-btn" onclick="fetchTodayView()">
-      <span class="live-dot"></span> Refresh
-    </button>
+    <div class="today-header-actions">
+      <button class="today-trades-btn" id="today-trades-btn" onclick="toggleTodayTrades()">📊 Track Trades</button>
+      <button class="live-btn" onclick="fetchTodayView(true)">
+        <span class="live-dot"></span> Refresh
+      </button>
+    </div>
+  </div>
+  <div class="today-trades-panel" id="today-trades-panel">
+    <div class="today-trades-summary" id="today-trades-summary">Loading trades…</div>
+    <div id="today-trades-content"></div>
+  </div>
+  <div class="today-toolbar" id="today-toolbar" style="display:none">
+    <label><input type="checkbox" id="today-show-finished" onchange="toggleTodayShowFinished()"> Show finished matches</label>
   </div>
   <div id="today-content">
     <div class="today-empty"><div style="font-size:40px">📅</div><p>Loading today's fixtures…</p></div>
@@ -320,6 +485,83 @@ a{color:inherit;text-decoration:none}
   <div class="stats-grid" id="stats-cards"></div>
   <div style="font-size:13px;font-weight:600;margin-bottom:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em">Win rate by model (home wins predicted)</div>
   <div class="model-acc-grid" id="model-acc"></div>
+</div>
+
+<div id="view-trading" class="view" style="display:none;padding:1.5rem 2rem">
+  <div class="trading-header">
+    <div>
+      <div class="trading-title" id="trading-title">Kalshi Trading</div>
+      <div class="trading-sub" id="trading-sub">Loading…</div>
+    </div>
+    <div class="trading-actions" id="trading-actions">
+      <button class="trading-btn" onclick="fetchTrading(true)">Refresh</button>
+      <button class="trading-btn" onclick="discoverKalshiMarkets(true)">Link Kalshi Games</button>
+      <button class="trading-btn" id="trading-scan-btn" onclick="runPaperScan()" style="display:none">Run Paper Scan</button>
+      <button class="trading-btn danger" onclick="toggleKillSwitch(true)">Stop Trading</button>
+      <button class="trading-btn ok" onclick="toggleKillSwitch(false)">Resume Trading</button>
+    </div>
+  </div>
+  <div id="trading-badges" style="margin-bottom:12px"></div>
+
+  <div id="trading-summary" class="trading-summary">
+    <div class="trading-empty-inline">Loading trading status…</div>
+  </div>
+
+  <div class="trading-layout">
+    <div class="trading-main">
+      <div class="trading-tabs" id="trading-tabs">
+        <button class="trading-tab active" data-tab="now" onclick="setTradingTab('now',this)">Trading Now<span class="tab-count" id="tab-count-now"></span></button>
+        <button class="trading-tab" data-tab="ideas" onclick="setTradingTab('ideas',this)">Buy Signals<span class="tab-count" id="tab-count-ideas"></span></button>
+        <button class="trading-tab" data-tab="linked" onclick="setTradingTab('linked',this)">On Kalshi<span class="tab-count" id="tab-count-linked"></span></button>
+        <button class="trading-tab" data-tab="live" onclick="setTradingTab('live',this)">Live &amp; Today<span class="tab-count" id="tab-count-live"></span></button>
+        <button class="trading-tab" data-tab="all" onclick="setTradingTab('all',this)">All 72</button>
+      </div>
+      <div class="trading-tab-hint" id="trading-tab-hint">Open positions and matches with buy signals — your active trading view.</div>
+      <div class="trading-search-wrap" id="trading-search-wrap" style="display:none">
+        <input type="text" id="trading-search" placeholder="Search team or match #…" oninput="filterTradingMatches(this.value)">
+      </div>
+      <div id="trading-match-list">
+        <div class="trading-empty">Loading trading data…</div>
+      </div>
+    </div>
+
+    <aside class="trading-sidebar-panel">
+      <div class="trading-panel">
+        <div class="trading-panel-title" id="trading-active-title">Active Trades</div>
+        <div id="trading-active-list">
+          <div class="trading-empty-inline">No open trades</div>
+        </div>
+      </div>
+      <div class="trading-panel">
+        <div class="trading-panel-title">Kalshi-Linked Games</div>
+        <div class="trading-discover-meta" id="trading-discover-meta" style="font-size:11px;color:var(--muted);margin-bottom:8px">
+          Matches your model can trade on Kalshi.
+        </div>
+        <div class="trading-grid" id="trading-discover-grid" style="grid-template-columns:1fr 1fr;margin-bottom:8px"></div>
+        <div id="trading-discover-list" style="max-height:280px;overflow:auto;font-size:11px"></div>
+      </div>
+      <div class="trading-panel">
+        <div class="trading-panel-title">Account</div>
+        <div class="trading-grid" id="trading-risk-grid" style="grid-template-columns:1fr 1fr;margin-bottom:8px"></div>
+        <div class="trading-grid" id="trading-paper-grid" style="grid-template-columns:1fr 1fr;margin-bottom:0"></div>
+      </div>
+      <div class="trading-panel" id="trading-recent-panel">
+        <div class="trading-panel-title" id="trading-recent-title">Recent Trades</div>
+        <div class="trading-table-wrap" style="max-height:240px;overflow:auto">
+          <table class="trading-table">
+            <thead><tr><th>Match</th><th>Bet</th><th>P/L</th></tr></thead>
+            <tbody id="trading-recent-trades"><tr><td colspan="3" style="color:var(--muted)">None yet</td></tr></tbody>
+          </table>
+        </div>
+        <span class="trading-help-toggle" onclick="toggleTradingHelp(this)">What do these numbers mean?</span>
+        <div class="trading-help-body">
+          <p style="margin-bottom:6px"><strong style="color:var(--text)">Model %</strong> — what our ML predicts. <strong style="color:var(--text)">Market %</strong> — Kalshi price.</p>
+          <p style="margin-bottom:6px"><strong style="color:var(--text)">Edge</strong> — model thinks the bet is cheaper than fair value by this amount.</p>
+          <p><strong style="color:var(--text)">Buy</strong> = place trade. <strong style="color:var(--text)">Pass</strong> = skip (no edge or risk limit).</p>
+        </div>
+      </div>
+    </aside>
+  </div>
 </div>
 
 <script src="dashboard.js"></script>

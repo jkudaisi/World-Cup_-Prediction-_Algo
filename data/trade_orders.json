@@ -1,0 +1,88 @@
+{
+  "orders": [
+    {
+      "timestamp": "2026-06-28T02:59:08.801891+00:00",
+      "order_id": "87991e3d-8a2b-4526-a56a-df8846695d12",
+      "ticker": "KXWCBTTS-26JUN27DZAAUT-BTTS",
+      "side": "no",
+      "count": 265,
+      "limit_price_cents": 3,
+      "fixture_key": "Algeria|Austria|2026-07-02",
+      "home": "Algeria",
+      "away": "Austria",
+      "market_type": "btts_yes",
+      "status": "filled",
+      "dry_run": false
+    },
+    {
+      "timestamp": "2026-06-28T02:59:12.808539+00:00",
+      "order_id": "cb7c8c55-75a8-4302-bd80-5f3984cae0d3",
+      "ticker": "KXWCGAME-26JUN27JORARG-ARG",
+      "side": "no",
+      "count": 88,
+      "limit_price_cents": 3,
+      "fixture_key": "Jordan|Argentina|2026-07-02",
+      "home": "Jordan",
+      "away": "Argentina",
+      "market_type": "away_win",
+      "status": "filled",
+      "dry_run": false
+    },
+    {
+      "timestamp": "2026-06-28T03:22:53.484349+00:00",
+      "order_id": "0b60b35f-22f2-4912-b21c-59fe8a7acfed",
+      "ticker": "KXWCTOTAL-26JUN27DZAAUT-4",
+      "side": "no",
+      "count": 285,
+      "limit_price_cents": 3,
+      "fixture_key": "Algeria|Austria|2026-07-02",
+      "home": "Algeria",
+      "away": "Austria",
+      "market_type": "over_3_5",
+      "status": "filled",
+      "dry_run": false
+    },
+    {
+      "timestamp": "2026-06-28T03:33:28.974129+00:00",
+      "order_id": "1777222e-067d-406c-b7cd-21a1b9c6ad79",
+      "ticker": "KXWCGAME-26JUN27DZAAUT-TIE",
+      "side": "no",
+      "count": 8,
+      "limit_price_cents": 35,
+      "fixture_key": "Algeria|Austria|2026-07-02",
+      "home": "Algeria",
+      "away": "Austria",
+      "market_type": "draw",
+      "status": "filled",
+      "dry_run": false
+    },
+    {
+      "timestamp": "2026-06-28T03:33:29.393785+00:00",
+      "order_id": "51910f90-55f6-4d86-a3c5-37fe4fb35da6",
+      "ticker": "KXWCGAME-26JUN27DZAAUT-AUT",
+      "side": "yes",
+      "count": 6,
+      "limit_price_cents": 22,
+      "fixture_key": "Algeria|Austria|2026-07-02",
+      "home": "Algeria",
+      "away": "Austria",
+      "market_type": "away_win",
+      "status": "filled",
+      "dry_run": false
+    },
+    {
+      "timestamp": "2026-06-28T03:33:30.258219+00:00",
+      "order_id": "a8a72661-4e2e-4281-a532-1eb0a642fede",
+      "ticker": "KXWCTOTAL-26JUN27JORARG-4",
+      "side": "yes",
+      "count": 3,
+      "limit_price_cents": 75,
+      "fixture_key": "Jordan|Argentina|2026-07-02",
+      "home": "Jordan",
+      "away": "Argentina",
+      "market_type": "over_3_5",
+      "status": "filled",
+      "dry_run": false
+    }
+  ]
+}
