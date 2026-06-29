@@ -3,10 +3,16 @@
 from __future__ import annotations
 
 import json
+import logging
+import shutil
 import threading
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from training_store import atomic_write_json
+
+log = logging.getLogger(__name__)
 
 ROOT = Path(__file__).parent
 DECISIONS_PATH = ROOT / "data" / "trading_decisions.json"
@@ -19,18 +25,36 @@ _lock = threading.Lock()
 def _ensure_file(path: Path, default: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     if not path.exists():
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(default, f, indent=2)
+        atomic_write_json(path, default)
+
+
+def _load_log_file(path: Path, key: str) -> dict[str, Any]:
+    """Load a log JSON file; recover from truncated/corrupt writes."""
+    default = {key: []}
+    _ensure_file(path, default)
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        if not isinstance(data, dict):
+            raise ValueError("log root must be object")
+        data.setdefault(key, [])
+        return data
+    except (OSError, json.JSONDecodeError, ValueError) as exc:
+        backup = path.with_suffix(path.suffix + ".corrupt")
+        try:
+            shutil.copy2(path, backup)
+        except OSError:
+            pass
+        log.warning("Reset corrupt log %s (%s); backup at %s", path.name, exc, backup.name)
+        atomic_write_json(path, default)
+        return dict(default)
 
 
 def _append(path: Path, key: str, entry: dict) -> None:
-    _ensure_file(path, {key: []})
     with _lock:
-        with open(path, encoding="utf-8") as f:
-            data = json.load(f)
+        data = _load_log_file(path, key)
         data.setdefault(key, []).append(entry)
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump(data, f, indent=2)
+        atomic_write_json(path, data)
 
 
 def log_decision(
@@ -67,7 +91,13 @@ def log_decision(
         "order_info": order_info,
         **(extra or {}),
     }
-    _append(DECISIONS_PATH, "decisions", entry)
+    # Full scans emit thousands of SKIP rows — only persist actionable decisions.
+    if extra and extra.get("scan") and decision != "TRADE":
+        return entry
+    try:
+        _append(DECISIONS_PATH, "decisions", entry)
+    except Exception as exc:
+        log.warning("Could not append trading decision log: %s", exc)
     return entry
 
 
@@ -90,24 +120,18 @@ def log_result(result: dict) -> dict:
 
 
 def load_decisions(limit: int = 200) -> list[dict]:
-    _ensure_file(DECISIONS_PATH, {"decisions": []})
-    with open(DECISIONS_PATH, encoding="utf-8") as f:
-        data = json.load(f)
+    data = _load_log_file(DECISIONS_PATH, "decisions")
     decisions = data.get("decisions", [])
     return decisions[-limit:]
 
 
 def load_orders(limit: int = 200) -> list[dict]:
-    _ensure_file(ORDERS_PATH, {"orders": []})
-    with open(ORDERS_PATH, encoding="utf-8") as f:
-        data = json.load(f)
+    data = _load_log_file(ORDERS_PATH, "orders")
     return data.get("orders", [])[-limit:]
 
 
 def load_results(limit: int = 200) -> list[dict]:
-    _ensure_file(RESULTS_PATH, {"results": []})
-    with open(RESULTS_PATH, encoding="utf-8") as f:
-        data = json.load(f)
+    data = _load_log_file(RESULTS_PATH, "results")
     return data.get("results", [])[-limit:]
 
 

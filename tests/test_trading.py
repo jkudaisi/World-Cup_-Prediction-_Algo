@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import tempfile
+from datetime import date
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -171,6 +172,58 @@ class TestEdgeEngine:
         )
         assert r["decision"] == "SKIP"
         assert "Edge too small" in r["reason"]
+
+    def test_live_uses_lower_confidence_threshold(self, monkeypatch):
+        from trading_config import TradingConfig, get_config
+
+        monkeypatch.setattr(
+            "edge_engine.get_config",
+            lambda: TradingConfig(
+                min_confidence=0.55,
+                min_confidence_live=0.40,
+                min_edge_prematch=0.08,
+                min_edge_live=0.08,
+                max_spread_cents=6.0,
+                min_liquidity_contracts=20,
+            ),
+        )
+        r = evaluate_edge(
+            model_probability=0.70,
+            market_implied_probability=0.55,
+            confidence=0.43,
+            spread=3.0,
+            liquidity=50,
+            market_type="home_advance",
+            live=True,
+        )
+        assert "confidence too low" not in r["reason"].lower()
+        assert r["decision"] == "TRADE"
+
+    def test_prematch_still_requires_higher_confidence(self, monkeypatch):
+        from trading_config import TradingConfig
+
+        monkeypatch.setattr(
+            "edge_engine.get_config",
+            lambda: TradingConfig(
+                min_confidence=0.55,
+                min_confidence_live=0.40,
+                min_edge_prematch=0.08,
+                min_edge_live=0.08,
+                max_spread_cents=6.0,
+                min_liquidity_contracts=20,
+            ),
+        )
+        r = evaluate_edge(
+            model_probability=0.70,
+            market_implied_probability=0.55,
+            confidence=0.43,
+            spread=3.0,
+            liquidity=50,
+            market_type="home_win",
+            live=False,
+        )
+        assert r["decision"] == "SKIP"
+        assert "confidence too low" in r["reason"].lower()
 
     def test_skip_illiquid(self):
         r = evaluate_edge(
@@ -831,3 +884,137 @@ class TestEntryGuards:
         btts = next(o for o in opps if o["market_type"] == "btts_yes")
         assert btts["model_probability"] == pytest.approx(1.0)
         assert btts["recommendation"] == "SKIP"
+
+
+class TestPnlHistory:
+    def test_weekly_buckets(self, tmp_path, monkeypatch):
+        live_path = tmp_path / "live_positions.json"
+        paper_path = tmp_path / "paper_trades.json"
+        today = date(2026, 6, 28)
+
+        live_path.write_text(json.dumps({
+            "positions": [{
+                "status": "closed",
+                "pnl": -7.95,
+                "closed_at": "2026-06-28T03:22:25+00:00",
+            }],
+        }), encoding="utf-8")
+        paper_path.write_text(json.dumps({
+            "trades": [{
+                "status": "closed",
+                "pnl": 0.44,
+                "closed_at": "2026-06-27T04:01:42+00:00",
+            }],
+        }), encoding="utf-8")
+
+        monkeypatch.setattr("pnl_history.LIVE_POSITIONS_PATH", live_path)
+        monkeypatch.setattr("pnl_history.PAPER_TRADES_PATH", paper_path)
+
+        from pnl_history import weekly_pnl_history
+
+        cur = weekly_pnl_history(week_offset=0, today=today)
+        assert cur["week_total"] == pytest.approx(-7.51, abs=0.01)
+        day28 = next(d for d in cur["days"] if d["date"] == "2026-06-28")
+        assert day28["live_pnl"] == pytest.approx(-7.95)
+        assert day28["trades"] == 1
+
+        older = weekly_pnl_history(week_offset=1, today=today)
+        assert older["week_start"] == "2026-06-15"
+        assert older["has_newer_weeks"] is True
+
+
+class TestAdvanceMarketScanning:
+    def test_home_advance_uses_qualification_not_90min_win(self, monkeypatch):
+        from trading_service import scan_opportunities
+
+        monkeypatch.setattr("trading_service.fetch_orderbook_safe", lambda *a, **k: None)
+        monkeypatch.setattr("trading_service.log_decision", lambda **k: None)
+        monkeypatch.setattr(
+            "multi_market_cache.qualification_probs_for_match",
+            lambda *a, **k: {"home_qualifies": 0.412, "away_qualifies": 0.588},
+        )
+
+        match = {
+            "fixture_id": 1561329,
+            "mn": 65,
+            "home": "South Africa",
+            "away": "Canada",
+            "group": "R32",
+            "knockout": True,
+            "prediction": {
+                "home_win": 0.15,
+                "draw": 0.22,
+                "away_win": 0.63,
+            },
+            "confidence": {"score": 0.55},
+        }
+        goal_mkts = build_goal_markets(0.8, 1.4)
+        mapping = {
+            "tickers": {
+                "home_advance": "KXWCADVANCE-26JUN28RSACAN-RSA",
+                "away_advance": "KXWCADVANCE-26JUN28RSACAN-CAN",
+            },
+            "match_confidence": 0.95,
+        }
+        opps = scan_opportunities(
+            match=match,
+            mapping=mapping,
+            goal_mkts=goal_mkts,
+            live_row=None,
+            fkey="South Africa|Canada|2026-06-28",
+            client=MagicMock(),
+            fetch_prices=False,
+        )
+        types = {o["market_type"] for o in opps}
+        assert "home_advance" in types
+        assert "away_advance" in types
+        home_adv = next(o for o in opps if o["market_type"] == "home_advance")
+        away_adv = next(o for o in opps if o["market_type"] == "away_advance")
+        assert home_adv["model_probability"] == pytest.approx(0.412, abs=0.001)
+        assert away_adv["model_probability"] == pytest.approx(0.588, abs=0.001)
+        assert home_adv["model_prob_source"] == "knockout_qualification"
+        assert home_adv["model_probability"] != pytest.approx(0.15, abs=0.01)
+        assert home_adv["confidence_source"] == "knockout_qualification"
+        assert home_adv["confidence"] >= 0.52
+
+    def test_advance_markets_not_scanned_without_tickers(self, monkeypatch):
+        from trading_service import scan_opportunities
+
+        monkeypatch.setattr("trading_service.fetch_orderbook_safe", lambda *a, **k: None)
+        monkeypatch.setattr("trading_service.log_decision", lambda **k: None)
+        match = {
+            "home": "South Africa",
+            "away": "Canada",
+            "group": "R32",
+            "prediction": {"home_win": 0.15, "draw": 0.22, "away_win": 0.63},
+            "confidence": {"score": 0.55},
+        }
+        opps = scan_opportunities(
+            match=match,
+            mapping={"tickers": {}, "match_confidence": 0.0},
+            goal_mkts=build_goal_markets(0.8, 1.4),
+            live_row=None,
+            fkey="South Africa|Canada|2026-06-28",
+            client=MagicMock(),
+            fetch_prices=False,
+        )
+        assert "home_advance" not in {o["market_type"] for o in opps}
+
+
+class TestOpportunitiesCache:
+    def test_corrupt_disk_falls_back_to_memory(self, tmp_path, monkeypatch):
+        import trading_service as ts
+
+        cache_path = tmp_path / "trading_opportunities.json"
+        cache_path.write_text('{"opportunities": [', encoding="utf-8")
+        monkeypatch.setattr(ts, "OPPORTUNITIES_CACHE", cache_path)
+
+        good = {"updated_at": 1.0, "opportunities": [{"market_type": "home_win"}]}
+        with ts._cache_lock:
+            ts._cached_opportunities.clear()
+            ts._cached_opportunities.update(good)
+
+        loaded = ts._load_opportunities_from_disk()
+        assert loaded is not None
+        assert len(loaded["opportunities"]) == 1
+

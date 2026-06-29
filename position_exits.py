@@ -13,6 +13,8 @@ SCAN_ENTRY_MARKETS = (
     "btts_yes",
     "over_2_5",
     "over_3_5",
+    "home_advance",
+    "away_advance",
 )
 
 

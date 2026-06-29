@@ -20,11 +20,15 @@ ALL_ROUTES = [
     ("GET", "/api/live-snapshots/12345", 200),
     ("GET", "/api/training-state", 200),
     ("GET", "/api/status", 200),
+    ("GET", "/api/future-fixture-cache", 200),
     ("GET", "/api/trading/opportunities", 200),
     ("GET", "/api/trading/paper", 200),
     ("GET", "/api/trading/logs", 200),
     ("GET", "/api/trading/exposure", 200),
     ("GET", "/api/kalshi/unmapped", 200),
+    ("GET", "/api/kalshi/linked-matches", 200),
+    ("GET", "/api/multi-market", 200),
+    ("GET", "/api/knockout-models", 200),
 ]
 
 

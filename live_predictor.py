@@ -237,9 +237,12 @@ def update_live_prediction_from_snapshot(
     )
 
     dq = score_data_quality(snapshot)
+    dq_score = float(dq["score"])
+    if minute > 0 and hs and aws:
+        dq_score = max(dq_score, 0.55)
     conf = compute_confidence(
         model_agreement=base_prediction.get("ensemble", {}).get("model_agreement", 0.5),
-        data_quality=dq["score"],
+        data_quality=dq_score,
         lineup_completeness=1.0 if snapshot.get("lineups") else 0.3,
         live_stats_completeness=0.9 if hs and aws else 0.2,
         minute=minute,

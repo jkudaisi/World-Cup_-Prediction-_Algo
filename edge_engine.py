@@ -39,7 +39,7 @@ def evaluate_edge(
         min_conf = cfg.paper_min_confidence
     else:
         min_edge = cfg.min_edge_live if live else cfg.min_edge_prematch
-        min_conf = cfg.min_confidence
+        min_conf = cfg.min_confidence_live if live else cfg.min_confidence
 
     edge_yes = model_p - market_p
     edge_no = (1.0 - model_p) - (1.0 - market_p)

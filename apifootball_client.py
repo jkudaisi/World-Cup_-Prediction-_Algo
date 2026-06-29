@@ -108,6 +108,15 @@ def _get(path: str, params: dict) -> Any:
     return data.get("response", [])
 
 
+def get_season_fixtures(
+    league_id: int = WC_LEAGUE_ID,
+    season: int = WC_SEASON,
+) -> list[dict]:
+    """All fixtures for a league season (group + knockout)."""
+    result = _get("/fixtures", {"league": league_id, "season": season})
+    return result if isinstance(result, list) else []
+
+
 def get_today_fixtures(date_str: str) -> list[dict]:
     result = _get("/fixtures", {"league": WC_LEAGUE_ID, "season": WC_SEASON, "date": date_str})
     return result if isinstance(result, list) else []
@@ -223,3 +232,164 @@ def get_fixture_full(fixture_id: int, home_team_id: int | None = None, away_team
     if partial:
         result["partial"] = True
     return result
+
+
+_wc_team_map: dict[str, int] | None = None
+
+
+def _load_wc_team_map() -> dict[str, int]:
+    """Load all WC 2026 national team ids in a single API call."""
+    global _wc_team_map
+    if _wc_team_map is not None:
+        return _wc_team_map
+
+    from team_names import resolve_team_name
+
+    mapping: dict[str, int] = {}
+    try:
+        raw = _get("/teams", {"league": WC_LEAGUE_ID, "season": WC_SEASON})
+        if isinstance(raw, list):
+            for block in raw:
+                team = block.get("team") or {}
+                if not team.get("national"):
+                    continue
+                tid = team.get("id")
+                api_name = team.get("name") or ""
+                if tid is None or not api_name:
+                    continue
+                canonical = resolve_team_name(api_name)
+                mapping[canonical] = int(tid)
+    except APIFootballError as exc:
+        if exc.status == 429:
+            raise
+        log.warning("WC team map load failed: %s", exc)
+    except (TypeError, ValueError) as exc:
+        log.warning("WC team map parse error: %s", exc)
+
+    _wc_team_map = mapping
+    return mapping
+
+
+def get_wc_team_id_map() -> dict[str, int]:
+    """All WC 2026 national teams: canonical name → API team id (one API call)."""
+    return dict(_load_wc_team_map())
+
+
+def get_team_id(team_name: str) -> int | None:
+    """Resolve a national team name to API-Football team id."""
+    if not team_name or not str(team_name).strip():
+        return None
+
+    from team_names import resolve_team_name, teams_match
+
+    query = resolve_team_name(str(team_name).strip())
+
+    try:
+        wc_map = _load_wc_team_map()
+        if query in wc_map:
+            return wc_map[query]
+
+        search_term = query if len(query) >= 3 else str(team_name).strip()
+        if len(search_term) < 3:
+            return None
+
+        raw = _get("/teams", {"search": search_term})
+        if not isinstance(raw, list) or not raw:
+            return None
+
+        national_teams = [
+            (block.get("team") or block)
+            for block in raw
+            if (block.get("team") or block).get("national")
+        ]
+        for team in national_teams:
+            if teams_match(team.get("name", ""), query):
+                tid = team.get("id")
+                return int(tid) if tid is not None else None
+
+        if len(national_teams) == 1:
+            tid = national_teams[0].get("id")
+            return int(tid) if tid is not None else None
+
+        return None
+    except APIFootballError as exc:
+        if exc.status == 429:
+            raise
+        log.warning("get_team_id(%r) failed: %s", team_name, exc)
+        return None
+    except (TypeError, ValueError, KeyError) as exc:
+        log.warning("get_team_id(%r) parse error: %s", team_name, exc)
+        return None
+
+
+def get_team_fixtures(team_id: int, season: int) -> list[dict]:
+    """Completed fixtures for a national team in a given season year."""
+    try:
+        raw = _get(
+            "/fixtures",
+            {"team": int(team_id), "season": int(season), "status": "FT-AET-PEN"},
+        )
+        return raw if isinstance(raw, list) else []
+    except APIFootballError as exc:
+        if exc.status == 429:
+            raise
+        log.warning("get_team_fixtures(%s, season=%s) failed: %s", team_id, season, exc)
+        return []
+    except (TypeError, ValueError) as exc:
+        log.warning("get_team_fixtures(%s, season=%s) parse error: %s", team_id, season, exc)
+        return []
+
+
+def get_team_fixtures_multi(team_id: int, seasons: list[int]) -> list[dict]:
+    """Fetch completed fixtures across multiple seasons (deduped by fixture id)."""
+    by_id: dict[int, dict] = {}
+    for season in seasons:
+        for fixture in get_team_fixtures(team_id, season):
+            fid = (fixture.get("fixture") or {}).get("id")
+            if fid is not None:
+                by_id[int(fid)] = fixture
+    return list(by_id.values())
+
+
+def get_team_season_stats(team_id: int, league_id: int, season: int) -> dict | None:
+    """Rolled-up season statistics for a team in a league."""
+    try:
+        raw = _get(
+            "/teams/statistics",
+            {"team": int(team_id), "league": int(league_id), "season": int(season)},
+        )
+        if isinstance(raw, dict):
+            return raw
+        if isinstance(raw, list) and raw:
+            item = raw[0]
+            return item if isinstance(item, dict) else None
+        return None
+    except APIFootballError as exc:
+        if exc.status == 429:
+            raise
+        log.warning(
+            "get_team_season_stats(team=%s, league=%s, season=%s) failed: %s",
+            team_id,
+            league_id,
+            season,
+            exc,
+        )
+        return None
+    except (TypeError, ValueError) as exc:
+        log.warning("get_team_season_stats parse error: %s", exc)
+        return None
+
+
+def get_league_coverage(team_id: int) -> list[dict]:
+    """Leagues/competitions a team has participated in (with season coverage)."""
+    try:
+        raw = _get("/leagues", {"team": int(team_id)})
+        return raw if isinstance(raw, list) else []
+    except APIFootballError as exc:
+        if exc.status == 429:
+            raise
+        log.warning("get_league_coverage(%s) failed: %s", team_id, exc)
+        return []
+    except (TypeError, ValueError) as exc:
+        log.warning("get_league_coverage(%s) parse error: %s", team_id, exc)
+        return []

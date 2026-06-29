@@ -1,0 +1,4155 @@
+{
+  "version": 1,
+  "updated_at": "2026-06-29T20:05:12.740051+00:00",
+  "fixtures": {
+    "1561329": {
+      "fixture_id": 1561329,
+      "league_id": 1,
+      "season": 2026,
+      "round": "Round of 32",
+      "date": "2026-06-28T19:00:00+00:00",
+      "venue": {
+        "id": null,
+        "name": "SoFi Stadium",
+        "city": "Inglewood"
+      },
+      "home_team": "South Africa",
+      "away_team": "Canada",
+      "home_team_id": 1531,
+      "away_team_id": 5529,
+      "home_team_api": "South Africa",
+      "away_team_api": "Canada",
+      "predicted_score": "1-2",
+      "predicted_home_goals": 1,
+      "predicted_away_goals": 2,
+      "probabilities": {
+        "home_win": 0.1561,
+        "draw": 0.2118,
+        "away_win": 0.6321,
+        "projected_home_goals": 0.8,
+        "projected_away_goals": 2.09
+      },
+      "confidence": {
+        "score": 0.458,
+        "label": "low",
+        "data_quality": 0.65
+      },
+      "model_version": {
+        "Poisson Regression": "1.0.0",
+        "Ridge Regression": "1.0.0",
+        "Random Forest": "1.0.0",
+        "Gradient Boosting": "1.0.0",
+        "XGBoost": "1.0.0",
+        "LightGBM": "1.0.0",
+        "Neural Network": "1.0.0"
+      },
+      "ml_match": {
+        "mn": 1561329,
+        "group": "R32",
+        "home": "South Africa",
+        "away": "Canada",
+        "home_flag": "🇿🇦",
+        "away_flag": "🇨🇦",
+        "models": {
+          "Poisson": {
+            "gh": 1,
+            "ga": 2,
+            "rh": 0.7572102153301568,
+            "ra": 2.22085879712028
+          },
+          "Ridge": {
+            "gh": 1,
+            "ga": 2,
+            "rh": 0.6524801870738157,
+            "ra": 2.473650323785291
+          },
+          "Random Forest": {
+            "gh": 1,
+            "ga": 2,
+            "rh": 0.8313332924614162,
+            "ra": 2.1837329924101336
+          },
+          "Gradient Boost": {
+            "gh": 1,
+            "ga": 2,
+            "rh": 0.8147084817007623,
+            "ra": 2.178834725844193
+          },
+          "XGBoost": {
+            "gh": 1,
+            "ga": 2,
+            "rh": 0.6939204335212708,
+            "ra": 2.0391197204589844
+          },
+          "LightGBM": {
+            "gh": 1,
+            "ga": 2,
+            "rh": 0.8257259261656154,
+            "ra": 2.112515768494142
+          },
+          "Neural Net": {
+            "gh": 1,
+            "ga": 1,
+            "rh": 0.9985515844629693,
+            "ra": 1.462219093948069
+          }
+        },
+        "ens_h": 1,
+        "ens_a": 2,
+        "ens": "1-2",
+        "prediction": {
+          "home_win": 0.1561,
+          "draw": 0.2118,
+          "away_win": 0.6321,
+          "projected_home_goals": 0.8,
+          "projected_away_goals": 2.09,
+          "over_2_5": 0.5516,
+          "over_3_5": 0.328,
+          "both_teams_score": 0.4822,
+          "over_under": {
+            "2.5": {
+              "line": 2.5,
+              "over": 0.5516,
+              "under": 0.4484
+            },
+            "3.5": {
+              "line": 3.5,
+              "over": 0.328,
+              "under": 0.672
+            },
+            "line": 2.5,
+            "over": 0.5516,
+            "under": 0.4484
+          },
+          "score_matrix": {
+            "top_exact_scores": [
+              {
+                "score": "0-2",
+                "probability": 0.121501
+              },
+              {
+                "score": "0-1",
+                "probability": 0.116244
+              },
+              {
+                "score": "1-2",
+                "probability": 0.097079
+              },
+              {
+                "score": "1-1",
+                "probability": 0.092878
+              },
+              {
+                "score": "0-3",
+                "probability": 0.084664
+              }
+            ],
+            "score_matrix": {
+              "0-0": 0.055607,
+              "0-1": 0.116244,
+              "0-2": 0.121501,
+              "0-3": 0.084664,
+              "0-4": 0.044246,
+              "0-5": 0.018499,
+              "0-6": 0.006445,
+              "0-7": 0.001925,
+              "0-8": 0.000503,
+              "1-0": 0.04443,
+              "1-1": 0.092878,
+              "1-2": 0.097079,
+              "1-3": 0.067646,
+              "1-4": 0.035353,
+              "1-5": 0.014781,
+              "1-6": 0.00515,
+              "1-7": 0.001538,
+              "1-8": 0.000402,
+              "2-0": 0.01775,
+              "2-1": 0.037105,
+              "2-2": 0.038783,
+              "2-3": 0.027024,
+              "2-4": 0.014123,
+              "2-5": 0.005905,
+              "2-6": 0.002057,
+              "2-7": 0.000614,
+              "2-8": 0.000161,
+              "3-0": 0.004727,
+              "3-1": 0.009882,
+              "3-2": 0.010329,
+              "3-3": 0.007197,
+              "3-4": 0.003761,
+              "3-5": 0.001573,
+              "3-6": 0.000548,
+              "3-7": 0.000164,
+              "3-8": 4.3e-05,
+              "4-0": 0.000944,
+              "4-1": 0.001974,
+              "4-2": 0.002063,
+              "4-3": 0.001438,
+              "4-4": 0.000751,
+              "4-5": 0.000314,
+              "4-6": 0.000109,
+              "4-7": 3.3e-05,
+              "4-8": 9e-06,
+              "5-0": 0.000151,
+              "5-1": 0.000315,
+              "5-2": 0.00033,
+              "5-3": 0.00023,
+              "5-4": 0.00012,
+              "5-5": 5e-05,
+              "5-6": 1.7e-05,
+              "5-7": 5e-06,
+              "5-8": 1e-06,
+              "6-0": 2e-05,
+              "6-1": 4.2e-05,
+              "6-2": 4.4e-05,
+              "6-3": 3.1e-05,
+              "6-4": 1.6e-05,
+              "6-5": 7e-06,
+              "6-6": 2e-06,
+              "6-7": 1e-06,
+              "6-8": 0.0,
+              "7-0": 2e-06,
+              "7-1": 5e-06,
+              "7-2": 5e-06,
+              "7-3": 3e-06,
+              "7-4": 2e-06,
+              "7-5": 1e-06,
+              "7-6": 0.0,
+              "7-7": 0.0,
+              "7-8": 0.0,
+              "8-0": 0.0,
+              "8-1": 0.0,
+              "8-2": 1e-06,
+              "8-3": 0.0,
+              "8-4": 0.0,
+              "8-5": 0.0,
+              "8-6": 0.0,
+              "8-7": 0.0,
+              "8-8": 0.0
+            }
+          }
+        },
+        "confidence": {
+          "score": 0.458,
+          "label": "low",
+          "data_quality": 0.65
+        },
+        "explanation": {
+          "top_factors": [
+            "Away team has stronger pre-match Elo rating",
+            "Away team stronger attacking xG profile"
+          ],
+          "risk_factors": []
+        },
+        "ensemble": {
+          "weights": {
+            "Poisson Regression": 0.1584,
+            "Ridge Regression": 0.1239,
+            "Random Forest": 0.1557,
+            "Gradient Boosting": 0.1416,
+            "XGBoost": 0.142,
+            "LightGBM": 0.1338,
+            "Neural Network": 0.1446
+          },
+          "model_agreement": 0.833
+        },
+        "fixture_id": 1561329,
+        "round": "Round of 32",
+        "kickoff": "2026-06-28T19:00:00+00:00",
+        "source": "future_cache"
+      },
+      "created_at": "2026-06-28T18:43:28.439698+00:00",
+      "updated_at": "2026-06-28T18:43:28.439698+00:00"
+    },
+    "1562344": {
+      "fixture_id": 1562344,
+      "league_id": 1,
+      "season": 2026,
+      "round": "Round of 32",
+      "date": "2026-06-29T17:00:00+00:00",
+      "venue": {
+        "id": 0,
+        "name": "NRG Stadium",
+        "city": null
+      },
+      "home_team": "Brazil",
+      "away_team": "Japan",
+      "home_team_id": 6,
+      "away_team_id": 12,
+      "home_team_api": "Brazil",
+      "away_team_api": "Japan",
+      "predicted_score": "4-0",
+      "predicted_home_goals": 4,
+      "predicted_away_goals": 0,
+      "probabilities": {
+        "home_win": 0.82,
+        "draw": 0.108,
+        "away_win": 0.072,
+        "projected_home_goals": 3.56,
+        "projected_away_goals": 0.45
+      },
+      "confidence": {
+        "score": 0.358,
+        "label": "low",
+        "data_quality": 0.65
+      },
+      "model_version": {
+        "Poisson Regression": "1.0.0",
+        "Ridge Regression": "1.0.0",
+        "Random Forest": "1.0.0",
+        "Gradient Boosting": "1.0.0",
+        "XGBoost": "1.0.0",
+        "LightGBM": "1.0.0",
+        "Neural Network": "1.0.0"
+      },
+      "ml_match": {
+        "mn": 1562344,
+        "group": "R32",
+        "home": "Brazil",
+        "away": "Japan",
+        "home_flag": "🇧🇷",
+        "away_flag": "🇯🇵",
+        "models": {
+          "Poisson": {
+            "gh": 3,
+            "ga": 1,
+            "rh": 2.6794574485070184,
+            "ra": 0.6362187974616138
+          },
+          "Ridge": {
+            "gh": 3,
+            "ga": 0,
+            "rh": 3.215491650610427,
+            "ra": 0.43743202475441234
+          },
+          "Random Forest": {
+            "gh": 4,
+            "ga": 0,
+            "rh": 3.726062627029183,
+            "ra": 0.36237411846337614
+          },
+          "Gradient Boost": {
+            "gh": 4,
+            "ga": 0,
+            "rh": 3.5143110177145584,
+            "ra": 0.3830813760575061
+          },
+          "XGBoost": {
+            "gh": 4,
+            "ga": 0,
+            "rh": 3.781536340713501,
+            "ra": 0.29194968938827515
+          },
+          "LightGBM": {
+            "gh": 4,
+            "ga": 0,
+            "rh": 4.116940622051794,
+            "ra": 0.32021372073771437
+          },
+          "Neural Net": {
+            "gh": 4,
+            "ga": 1,
+            "rh": 3.927399121171475,
+            "ra": 0.707301594486944
+          }
+        },
+        "ens_h": 4,
+        "ens_a": 0,
+        "ens": "4-0",
+        "prediction": {
+          "home_win": 0.82,
+          "draw": 0.108,
+          "away_win": 0.072,
+          "projected_home_goals": 3.56,
+          "projected_away_goals": 0.45,
+          "over_2_5": 0.7631,
+          "over_3_5": 0.5682,
+          "both_teams_score": 0.3534,
+          "over_under": {
+            "2.5": {
+              "line": 2.5,
+              "over": 0.7631,
+              "under": 0.2369
+            },
+            "3.5": {
+              "line": 3.5,
+              "over": 0.5682,
+              "under": 0.4318
+            },
+            "line": 2.5,
+            "over": 0.7631,
+            "under": 0.2369
+          },
+          "score_matrix": {
+            "top_exact_scores": [
+              {
+                "score": "3-0",
+                "probability": 0.136133
+              },
+              {
+                "score": "4-0",
+                "probability": 0.121034
+              },
+              {
+                "score": "2-0",
+                "probability": 0.114838
+              },
+              {
+                "score": "5-0",
+                "probability": 0.086087
+              },
+              {
+                "score": "1-0",
+                "probability": 0.064582
+              }
+            ],
+            "score_matrix": {
+              "0-0": 0.01816,
+              "0-1": 0.008212,
+              "0-2": 0.001857,
+              "0-3": 0.00028,
+              "0-4": 3.2e-05,
+              "0-5": 3e-06,
+              "0-6": 0.0,
+              "0-7": 0.0,
+              "0-8": 0.0,
+              "1-0": 0.064582,
+              "1-1": 0.029205,
+              "1-2": 0.006604,
+              "1-3": 0.000995,
+              "1-4": 0.000113,
+              "1-5": 1e-05,
+              "1-6": 1e-06,
+              "1-7": 0.0,
+              "1-8": 0.0,
+              "2-0": 0.114838,
+              "2-1": 0.051932,
+              "2-2": 0.011742,
+              "2-3": 0.00177,
+              "2-4": 0.0002,
+              "2-5": 1.8e-05,
+              "2-6": 1e-06,
+              "2-7": 0.0,
+              "2-8": 0.0,
+              "3-0": 0.136133,
+              "3-1": 0.061562,
+              "3-2": 0.01392,
+              "3-3": 0.002098,
+              "3-4": 0.000237,
+              "3-5": 2.1e-05,
+              "3-6": 2e-06,
+              "3-7": 0.0,
+              "3-8": 0.0,
+              "4-0": 0.121034,
+              "4-1": 0.054734,
+              "4-2": 0.012376,
+              "4-3": 0.001866,
+              "4-4": 0.000211,
+              "4-5": 1.9e-05,
+              "4-6": 1e-06,
+              "4-7": 0.0,
+              "4-8": 0.0,
+              "5-0": 0.086087,
+              "5-1": 0.03893,
+              "5-2": 0.008802,
+              "5-3": 0.001327,
+              "5-4": 0.00015,
+              "5-5": 1.4e-05,
+              "5-6": 1e-06,
+              "5-7": 0.0,
+              "5-8": 0.0,
+              "6-0": 0.051026,
+              "6-1": 0.023075,
+              "6-2": 0.005217,
+              "6-3": 0.000786,
+              "6-4": 8.9e-05,
+              "6-5": 8e-06,
+              "6-6": 1e-06,
+              "6-7": 0.0,
+              "6-8": 0.0,
+              "7-0": 0.025923,
+              "7-1": 0.011723,
+              "7-2": 0.002651,
+              "7-3": 0.0004,
+              "7-4": 4.5e-05,
+              "7-5": 4e-06,
+              "7-6": 0.0,
+              "7-7": 0.0,
+              "7-8": 0.0,
+              "8-0": 0.011524,
+              "8-1": 0.005211,
+              "8-2": 0.001178,
+              "8-3": 0.000178,
+              "8-4": 2e-05,
+              "8-5": 2e-06,
+              "8-6": 0.0,
+              "8-7": 0.0,
+              "8-8": 0.0
+            }
+          }
+        },
+        "confidence": {
+          "score": 0.358,
+          "label": "low",
+          "data_quality": 0.65
+        },
+        "explanation": {
+          "top_factors": [
+            "Home team has stronger pre-match Elo rating",
+            "Home team stronger attacking xG profile"
+          ],
+          "risk_factors": []
+        },
+        "ensemble": {
+          "weights": {
+            "Poisson Regression": 0.1584,
+            "Ridge Regression": 0.1239,
+            "Random Forest": 0.1557,
+            "Gradient Boosting": 0.1416,
+            "XGBoost": 0.142,
+            "LightGBM": 0.1338,
+            "Neural Network": 0.1446
+          },
+          "model_agreement": 0.5
+        },
+        "fixture_id": 1562344,
+        "round": "Round of 32",
+        "kickoff": "2026-06-29T17:00:00+00:00",
+        "source": "future_cache"
+      },
+      "created_at": "2026-06-28T18:43:28.677919+00:00",
+      "updated_at": "2026-06-28T18:43:28.677919+00:00"
+    },
+    "1565176": {
+      "fixture_id": 1565176,
+      "league_id": 1,
+      "season": 2026,
+      "round": "Round of 32",
+      "date": "2026-06-29T20:30:00+00:00",
+      "venue": {
+        "id": 0,
+        "name": "Gillette Stadium",
+        "city": null
+      },
+      "home_team": "Germany",
+      "away_team": "Paraguay",
+      "home_team_id": 25,
+      "away_team_id": 2380,
+      "home_team_api": "Germany",
+      "away_team_api": "Paraguay",
+      "predicted_score": "4-0",
+      "predicted_home_goals": 4,
+      "predicted_away_goals": 0,
+      "probabilities": {
+        "home_win": 0.82,
+        "draw": 0.1067,
+        "away_win": 0.0734,
+        "projected_home_goals": 3.52,
+        "projected_away_goals": 0.23
+      },
+      "confidence": {
+        "score": 0.458,
+        "label": "low",
+        "data_quality": 0.65
+      },
+      "model_version": {
+        "Poisson Regression": "1.0.0",
+        "Ridge Regression": "1.0.0",
+        "Random Forest": "1.0.0",
+        "Gradient Boosting": "1.0.0",
+        "XGBoost": "1.0.0",
+        "LightGBM": "1.0.0",
+        "Neural Network": "1.0.0"
+      },
+      "ml_match": {
+        "mn": 1565176,
+        "group": "R32",
+        "home": "Germany",
+        "away": "Paraguay",
+        "home_flag": "🇩🇪",
+        "away_flag": "🇵🇾",
+        "models": {
+          "Poisson": {
+            "gh": 4,
+            "ga": 0,
+            "rh": 3.781856221526742,
+            "ra": 0.37611870028821337
+          },
+          "Ridge": {
+            "gh": 4,
+            "ga": 0,
+            "rh": 3.6793022270572346,
+            "ra": 0.27857903570384557
+          },
+          "Random Forest": {
+            "gh": 4,
+            "ga": 0,
+            "rh": 3.5665197386362975,
+            "ra": 0.22097426547229637
+          },
+          "Gradient Boost": {
+            "gh": 3,
+            "ga": 0,
+            "rh": 3.122280877924813,
+            "ra": 0.23717264514940853
+          },
+          "XGBoost": {
+            "gh": 3,
+            "ga": 0,
+            "rh": 3.174506664276123,
+            "ra": 0.2575727701187134
+          },
+          "LightGBM": {
+            "gh": 4,
+            "ga": 0,
+            "rh": 3.6019608202244493,
+            "ra": 0.15913881885120063
+          },
+          "Neural Net": {
+            "gh": 4,
+            "ga": 0,
+            "rh": 3.6781686219881493,
+            "ra": 0.036932953875261854
+          }
+        },
+        "ens_h": 4,
+        "ens_a": 0,
+        "ens": "4-0",
+        "prediction": {
+          "home_win": 0.82,
+          "draw": 0.1067,
+          "away_win": 0.0734,
+          "projected_home_goals": 3.52,
+          "projected_away_goals": 0.23,
+          "over_2_5": 0.7216,
+          "over_3_5": 0.5146,
+          "both_teams_score": 0.1957,
+          "over_under": {
+            "2.5": {
+              "line": 2.5,
+              "over": 0.7216,
+              "under": 0.2784
+            },
+            "3.5": {
+              "line": 3.5,
+              "over": 0.5146,
+              "under": 0.4854
+            },
+            "line": 2.5,
+            "over": 0.7216,
+            "under": 0.2784
+          },
+          "score_matrix": {
+            "top_exact_scores": [
+              {
+                "score": "3-0",
+                "probability": 0.171836
+              },
+              {
+                "score": "4-0",
+                "probability": 0.151083
+              },
+              {
+                "score": "2-0",
+                "probability": 0.14658
+              },
+              {
+                "score": "5-0",
+                "probability": 0.10627
+              },
+              {
+                "score": "1-0",
+                "probability": 0.083357
+              }
+            ],
+            "score_matrix": {
+              "0-0": 0.023702,
+              "0-1": 0.00534,
+              "0-2": 0.000602,
+              "0-3": 4.5e-05,
+              "0-4": 3e-06,
+              "0-5": 0.0,
+              "0-6": 0.0,
+              "0-7": 0.0,
+              "0-8": 0.0,
+              "1-0": 0.083357,
+              "1-1": 0.01878,
+              "1-2": 0.002115,
+              "1-3": 0.000159,
+              "1-4": 9e-06,
+              "1-5": 0.0,
+              "1-6": 0.0,
+              "1-7": 0.0,
+              "1-8": 0.0,
+              "2-0": 0.14658,
+              "2-1": 0.033023,
+              "2-2": 0.00372,
+              "2-3": 0.000279,
+              "2-4": 1.6e-05,
+              "2-5": 1e-06,
+              "2-6": 0.0,
+              "2-7": 0.0,
+              "2-8": 0.0,
+              "3-0": 0.171836,
+              "3-1": 0.038713,
+              "3-2": 0.004361,
+              "3-3": 0.000327,
+              "3-4": 1.8e-05,
+              "3-5": 1e-06,
+              "3-6": 0.0,
+              "3-7": 0.0,
+              "3-8": 0.0,
+              "4-0": 0.151083,
+              "4-1": 0.034038,
+              "4-2": 0.003834,
+              "4-3": 0.000288,
+              "4-4": 1.6e-05,
+              "4-5": 1e-06,
+              "4-6": 0.0,
+              "4-7": 0.0,
+              "4-8": 0.0,
+              "5-0": 0.10627,
+              "5-1": 0.023942,
+              "5-2": 0.002697,
+              "5-3": 0.000203,
+              "5-4": 1.1e-05,
+              "5-5": 1e-06,
+              "5-6": 0.0,
+              "5-7": 0.0,
+              "5-8": 0.0,
+              "6-0": 0.06229,
+              "6-1": 0.014033,
+              "6-2": 0.001581,
+              "6-3": 0.000119,
+              "6-4": 7e-06,
+              "6-5": 0.0,
+              "6-6": 0.0,
+              "6-7": 0.0,
+              "6-8": 0.0,
+              "7-0": 0.031296,
+              "7-1": 0.007051,
+              "7-2": 0.000794,
+              "7-3": 6e-05,
+              "7-4": 3e-06,
+              "7-5": 0.0,
+              "7-6": 0.0,
+              "7-7": 0.0,
+              "7-8": 0.0,
+              "8-0": 0.013758,
+              "8-1": 0.0031,
+              "8-2": 0.000349,
+              "8-3": 2.6e-05,
+              "8-4": 1e-06,
+              "8-5": 0.0,
+              "8-6": 0.0,
+              "8-7": 0.0,
+              "8-8": 0.0
+            }
+          }
+        },
+        "confidence": {
+          "score": 0.458,
+          "label": "low",
+          "data_quality": 0.65
+        },
+        "explanation": {
+          "top_factors": [
+            "Home team has stronger pre-match Elo rating",
+            "Home team stronger attacking xG profile"
+          ],
+          "risk_factors": []
+        },
+        "ensemble": {
+          "weights": {
+            "Poisson Regression": 0.1584,
+            "Ridge Regression": 0.1239,
+            "Random Forest": 0.1557,
+            "Gradient Boosting": 0.1416,
+            "XGBoost": 0.142,
+            "LightGBM": 0.1338,
+            "Neural Network": 0.1446
+          },
+          "model_agreement": 0.833
+        },
+        "fixture_id": 1565176,
+        "round": "Round of 32",
+        "kickoff": "2026-06-29T20:30:00+00:00",
+        "source": "future_cache"
+      },
+      "created_at": "2026-06-28T18:43:28.917256+00:00",
+      "updated_at": "2026-06-28T18:43:28.917256+00:00"
+    },
+    "1562345": {
+      "fixture_id": 1562345,
+      "league_id": 1,
+      "season": 2026,
+      "round": "Round of 32",
+      "date": "2026-06-30T01:00:00+00:00",
+      "venue": {
+        "id": 0,
+        "name": "Estadio BBVA",
+        "city": "Monterrey"
+      },
+      "home_team": "Netherlands",
+      "away_team": "Morocco",
+      "home_team_id": 1118,
+      "away_team_id": 31,
+      "home_team_api": "Netherlands",
+      "away_team_api": "Morocco",
+      "predicted_score": "2-1",
+      "predicted_home_goals": 2,
+      "predicted_away_goals": 1,
+      "probabilities": {
+        "home_win": 0.5411,
+        "draw": 0.2579,
+        "away_win": 0.201,
+        "projected_home_goals": 1.62,
+        "projected_away_goals": 0.79
+      },
+      "confidence": {
+        "score": 0.408,
+        "label": "low",
+        "data_quality": 0.65
+      },
+      "model_version": {
+        "Poisson Regression": "1.0.0",
+        "Ridge Regression": "1.0.0",
+        "Random Forest": "1.0.0",
+        "Gradient Boosting": "1.0.0",
+        "XGBoost": "1.0.0",
+        "LightGBM": "1.0.0",
+        "Neural Network": "1.0.0"
+      },
+      "ml_match": {
+        "mn": 1562345,
+        "group": "R32",
+        "home": "Netherlands",
+        "away": "Morocco",
+        "home_flag": "🇳🇱",
+        "away_flag": "🇲🇦",
+        "models": {
+          "Poisson": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 1.929754534125308,
+            "ra": 0.9734511999686059
+          },
+          "Ridge": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 1.8373182363403078,
+            "ra": 0.7838269470849168
+          },
+          "Random Forest": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 1.7154469294609718,
+            "ra": 0.8032295686575084
+          },
+          "Gradient Boost": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 1.6336681045452441,
+            "ra": 0.9349163474645801
+          },
+          "XGBoost": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 1.6062157154083252,
+            "ra": 0.802320122718811
+          },
+          "LightGBM": {
+            "gh": 1,
+            "ga": 1,
+            "rh": 1.4301101686170175,
+            "ra": 0.7667371283000087
+          },
+          "Neural Net": {
+            "gh": 1,
+            "ga": 0,
+            "rh": 1.145399024793749,
+            "ra": 0.47597557889730713
+          }
+        },
+        "ens_h": 2,
+        "ens_a": 1,
+        "ens": "2-1",
+        "prediction": {
+          "home_win": 0.5411,
+          "draw": 0.2579,
+          "away_win": 0.201,
+          "projected_home_goals": 1.62,
+          "projected_away_goals": 0.79,
+          "over_2_5": 0.4331,
+          "over_3_5": 0.2236,
+          "both_teams_score": 0.4392,
+          "over_under": {
+            "2.5": {
+              "line": 2.5,
+              "over": 0.4331,
+              "under": 0.5669
+            },
+            "3.5": {
+              "line": 3.5,
+              "over": 0.2236,
+              "under": 0.7764
+            },
+            "line": 2.5,
+            "over": 0.4331,
+            "under": 0.5669
+          },
+          "score_matrix": {
+            "top_exact_scores": [
+              {
+                "score": "1-0",
+                "probability": 0.145083
+              },
+              {
+                "score": "2-0",
+                "probability": 0.117284
+              },
+              {
+                "score": "1-1",
+                "probability": 0.11521
+              },
+              {
+                "score": "2-1",
+                "probability": 0.093136
+              },
+              {
+                "score": "0-0",
+                "probability": 0.089735
+              }
+            ],
+            "score_matrix": {
+              "0-0": 0.089735,
+              "0-1": 0.071259,
+              "0-2": 0.028293,
+              "0-3": 0.007489,
+              "0-4": 0.001487,
+              "0-5": 0.000236,
+              "0-6": 3.1e-05,
+              "0-7": 4e-06,
+              "0-8": 0.0,
+              "1-0": 0.145083,
+              "1-1": 0.11521,
+              "1-2": 0.045744,
+              "1-3": 0.012109,
+              "1-4": 0.002404,
+              "1-5": 0.000382,
+              "1-6": 5.1e-05,
+              "1-7": 6e-06,
+              "1-8": 1e-06,
+              "2-0": 0.117284,
+              "2-1": 0.093136,
+              "2-2": 0.03698,
+              "2-3": 0.009789,
+              "2-4": 0.001943,
+              "2-5": 0.000309,
+              "2-6": 4.1e-05,
+              "2-7": 5e-06,
+              "2-8": 0.0,
+              "3-0": 0.063208,
+              "3-1": 0.050194,
+              "3-2": 0.01993,
+              "3-3": 0.005275,
+              "3-4": 0.001047,
+              "3-5": 0.000166,
+              "3-6": 2.2e-05,
+              "3-7": 2e-06,
+              "3-8": 0.0,
+              "4-0": 0.025549,
+              "4-1": 0.020288,
+              "4-2": 0.008056,
+              "4-3": 0.002132,
+              "4-4": 0.000423,
+              "4-5": 6.7e-05,
+              "4-6": 9e-06,
+              "4-7": 1e-06,
+              "4-8": 0.0,
+              "5-0": 0.008261,
+              "5-1": 0.00656,
+              "5-2": 0.002605,
+              "5-3": 0.000689,
+              "5-4": 0.000137,
+              "5-5": 2.2e-05,
+              "5-6": 3e-06,
+              "5-7": 0.0,
+              "5-8": 0.0,
+              "6-0": 0.002226,
+              "6-1": 0.001768,
+              "6-2": 0.000702,
+              "6-3": 0.000186,
+              "6-4": 3.7e-05,
+              "6-5": 6e-06,
+              "6-6": 1e-06,
+              "6-7": 0.0,
+              "6-8": 0.0,
+              "7-0": 0.000514,
+              "7-1": 0.000408,
+              "7-2": 0.000162,
+              "7-3": 4.3e-05,
+              "7-4": 9e-06,
+              "7-5": 1e-06,
+              "7-6": 0.0,
+              "7-7": 0.0,
+              "7-8": 0.0,
+              "8-0": 0.000104,
+              "8-1": 8.3e-05,
+              "8-2": 3.3e-05,
+              "8-3": 9e-06,
+              "8-4": 2e-06,
+              "8-5": 0.0,
+              "8-6": 0.0,
+              "8-7": 0.0,
+              "8-8": 0.0
+            }
+          }
+        },
+        "confidence": {
+          "score": 0.408,
+          "label": "low",
+          "data_quality": 0.65
+        },
+        "explanation": {
+          "top_factors": [
+            "Home team has stronger pre-match Elo rating",
+            "Home team stronger attacking xG profile"
+          ],
+          "risk_factors": []
+        },
+        "ensemble": {
+          "weights": {
+            "Poisson Regression": 0.1584,
+            "Ridge Regression": 0.1239,
+            "Random Forest": 0.1557,
+            "Gradient Boosting": 0.1416,
+            "XGBoost": 0.142,
+            "LightGBM": 0.1338,
+            "Neural Network": 0.1446
+          },
+          "model_agreement": 0.667
+        },
+        "fixture_id": 1562345,
+        "round": "Round of 32",
+        "kickoff": "2026-06-30T01:00:00+00:00",
+        "source": "future_cache"
+      },
+      "created_at": "2026-06-28T18:43:29.166874+00:00",
+      "updated_at": "2026-06-28T18:43:29.166874+00:00"
+    },
+    "1564789": {
+      "fixture_id": 1564789,
+      "league_id": 1,
+      "season": 2026,
+      "round": "Round of 32",
+      "date": "2026-06-30T17:00:00+00:00",
+      "venue": {
+        "id": 0,
+        "name": null,
+        "city": null
+      },
+      "home_team": "Ivory Coast",
+      "away_team": "Norway",
+      "home_team_id": 1501,
+      "away_team_id": 1090,
+      "home_team_api": "Ivory Coast",
+      "away_team_api": "Norway",
+      "predicted_score": "1-2",
+      "predicted_home_goals": 1,
+      "predicted_away_goals": 2,
+      "probabilities": {
+        "home_win": 0.2315,
+        "draw": 0.2407,
+        "away_win": 0.5278,
+        "projected_home_goals": 1.06,
+        "projected_away_goals": 1.83
+      },
+      "confidence": {
+        "score": 0.458,
+        "label": "low",
+        "data_quality": 0.65
+      },
+      "model_version": {
+        "Poisson Regression": "1.0.0",
+        "Ridge Regression": "1.0.0",
+        "Random Forest": "1.0.0",
+        "Gradient Boosting": "1.0.0",
+        "XGBoost": "1.0.0",
+        "LightGBM": "1.0.0",
+        "Neural Network": "1.0.0"
+      },
+      "ml_match": {
+        "mn": 1564789,
+        "group": "R32",
+        "home": "Ivory Coast",
+        "away": "Norway",
+        "home_flag": "🇨🇮",
+        "away_flag": "🇳🇴",
+        "models": {
+          "Poisson": {
+            "gh": 1,
+            "ga": 2,
+            "rh": 0.9560850806571954,
+            "ra": 1.9227549979317424
+          },
+          "Ridge": {
+            "gh": 1,
+            "ga": 2,
+            "rh": 1.020029405174283,
+            "ra": 2.1967315622189907
+          },
+          "Random Forest": {
+            "gh": 1,
+            "ga": 2,
+            "rh": 1.0269841761152456,
+            "ra": 1.9840499151544455
+          },
+          "Gradient Boost": {
+            "gh": 1,
+            "ga": 2,
+            "rh": 0.9273034701768389,
+            "ra": 1.9922909068984396
+          },
+          "XGBoost": {
+            "gh": 1,
+            "ga": 2,
+            "rh": 0.9937971234321594,
+            "ra": 1.8665071725845337
+          },
+          "LightGBM": {
+            "gh": 1,
+            "ga": 2,
+            "rh": 0.9723523435737416,
+            "ra": 1.5960672810458887
+          },
+          "Neural Net": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 1.5329889611673733,
+            "ra": 1.2928889252774605
+          }
+        },
+        "ens_h": 1,
+        "ens_a": 2,
+        "ens": "1-2",
+        "prediction": {
+          "home_win": 0.2315,
+          "draw": 0.2407,
+          "away_win": 0.5278,
+          "projected_home_goals": 1.06,
+          "projected_away_goals": 1.83,
+          "over_2_5": 0.5529,
+          "over_3_5": 0.3293,
+          "both_teams_score": 0.5496,
+          "over_under": {
+            "2.5": {
+              "line": 2.5,
+              "over": 0.5529,
+              "under": 0.4471
+            },
+            "3.5": {
+              "line": 3.5,
+              "over": 0.3293,
+              "under": 0.6707
+            },
+            "line": 2.5,
+            "over": 0.5529,
+            "under": 0.4471
+          },
+          "score_matrix": {
+            "top_exact_scores": [
+              {
+                "score": "1-1",
+                "probability": 0.107633
+              },
+              {
+                "score": "0-1",
+                "probability": 0.101356
+              },
+              {
+                "score": "1-2",
+                "probability": 0.098662
+              },
+              {
+                "score": "0-2",
+                "probability": 0.092909
+              },
+              {
+                "score": "1-3",
+                "probability": 0.060293
+              }
+            ],
+            "score_matrix": {
+              "0-0": 0.055286,
+              "0-1": 0.101356,
+              "0-2": 0.092909,
+              "0-3": 0.056777,
+              "0-4": 0.026023,
+              "0-5": 0.009542,
+              "0-6": 0.002915,
+              "0-7": 0.000764,
+              "0-8": 0.000175,
+              "1-0": 0.058709,
+              "1-1": 0.107633,
+              "1-2": 0.098662,
+              "1-3": 0.060293,
+              "1-4": 0.027634,
+              "1-5": 0.010132,
+              "1-6": 0.003096,
+              "1-7": 0.000811,
+              "1-8": 0.000186,
+              "2-0": 0.031172,
+              "2-1": 0.057149,
+              "2-2": 0.052386,
+              "2-3": 0.032013,
+              "2-4": 0.014673,
+              "2-5": 0.00538,
+              "2-6": 0.001644,
+              "2-7": 0.000431,
+              "2-8": 9.9e-05,
+              "3-0": 0.011034,
+              "3-1": 0.020229,
+              "3-2": 0.018543,
+              "3-3": 0.011332,
+              "3-4": 0.005194,
+              "3-5": 0.001904,
+              "3-6": 0.000582,
+              "3-7": 0.000152,
+              "3-8": 3.5e-05,
+              "4-0": 0.002929,
+              "4-1": 0.00537,
+              "4-2": 0.004923,
+              "4-3": 0.003008,
+              "4-4": 0.001379,
+              "4-5": 0.000506,
+              "4-6": 0.000154,
+              "4-7": 4e-05,
+              "4-8": 9e-06,
+              "5-0": 0.000622,
+              "5-1": 0.001141,
+              "5-2": 0.001046,
+              "5-3": 0.000639,
+              "5-4": 0.000293,
+              "5-5": 0.000107,
+              "5-6": 3.3e-05,
+              "5-7": 9e-06,
+              "5-8": 2e-06,
+              "6-0": 0.00011,
+              "6-1": 0.000202,
+              "6-2": 0.000185,
+              "6-3": 0.000113,
+              "6-4": 5.2e-05,
+              "6-5": 1.9e-05,
+              "6-6": 6e-06,
+              "6-7": 2e-06,
+              "6-8": 0.0,
+              "7-0": 1.7e-05,
+              "7-1": 3.1e-05,
+              "7-2": 2.8e-05,
+              "7-3": 1.7e-05,
+              "7-4": 8e-06,
+              "7-5": 3e-06,
+              "7-6": 1e-06,
+              "7-7": 0.0,
+              "7-8": 0.0,
+              "8-0": 2e-06,
+              "8-1": 4e-06,
+              "8-2": 4e-06,
+              "8-3": 2e-06,
+              "8-4": 1e-06,
+              "8-5": 0.0,
+              "8-6": 0.0,
+              "8-7": 0.0,
+              "8-8": 0.0
+            }
+          }
+        },
+        "confidence": {
+          "score": 0.458,
+          "label": "low",
+          "data_quality": 0.65
+        },
+        "explanation": {
+          "top_factors": [
+            "Away team has stronger pre-match Elo rating"
+          ],
+          "risk_factors": []
+        },
+        "ensemble": {
+          "weights": {
+            "Poisson Regression": 0.1584,
+            "Ridge Regression": 0.1239,
+            "Random Forest": 0.1557,
+            "Gradient Boosting": 0.1416,
+            "XGBoost": 0.142,
+            "LightGBM": 0.1338,
+            "Neural Network": 0.1446
+          },
+          "model_agreement": 0.833
+        },
+        "fixture_id": 1564789,
+        "round": "Round of 32",
+        "kickoff": "2026-06-30T17:00:00+00:00",
+        "source": "future_cache"
+      },
+      "created_at": "2026-06-28T18:43:29.423038+00:00",
+      "updated_at": "2026-06-28T18:43:29.423038+00:00"
+    },
+    "1565177": {
+      "fixture_id": 1565177,
+      "league_id": 1,
+      "season": 2026,
+      "round": "Round of 32",
+      "date": "2026-06-30T21:00:00+00:00",
+      "venue": {
+        "id": 0,
+        "name": "MetLife Stadium",
+        "city": null
+      },
+      "home_team": "France",
+      "away_team": "Sweden",
+      "home_team_id": 2,
+      "away_team_id": 5,
+      "home_team_api": "France",
+      "away_team_api": "Sweden",
+      "predicted_score": "3-0",
+      "predicted_home_goals": 3,
+      "predicted_away_goals": 0,
+      "probabilities": {
+        "home_win": 0.8199,
+        "draw": 0.115,
+        "away_win": 0.0651,
+        "projected_home_goals": 3.07,
+        "projected_away_goals": 0.38
+      },
+      "confidence": {
+        "score": 0.458,
+        "label": "low",
+        "data_quality": 0.65
+      },
+      "model_version": {
+        "Poisson Regression": "1.0.0",
+        "Ridge Regression": "1.0.0",
+        "Random Forest": "1.0.0",
+        "Gradient Boosting": "1.0.0",
+        "XGBoost": "1.0.0",
+        "LightGBM": "1.0.0",
+        "Neural Network": "1.0.0"
+      },
+      "ml_match": {
+        "mn": 1565177,
+        "group": "R32",
+        "home": "France",
+        "away": "Sweden",
+        "home_flag": "🇫🇷",
+        "away_flag": "🇸🇪",
+        "models": {
+          "Poisson": {
+            "gh": 3,
+            "ga": 1,
+            "rh": 2.918782070247028,
+            "ra": 0.5815070875749252
+          },
+          "Ridge": {
+            "gh": 3,
+            "ga": 0,
+            "rh": 2.970436425598848,
+            "ra": 0.4379537063462047
+          },
+          "Random Forest": {
+            "gh": 3,
+            "ga": 0,
+            "rh": 3.182337477012033,
+            "ra": 0.30985853588348816
+          },
+          "Gradient Boost": {
+            "gh": 3,
+            "ga": 0,
+            "rh": 3.0913871673858475,
+            "ra": 0.31426497318291263
+          },
+          "XGBoost": {
+            "gh": 3,
+            "ga": 0,
+            "rh": 2.90436053276062,
+            "ra": 0.34721264243125916
+          },
+          "LightGBM": {
+            "gh": 3,
+            "ga": 0,
+            "rh": 3.2056968530558545,
+            "ra": 0.35596345877724633
+          },
+          "Neural Net": {
+            "gh": 3,
+            "ga": 0,
+            "rh": 3.220759226493223,
+            "ra": 0.31765021633262125
+          }
+        },
+        "ens_h": 3,
+        "ens_a": 0,
+        "ens": "3-0",
+        "prediction": {
+          "home_win": 0.8199,
+          "draw": 0.115,
+          "away_win": 0.0651,
+          "projected_home_goals": 3.07,
+          "projected_away_goals": 0.38,
+          "over_2_5": 0.6703,
+          "over_3_5": 0.4531,
+          "both_teams_score": 0.3028,
+          "over_under": {
+            "2.5": {
+              "line": 2.5,
+              "over": 0.6703,
+              "under": 0.3297
+            },
+            "3.5": {
+              "line": 3.5,
+              "over": 0.4531,
+              "under": 0.5469
+            },
+            "line": 2.5,
+            "over": 0.6703,
+            "under": 0.3297
+          },
+          "score_matrix": {
+            "top_exact_scores": [
+              {
+                "score": "3-0",
+                "probability": 0.152785
+              },
+              {
+                "score": "2-0",
+                "probability": 0.149269
+              },
+              {
+                "score": "4-0",
+                "probability": 0.117288
+              },
+              {
+                "score": "1-0",
+                "probability": 0.097222
+              },
+              {
+                "score": "5-0",
+                "probability": 0.07203
+              }
+            ],
+            "score_matrix": {
+              "0-0": 0.031662,
+              "0-1": 0.012094,
+              "0-2": 0.00231,
+              "0-3": 0.000294,
+              "0-4": 2.8e-05,
+              "0-5": 2e-06,
+              "0-6": 0.0,
+              "0-7": 0.0,
+              "0-8": 0.0,
+              "1-0": 0.097222,
+              "1-1": 0.037137,
+              "1-2": 0.007093,
+              "1-3": 0.000903,
+              "1-4": 8.6e-05,
+              "1-5": 7e-06,
+              "1-6": 0.0,
+              "1-7": 0.0,
+              "1-8": 0.0,
+              "2-0": 0.149269,
+              "2-1": 0.057018,
+              "2-2": 0.01089,
+              "2-3": 0.001387,
+              "2-4": 0.000132,
+              "2-5": 1e-05,
+              "2-6": 1e-06,
+              "2-7": 0.0,
+              "2-8": 0.0,
+              "3-0": 0.152785,
+              "3-1": 0.058361,
+              "3-2": 0.011146,
+              "3-3": 0.001419,
+              "3-4": 0.000136,
+              "3-5": 1e-05,
+              "3-6": 1e-06,
+              "3-7": 0.0,
+              "3-8": 0.0,
+              "4-0": 0.117288,
+              "4-1": 0.044802,
+              "4-2": 0.008557,
+              "4-3": 0.00109,
+              "4-4": 0.000104,
+              "4-5": 8e-06,
+              "4-6": 1e-06,
+              "4-7": 0.0,
+              "4-8": 0.0,
+              "5-0": 0.07203,
+              "5-1": 0.027514,
+              "5-2": 0.005255,
+              "5-3": 0.000669,
+              "5-4": 6.4e-05,
+              "5-5": 5e-06,
+              "5-6": 0.0,
+              "5-7": 0.0,
+              "5-8": 0.0,
+              "6-0": 0.036864,
+              "6-1": 0.014081,
+              "6-2": 0.002689,
+              "6-3": 0.000342,
+              "6-4": 3.3e-05,
+              "6-5": 2e-06,
+              "6-6": 0.0,
+              "6-7": 0.0,
+              "6-8": 0.0,
+              "7-0": 0.016171,
+              "7-1": 0.006177,
+              "7-2": 0.00118,
+              "7-3": 0.00015,
+              "7-4": 1.4e-05,
+              "7-5": 1e-06,
+              "7-6": 0.0,
+              "7-7": 0.0,
+              "7-8": 0.0,
+              "8-0": 0.006207,
+              "8-1": 0.002371,
+              "8-2": 0.000453,
+              "8-3": 5.8e-05,
+              "8-4": 6e-06,
+              "8-5": 0.0,
+              "8-6": 0.0,
+              "8-7": 0.0,
+              "8-8": 0.0
+            }
+          }
+        },
+        "confidence": {
+          "score": 0.458,
+          "label": "low",
+          "data_quality": 0.65
+        },
+        "explanation": {
+          "top_factors": [
+            "Home team has stronger pre-match Elo rating",
+            "Home team stronger attacking xG profile"
+          ],
+          "risk_factors": []
+        },
+        "ensemble": {
+          "weights": {
+            "Poisson Regression": 0.1584,
+            "Ridge Regression": 0.1239,
+            "Random Forest": 0.1557,
+            "Gradient Boosting": 0.1416,
+            "XGBoost": 0.142,
+            "LightGBM": 0.1338,
+            "Neural Network": 0.1446
+          },
+          "model_agreement": 0.833
+        },
+        "fixture_id": 1565177,
+        "round": "Round of 32",
+        "kickoff": "2026-06-30T21:00:00+00:00",
+        "source": "future_cache"
+      },
+      "created_at": "2026-06-28T18:43:29.638394+00:00",
+      "updated_at": "2026-06-28T18:43:29.638394+00:00"
+    },
+    "1567306": {
+      "fixture_id": 1567306,
+      "league_id": 1,
+      "season": 2026,
+      "round": "Round of 32",
+      "date": "2026-07-01T01:00:00+00:00",
+      "venue": {
+        "id": 0,
+        "name": "Estadio Banorte",
+        "city": "Mexico City"
+      },
+      "home_team": "Mexico",
+      "away_team": "Ecuador",
+      "home_team_id": 16,
+      "away_team_id": 2382,
+      "home_team_api": "Mexico",
+      "away_team_api": "Ecuador",
+      "predicted_score": "2-1",
+      "predicted_home_goals": 2,
+      "predicted_away_goals": 1,
+      "probabilities": {
+        "home_win": 0.6836,
+        "draw": 0.1981,
+        "away_win": 0.1183,
+        "projected_home_goals": 2.11,
+        "projected_away_goals": 0.58
+      },
+      "confidence": {
+        "score": 0.458,
+        "label": "low",
+        "data_quality": 0.65
+      },
+      "model_version": {
+        "Poisson Regression": "1.0.0",
+        "Ridge Regression": "1.0.0",
+        "Random Forest": "1.0.0",
+        "Gradient Boosting": "1.0.0",
+        "XGBoost": "1.0.0",
+        "LightGBM": "1.0.0",
+        "Neural Network": "1.0.0"
+      },
+      "ml_match": {
+        "mn": 1567306,
+        "group": "R32",
+        "home": "Mexico",
+        "away": "Ecuador",
+        "home_flag": "🇲🇽",
+        "away_flag": "🇪🇨",
+        "models": {
+          "Poisson": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 2.2006734718713026,
+            "ra": 0.7549758876098666
+          },
+          "Ridge": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 2.36589587204583,
+            "ra": 0.5264679176273079
+          },
+          "Random Forest": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 2.3846443932329837,
+            "ra": 0.5293781506667411
+          },
+          "Gradient Boost": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 2.305404674095046,
+            "ra": 0.5318755244292742
+          },
+          "XGBoost": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 2.2573068141937256,
+            "ra": 0.549608588218689
+          },
+          "LightGBM": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 2.161415439578234,
+            "ra": 0.5682748649278946
+          },
+          "Neural Net": {
+            "gh": 1,
+            "ga": 1,
+            "rh": 1.1399137605151035,
+            "ra": 0.5808494914723769
+          }
+        },
+        "ens_h": 2,
+        "ens_a": 1,
+        "ens": "2-1",
+        "prediction": {
+          "home_win": 0.6836,
+          "draw": 0.1981,
+          "away_win": 0.1183,
+          "projected_home_goals": 2.11,
+          "projected_away_goals": 0.58,
+          "over_2_5": 0.5051,
+          "over_3_5": 0.2847,
+          "both_teams_score": 0.3873,
+          "over_under": {
+            "2.5": {
+              "line": 2.5,
+              "over": 0.5051,
+              "under": 0.4949
+            },
+            "3.5": {
+              "line": 3.5,
+              "over": 0.2847,
+              "under": 0.7153
+            },
+            "line": 2.5,
+            "over": 0.5051,
+            "under": 0.4949
+          },
+          "score_matrix": {
+            "top_exact_scores": [
+              {
+                "score": "2-0",
+                "probability": 0.15098
+              },
+              {
+                "score": "1-0",
+                "probability": 0.142836
+              },
+              {
+                "score": "3-0",
+                "probability": 0.106391
+              },
+              {
+                "score": "2-1",
+                "probability": 0.087663
+              },
+              {
+                "score": "1-1",
+                "probability": 0.082934
+              }
+            ],
+            "score_matrix": {
+              "0-0": 0.067566,
+              "0-1": 0.039231,
+              "0-2": 0.011389,
+              "0-3": 0.002204,
+              "0-4": 0.00032,
+              "0-5": 3.7e-05,
+              "0-6": 4e-06,
+              "0-7": 0.0,
+              "0-8": 0.0,
+              "1-0": 0.142836,
+              "1-1": 0.082934,
+              "1-2": 0.024077,
+              "1-3": 0.00466,
+              "1-4": 0.000676,
+              "1-5": 7.9e-05,
+              "1-6": 8e-06,
+              "1-7": 1e-06,
+              "1-8": 0.0,
+              "2-0": 0.15098,
+              "2-1": 0.087663,
+              "2-2": 0.02545,
+              "2-3": 0.004926,
+              "2-4": 0.000715,
+              "2-5": 8.3e-05,
+              "2-6": 8e-06,
+              "2-7": 1e-06,
+              "2-8": 0.0,
+              "3-0": 0.106391,
+              "3-1": 0.061774,
+              "3-2": 0.017934,
+              "3-3": 0.003471,
+              "3-4": 0.000504,
+              "3-5": 5.9e-05,
+              "3-6": 6e-06,
+              "3-7": 0.0,
+              "3-8": 0.0,
+              "4-0": 0.056228,
+              "4-1": 0.032648,
+              "4-2": 0.009478,
+              "4-3": 0.001834,
+              "4-4": 0.000266,
+              "4-5": 3.1e-05,
+              "4-6": 3e-06,
+              "4-7": 0.0,
+              "4-8": 0.0,
+              "5-0": 0.023774,
+              "5-1": 0.013804,
+              "5-2": 0.004007,
+              "5-3": 0.000776,
+              "5-4": 0.000113,
+              "5-5": 1.3e-05,
+              "5-6": 1e-06,
+              "5-7": 0.0,
+              "5-8": 0.0,
+              "6-0": 0.008376,
+              "6-1": 0.004864,
+              "6-2": 0.001412,
+              "6-3": 0.000273,
+              "6-4": 4e-05,
+              "6-5": 5e-06,
+              "6-6": 0.0,
+              "6-7": 0.0,
+              "6-8": 0.0,
+              "7-0": 0.00253,
+              "7-1": 0.001469,
+              "7-2": 0.000426,
+              "7-3": 8.3e-05,
+              "7-4": 1.2e-05,
+              "7-5": 1e-06,
+              "7-6": 0.0,
+              "7-7": 0.0,
+              "7-8": 0.0,
+              "8-0": 0.000668,
+              "8-1": 0.000388,
+              "8-2": 0.000113,
+              "8-3": 2.2e-05,
+              "8-4": 3e-06,
+              "8-5": 0.0,
+              "8-6": 0.0,
+              "8-7": 0.0,
+              "8-8": 0.0
+            }
+          }
+        },
+        "confidence": {
+          "score": 0.458,
+          "label": "low",
+          "data_quality": 0.65
+        },
+        "explanation": {
+          "top_factors": [
+            "Home team has stronger pre-match Elo rating"
+          ],
+          "risk_factors": []
+        },
+        "ensemble": {
+          "weights": {
+            "Poisson Regression": 0.1584,
+            "Ridge Regression": 0.1239,
+            "Random Forest": 0.1557,
+            "Gradient Boosting": 0.1416,
+            "XGBoost": 0.142,
+            "LightGBM": 0.1338,
+            "Neural Network": 0.1446
+          },
+          "model_agreement": 0.833
+        },
+        "fixture_id": 1567306,
+        "round": "Round of 32",
+        "kickoff": "2026-07-01T01:00:00+00:00",
+        "source": "future_cache"
+      },
+      "created_at": "2026-06-28T18:43:29.929275+00:00",
+      "updated_at": "2026-06-28T18:43:29.929275+00:00"
+    },
+    "1567307": {
+      "fixture_id": 1567307,
+      "league_id": 1,
+      "season": 2026,
+      "round": "Round of 32",
+      "date": "2026-07-01T16:00:00+00:00",
+      "venue": {
+        "id": 0,
+        "name": "Mercedes-Benz Stadium",
+        "city": null
+      },
+      "home_team": "England",
+      "away_team": "DRC",
+      "home_team_id": 10,
+      "away_team_id": 1508,
+      "home_team_api": "England",
+      "away_team_api": "Congo DR",
+      "predicted_score": "4-0",
+      "predicted_home_goals": 4,
+      "predicted_away_goals": 0,
+      "probabilities": {
+        "home_win": 0.82,
+        "draw": 0.1027,
+        "away_win": 0.0774,
+        "projected_home_goals": 3.91,
+        "projected_away_goals": 0.28
+      },
+      "confidence": {
+        "score": 0.458,
+        "label": "low",
+        "data_quality": 0.65
+      },
+      "model_version": {
+        "Poisson Regression": "1.0.0",
+        "Ridge Regression": "1.0.0",
+        "Random Forest": "1.0.0",
+        "Gradient Boosting": "1.0.0",
+        "XGBoost": "1.0.0",
+        "LightGBM": "1.0.0",
+        "Neural Network": "1.0.0"
+      },
+      "ml_match": {
+        "mn": 1567307,
+        "group": "R32",
+        "home": "England",
+        "away": "DRC",
+        "home_flag": "🏴󠁧󠁢󠁥󠁮󠁧󠁿",
+        "away_flag": "🇨🇩",
+        "models": {
+          "Poisson": {
+            "gh": 4,
+            "ga": 0,
+            "rh": 4.291080721404753,
+            "ra": 0.3124744830165948
+          },
+          "Ridge": {
+            "gh": 4,
+            "ga": 0,
+            "rh": 4.01219833767496,
+            "ra": 0.34485050087018054
+          },
+          "Random Forest": {
+            "gh": 4,
+            "ga": 0,
+            "rh": 3.8089237618421317,
+            "ra": 0.24647707135621325
+          },
+          "Gradient Boost": {
+            "gh": 4,
+            "ga": 0,
+            "rh": 3.762177103514814,
+            "ra": 0.26345715926332175
+          },
+          "XGBoost": {
+            "gh": 4,
+            "ga": 0,
+            "rh": 3.842646598815918,
+            "ra": 0.293302446603775
+          },
+          "LightGBM": {
+            "gh": 3,
+            "ga": 0,
+            "rh": 3.453441957112314,
+            "ra": 0.2760444130671988
+          },
+          "Neural Net": {
+            "gh": 4,
+            "ga": 0,
+            "rh": 4.15443206644985,
+            "ra": 0.21011706986606227
+          }
+        },
+        "ens_h": 4,
+        "ens_a": 0,
+        "ens": "4-0",
+        "prediction": {
+          "home_win": 0.82,
+          "draw": 0.1027,
+          "away_win": 0.0774,
+          "projected_home_goals": 3.91,
+          "projected_away_goals": 0.28,
+          "over_2_5": 0.7882,
+          "over_3_5": 0.6024,
+          "both_teams_score": 0.237,
+          "over_under": {
+            "2.5": {
+              "line": 2.5,
+              "over": 0.7882,
+              "under": 0.2118
+            },
+            "3.5": {
+              "line": 3.5,
+              "over": 0.6024,
+              "under": 0.3976
+            },
+            "line": 2.5,
+            "over": 0.7882,
+            "under": 0.2118
+          },
+          "score_matrix": {
+            "top_exact_scores": [
+              {
+                "score": "3-0",
+                "probability": 0.151334
+              },
+              {
+                "score": "4-0",
+                "probability": 0.147969
+              },
+              {
+                "score": "2-0",
+                "probability": 0.116082
+              },
+              {
+                "score": "5-0",
+                "probability": 0.115743
+              },
+              {
+                "score": "6-0",
+                "probability": 0.075446
+              }
+            ],
+            "score_matrix": {
+              "0-0": 0.015178,
+              "0-1": 0.004202,
+              "0-2": 0.000582,
+              "0-3": 5.4e-05,
+              "0-4": 4e-06,
+              "0-5": 0.0,
+              "0-6": 0.0,
+              "0-7": 0.0,
+              "0-8": 0.0,
+              "1-0": 0.059361,
+              "1-1": 0.016435,
+              "1-2": 0.002275,
+              "1-3": 0.00021,
+              "1-4": 1.5e-05,
+              "1-5": 1e-06,
+              "1-6": 0.0,
+              "1-7": 0.0,
+              "1-8": 0.0,
+              "2-0": 0.116082,
+              "2-1": 0.03214,
+              "2-2": 0.004449,
+              "2-3": 0.000411,
+              "2-4": 2.8e-05,
+              "2-5": 2e-06,
+              "2-6": 0.0,
+              "2-7": 0.0,
+              "2-8": 0.0,
+              "3-0": 0.151334,
+              "3-1": 0.0419,
+              "3-2": 0.0058,
+              "3-3": 0.000535,
+              "3-4": 3.7e-05,
+              "3-5": 2e-06,
+              "3-6": 0.0,
+              "3-7": 0.0,
+              "3-8": 0.0,
+              "4-0": 0.147969,
+              "4-1": 0.040968,
+              "4-2": 0.005671,
+              "4-3": 0.000523,
+              "4-4": 3.6e-05,
+              "4-5": 2e-06,
+              "4-6": 0.0,
+              "4-7": 0.0,
+              "4-8": 0.0,
+              "5-0": 0.115743,
+              "5-1": 0.032046,
+              "5-2": 0.004436,
+              "5-3": 0.000409,
+              "5-4": 2.8e-05,
+              "5-5": 2e-06,
+              "5-6": 0.0,
+              "5-7": 0.0,
+              "5-8": 0.0,
+              "6-0": 0.075446,
+              "6-1": 0.020889,
+              "6-2": 0.002892,
+              "6-3": 0.000267,
+              "6-4": 1.8e-05,
+              "6-5": 1e-06,
+              "6-6": 0.0,
+              "6-7": 0.0,
+              "6-8": 0.0,
+              "7-0": 0.042153,
+              "7-1": 0.011671,
+              "7-2": 0.001616,
+              "7-3": 0.000149,
+              "7-4": 1e-05,
+              "7-5": 1e-06,
+              "7-6": 0.0,
+              "7-7": 0.0,
+              "7-8": 0.0,
+              "8-0": 0.020608,
+              "8-1": 0.005706,
+              "8-2": 0.00079,
+              "8-3": 7.3e-05,
+              "8-4": 5e-06,
+              "8-5": 0.0,
+              "8-6": 0.0,
+              "8-7": 0.0,
+              "8-8": 0.0
+            }
+          }
+        },
+        "confidence": {
+          "score": 0.458,
+          "label": "low",
+          "data_quality": 0.65
+        },
+        "explanation": {
+          "top_factors": [
+            "Home team has stronger pre-match Elo rating",
+            "Home team stronger attacking xG profile"
+          ],
+          "risk_factors": []
+        },
+        "ensemble": {
+          "weights": {
+            "Poisson Regression": 0.1584,
+            "Ridge Regression": 0.1239,
+            "Random Forest": 0.1557,
+            "Gradient Boosting": 0.1416,
+            "XGBoost": 0.142,
+            "LightGBM": 0.1338,
+            "Neural Network": 0.1446
+          },
+          "model_agreement": 0.833
+        },
+        "fixture_id": 1567307,
+        "round": "Round of 32",
+        "kickoff": "2026-07-01T16:00:00+00:00",
+        "source": "future_cache"
+      },
+      "created_at": "2026-06-28T18:43:30.180223+00:00",
+      "updated_at": "2026-06-28T18:43:30.180223+00:00"
+    },
+    "1567308": {
+      "fixture_id": 1567308,
+      "league_id": 1,
+      "season": 2026,
+      "round": "Round of 32",
+      "date": "2026-07-01T20:00:00+00:00",
+      "venue": {
+        "id": 0,
+        "name": "Lumen Field",
+        "city": null
+      },
+      "home_team": "Belgium",
+      "away_team": "Senegal",
+      "home_team_id": 1,
+      "away_team_id": 13,
+      "home_team_api": "Belgium",
+      "away_team_api": "Senegal",
+      "predicted_score": "3-1",
+      "predicted_home_goals": 3,
+      "predicted_away_goals": 1,
+      "probabilities": {
+        "home_win": 0.7503,
+        "draw": 0.1511,
+        "away_win": 0.0986,
+        "projected_home_goals": 2.78,
+        "projected_away_goals": 0.69
+      },
+      "confidence": {
+        "score": 0.408,
+        "label": "low",
+        "data_quality": 0.65
+      },
+      "model_version": {
+        "Poisson Regression": "1.0.0",
+        "Ridge Regression": "1.0.0",
+        "Random Forest": "1.0.0",
+        "Gradient Boosting": "1.0.0",
+        "XGBoost": "1.0.0",
+        "LightGBM": "1.0.0",
+        "Neural Network": "1.0.0"
+      },
+      "ml_match": {
+        "mn": 1567308,
+        "group": "R32",
+        "home": "Belgium",
+        "away": "Senegal",
+        "home_flag": "🇧🇪",
+        "away_flag": "🇸🇳",
+        "models": {
+          "Poisson": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 1.9980084900725394,
+            "ra": 0.9292509818652424
+          },
+          "Ridge": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 2.0442371067400034,
+            "ra": 0.913511801370588
+          },
+          "Random Forest": {
+            "gh": 3,
+            "ga": 1,
+            "rh": 2.9927942350162886,
+            "ra": 0.5810468942752134
+          },
+          "Gradient Boost": {
+            "gh": 3,
+            "ga": 1,
+            "rh": 2.7680860026995933,
+            "ra": 0.7261014409982377
+          },
+          "XGBoost": {
+            "gh": 3,
+            "ga": 1,
+            "rh": 2.957733154296875,
+            "ra": 0.7486884593963623
+          },
+          "LightGBM": {
+            "gh": 3,
+            "ga": 1,
+            "rh": 3.394937667857653,
+            "ra": 0.6297908836677863
+          },
+          "Neural Net": {
+            "gh": 3,
+            "ga": 0,
+            "rh": 3.3237223774430844,
+            "ra": 0.3303303240983224
+          }
+        },
+        "ens_h": 3,
+        "ens_a": 1,
+        "ens": "3-1",
+        "prediction": {
+          "home_win": 0.7503,
+          "draw": 0.1511,
+          "away_win": 0.0986,
+          "projected_home_goals": 2.78,
+          "projected_away_goals": 0.69,
+          "over_2_5": 0.6744,
+          "over_3_5": 0.4579,
+          "both_teams_score": 0.4685,
+          "over_under": {
+            "2.5": {
+              "line": 2.5,
+              "over": 0.6744,
+              "under": 0.3256
+            },
+            "3.5": {
+              "line": 3.5,
+              "over": 0.4579,
+              "under": 0.5421
+            },
+            "line": 2.5,
+            "over": 0.6744,
+            "under": 0.3256
+          },
+          "score_matrix": {
+            "top_exact_scores": [
+              {
+                "score": "2-0",
+                "probability": 0.119915
+              },
+              {
+                "score": "3-0",
+                "probability": 0.111223
+              },
+              {
+                "score": "1-0",
+                "probability": 0.086191
+              },
+              {
+                "score": "2-1",
+                "probability": 0.082982
+              },
+              {
+                "score": "4-0",
+                "probability": 0.077371
+              }
+            ],
+            "score_matrix": {
+              "0-0": 0.030975,
+              "0-1": 0.021435,
+              "0-2": 0.007417,
+              "0-3": 0.001711,
+              "0-4": 0.000296,
+              "0-5": 4.1e-05,
+              "0-6": 5e-06,
+              "0-7": 0.0,
+              "0-8": 0.0,
+              "1-0": 0.086191,
+              "1-1": 0.059645,
+              "1-2": 0.020637,
+              "1-3": 0.00476,
+              "1-4": 0.000824,
+              "1-5": 0.000114,
+              "1-6": 1.3e-05,
+              "1-7": 1e-06,
+              "1-8": 0.0,
+              "2-0": 0.119915,
+              "2-1": 0.082982,
+              "2-2": 0.028712,
+              "2-3": 0.006623,
+              "2-4": 0.001146,
+              "2-5": 0.000159,
+              "2-6": 1.8e-05,
+              "2-7": 2e-06,
+              "2-8": 0.0,
+              "3-0": 0.111223,
+              "3-1": 0.076968,
+              "3-2": 0.026631,
+              "3-3": 0.006143,
+              "3-4": 0.001063,
+              "3-5": 0.000147,
+              "3-6": 1.7e-05,
+              "3-7": 2e-06,
+              "3-8": 0.0,
+              "4-0": 0.077371,
+              "4-1": 0.053542,
+              "4-2": 0.018526,
+              "4-3": 0.004273,
+              "4-4": 0.000739,
+              "4-5": 0.000102,
+              "4-6": 1.2e-05,
+              "4-7": 1e-06,
+              "4-8": 0.0,
+              "5-0": 0.043058,
+              "5-1": 0.029797,
+              "5-2": 0.01031,
+              "5-3": 0.002378,
+              "5-4": 0.000411,
+              "5-5": 5.7e-05,
+              "5-6": 7e-06,
+              "5-7": 1e-06,
+              "5-8": 0.0,
+              "6-0": 0.019969,
+              "6-1": 0.013818,
+              "6-2": 0.004781,
+              "6-3": 0.001103,
+              "6-4": 0.000191,
+              "6-5": 2.6e-05,
+              "6-6": 3e-06,
+              "6-7": 0.0,
+              "6-8": 0.0,
+              "7-0": 0.007938,
+              "7-1": 0.005493,
+              "7-2": 0.001901,
+              "7-3": 0.000438,
+              "7-4": 7.6e-05,
+              "7-5": 1e-05,
+              "7-6": 1e-06,
+              "7-7": 0.0,
+              "7-8": 0.0,
+              "8-0": 0.002761,
+              "8-1": 0.001911,
+              "8-2": 0.000661,
+              "8-3": 0.000152,
+              "8-4": 2.6e-05,
+              "8-5": 4e-06,
+              "8-6": 0.0,
+              "8-7": 0.0,
+              "8-8": 0.0
+            }
+          }
+        },
+        "confidence": {
+          "score": 0.408,
+          "label": "low",
+          "data_quality": 0.65
+        },
+        "explanation": {
+          "top_factors": [
+            "Home team has stronger pre-match Elo rating",
+            "Home team stronger attacking xG profile"
+          ],
+          "risk_factors": []
+        },
+        "ensemble": {
+          "weights": {
+            "Poisson Regression": 0.1584,
+            "Ridge Regression": 0.1239,
+            "Random Forest": 0.1557,
+            "Gradient Boosting": 0.1416,
+            "XGBoost": 0.142,
+            "LightGBM": 0.1338,
+            "Neural Network": 0.1446
+          },
+          "model_agreement": 0.667
+        },
+        "fixture_id": 1567308,
+        "round": "Round of 32",
+        "kickoff": "2026-07-01T20:00:00+00:00",
+        "source": "future_cache"
+      },
+      "created_at": "2026-06-28T18:43:30.582172+00:00",
+      "updated_at": "2026-06-28T18:43:30.582172+00:00"
+    },
+    "1562586": {
+      "fixture_id": 1562586,
+      "league_id": 1,
+      "season": 2026,
+      "round": "Round of 32",
+      "date": "2026-07-02T00:00:00+00:00",
+      "venue": {
+        "id": 0,
+        "name": null,
+        "city": null
+      },
+      "home_team": "USA",
+      "away_team": "Bosnia and Herzegovina",
+      "home_team_id": 2384,
+      "away_team_id": 1113,
+      "home_team_api": "USA",
+      "away_team_api": "Bosnia & Herzegovina",
+      "predicted_score": "2-0",
+      "predicted_home_goals": 2,
+      "predicted_away_goals": 0,
+      "probabilities": {
+        "home_win": 0.7034,
+        "draw": 0.1946,
+        "away_win": 0.102,
+        "projected_home_goals": 2.07,
+        "projected_away_goals": 0.46
+      },
+      "confidence": {
+        "score": 0.408,
+        "label": "low",
+        "data_quality": 0.65
+      },
+      "model_version": {
+        "Poisson Regression": "1.0.0",
+        "Ridge Regression": "1.0.0",
+        "Random Forest": "1.0.0",
+        "Gradient Boosting": "1.0.0",
+        "XGBoost": "1.0.0",
+        "LightGBM": "1.0.0",
+        "Neural Network": "1.0.0"
+      },
+      "ml_match": {
+        "mn": 1562586,
+        "group": "R32",
+        "home": "USA",
+        "away": "Bosnia and Herzegovina",
+        "home_flag": "🇺🇸",
+        "away_flag": "🇧🇦",
+        "models": {
+          "Poisson": {
+            "gh": 3,
+            "ga": 1,
+            "rh": 2.6593683597921096,
+            "ra": 0.6296747256847804
+          },
+          "Ridge": {
+            "gh": 3,
+            "ga": 1,
+            "rh": 2.786480500163055,
+            "ra": 0.6760208964147288
+          },
+          "Random Forest": {
+            "gh": 2,
+            "ga": 0,
+            "rh": 2.0875896252670136,
+            "ra": 0.4452960724250962
+          },
+          "Gradient Boost": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 1.7691014298316448,
+            "ra": 0.5016123409736964
+          },
+          "XGBoost": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 1.6981563568115234,
+            "ra": 0.504798412322998
+          },
+          "LightGBM": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 1.712967310537233,
+            "ra": 0.5158603064931602
+          },
+          "Neural Net": {
+            "gh": 2,
+            "ga": 0,
+            "rh": 1.773312691051085,
+            "ra": -0.03292676661541771
+          }
+        },
+        "ens_h": 2,
+        "ens_a": 0,
+        "ens": "2-0",
+        "prediction": {
+          "home_win": 0.7034,
+          "draw": 0.1946,
+          "away_win": 0.102,
+          "projected_home_goals": 2.07,
+          "projected_away_goals": 0.46,
+          "over_2_5": 0.4635,
+          "over_3_5": 0.2486,
+          "both_teams_score": 0.322,
+          "over_under": {
+            "2.5": {
+              "line": 2.5,
+              "over": 0.4635,
+              "under": 0.5365
+            },
+            "3.5": {
+              "line": 3.5,
+              "over": 0.2486,
+              "under": 0.7514
+            },
+            "line": 2.5,
+            "over": 0.4635,
+            "under": 0.5365
+          },
+          "score_matrix": {
+            "top_exact_scores": [
+              {
+                "score": "2-0",
+                "probability": 0.170706
+              },
+              {
+                "score": "1-0",
+                "probability": 0.16503
+              },
+              {
+                "score": "3-0",
+                "probability": 0.117718
+              },
+              {
+                "score": "0-0",
+                "probability": 0.079772
+              },
+              {
+                "score": "2-1",
+                "probability": 0.078491
+              }
+            ],
+            "score_matrix": {
+              "0-0": 0.079772,
+              "0-1": 0.036679,
+              "0-2": 0.008433,
+              "0-3": 0.001292,
+              "0-4": 0.000149,
+              "0-5": 1.4e-05,
+              "0-6": 1e-06,
+              "0-7": 0.0,
+              "0-8": 0.0,
+              "1-0": 0.16503,
+              "1-1": 0.075881,
+              "1-2": 0.017445,
+              "1-3": 0.002674,
+              "1-4": 0.000307,
+              "1-5": 2.8e-05,
+              "1-6": 2e-06,
+              "1-7": 0.0,
+              "1-8": 0.0,
+              "2-0": 0.170706,
+              "2-1": 0.078491,
+              "2-2": 0.018045,
+              "2-3": 0.002766,
+              "2-4": 0.000318,
+              "2-5": 2.9e-05,
+              "2-6": 2e-06,
+              "2-7": 0.0,
+              "2-8": 0.0,
+              "3-0": 0.117718,
+              "3-1": 0.054127,
+              "3-2": 0.012444,
+              "3-3": 0.001907,
+              "3-4": 0.000219,
+              "3-5": 2e-05,
+              "3-6": 2e-06,
+              "3-7": 0.0,
+              "3-8": 0.0,
+              "4-0": 0.060883,
+              "4-1": 0.027994,
+              "4-2": 0.006436,
+              "4-3": 0.000986,
+              "4-4": 0.000113,
+              "4-5": 1e-05,
+              "4-6": 1e-06,
+              "4-7": 0.0,
+              "4-8": 0.0,
+              "5-0": 0.025191,
+              "5-1": 0.011583,
+              "5-2": 0.002663,
+              "5-3": 0.000408,
+              "5-4": 4.7e-05,
+              "5-5": 4e-06,
+              "5-6": 0.0,
+              "5-7": 0.0,
+              "5-8": 0.0,
+              "6-0": 0.008686,
+              "6-1": 0.003994,
+              "6-2": 0.000918,
+              "6-3": 0.000141,
+              "6-4": 1.6e-05,
+              "6-5": 1e-06,
+              "6-6": 0.0,
+              "6-7": 0.0,
+              "6-8": 0.0,
+              "7-0": 0.002567,
+              "7-1": 0.00118,
+              "7-2": 0.000271,
+              "7-3": 4.2e-05,
+              "7-4": 5e-06,
+              "7-5": 0.0,
+              "7-6": 0.0,
+              "7-7": 0.0,
+              "7-8": 0.0,
+              "8-0": 0.000664,
+              "8-1": 0.000305,
+              "8-2": 7e-05,
+              "8-3": 1.1e-05,
+              "8-4": 1e-06,
+              "8-5": 0.0,
+              "8-6": 0.0,
+              "8-7": 0.0,
+              "8-8": 0.0
+            }
+          }
+        },
+        "confidence": {
+          "score": 0.408,
+          "label": "low",
+          "data_quality": 0.65
+        },
+        "explanation": {
+          "top_factors": [
+            "Home team has stronger pre-match Elo rating",
+            "Home team stronger attacking xG profile"
+          ],
+          "risk_factors": []
+        },
+        "ensemble": {
+          "weights": {
+            "Poisson Regression": 0.1584,
+            "Ridge Regression": 0.1239,
+            "Random Forest": 0.1557,
+            "Gradient Boosting": 0.1416,
+            "XGBoost": 0.142,
+            "LightGBM": 0.1338,
+            "Neural Network": 0.1446
+          },
+          "model_agreement": 0.667
+        },
+        "fixture_id": 1562586,
+        "round": "Round of 32",
+        "kickoff": "2026-07-02T00:00:00+00:00",
+        "source": "future_cache"
+      },
+      "created_at": "2026-06-28T18:43:30.884105+00:00",
+      "updated_at": "2026-06-28T18:43:30.884105+00:00"
+    },
+    "1567311": {
+      "fixture_id": 1567311,
+      "league_id": 1,
+      "season": 2026,
+      "round": "Round of 32",
+      "date": "2026-07-02T19:00:00+00:00",
+      "venue": {
+        "id": null,
+        "name": "SoFi Stadium",
+        "city": null
+      },
+      "home_team": "Spain",
+      "away_team": "Austria",
+      "home_team_id": 9,
+      "away_team_id": 775,
+      "home_team_api": "Spain",
+      "away_team_api": "Austria",
+      "predicted_score": "4-1",
+      "predicted_home_goals": 4,
+      "predicted_away_goals": 1,
+      "probabilities": {
+        "home_win": 0.82,
+        "draw": 0.1018,
+        "away_win": 0.0782,
+        "projected_home_goals": 4.24,
+        "projected_away_goals": 0.54
+      },
+      "confidence": {
+        "score": 0.358,
+        "label": "low",
+        "data_quality": 0.65
+      },
+      "model_version": {
+        "Poisson Regression": "1.0.0",
+        "Ridge Regression": "1.0.0",
+        "Random Forest": "1.0.0",
+        "Gradient Boosting": "1.0.0",
+        "XGBoost": "1.0.0",
+        "LightGBM": "1.0.0",
+        "Neural Network": "1.0.0"
+      },
+      "ml_match": {
+        "mn": 1567311,
+        "group": "R32",
+        "home": "Spain",
+        "away": "Austria",
+        "home_flag": "🇪🇸",
+        "away_flag": "🇦🇹",
+        "models": {
+          "Poisson": {
+            "gh": 3,
+            "ga": 1,
+            "rh": 3.3994941065186373,
+            "ra": 0.5352910001516396
+          },
+          "Ridge": {
+            "gh": 4,
+            "ga": 0,
+            "rh": 3.8057401289219768,
+            "ra": 0.23330512879689524
+          },
+          "Random Forest": {
+            "gh": 4,
+            "ga": 1,
+            "rh": 3.8561705277874165,
+            "ra": 0.5460285894710547
+          },
+          "Gradient Boost": {
+            "gh": 5,
+            "ga": 1,
+            "rh": 4.5432321158845825,
+            "ra": 0.5554858773526605
+          },
+          "XGBoost": {
+            "gh": 5,
+            "ga": 1,
+            "rh": 4.591587543487549,
+            "ra": 0.5659703612327576
+          },
+          "LightGBM": {
+            "gh": 5,
+            "ga": 1,
+            "rh": 4.6641753528602194,
+            "ra": 0.6868713669882666
+          },
+          "Neural Net": {
+            "gh": 5,
+            "ga": 1,
+            "rh": 4.913359880022383,
+            "ra": 0.6154092088412357
+          }
+        },
+        "ens_h": 4,
+        "ens_a": 1,
+        "ens": "4-1",
+        "prediction": {
+          "home_win": 0.82,
+          "draw": 0.1018,
+          "away_win": 0.0782,
+          "projected_home_goals": 4.24,
+          "projected_away_goals": 0.54,
+          "over_2_5": 0.8554,
+          "over_3_5": 0.7025,
+          "both_teams_score": 0.4105,
+          "over_under": {
+            "2.5": {
+              "line": 2.5,
+              "over": 0.8554,
+              "under": 0.1446
+            },
+            "3.5": {
+              "line": 3.5,
+              "over": 0.7025,
+              "under": 0.2975
+            },
+            "line": 2.5,
+            "over": 0.8554,
+            "under": 0.1446
+          },
+          "score_matrix": {
+            "top_exact_scores": [
+              {
+                "score": "4-0",
+                "probability": 0.113217
+              },
+              {
+                "score": "3-0",
+                "probability": 0.106802
+              },
+              {
+                "score": "5-0",
+                "probability": 0.096015
+              },
+              {
+                "score": "2-0",
+                "probability": 0.075562
+              },
+              {
+                "score": "6-0",
+                "probability": 0.067855
+              }
+            ],
+            "score_matrix": {
+              "0-0": 0.008405,
+              "0-1": 0.004527,
+              "0-2": 0.001219,
+              "0-3": 0.000219,
+              "0-4": 2.9e-05,
+              "0-5": 3e-06,
+              "0-6": 0.0,
+              "0-7": 0.0,
+              "0-8": 0.0,
+              "1-0": 0.03564,
+              "1-1": 0.019197,
+              "1-2": 0.00517,
+              "1-3": 0.000928,
+              "1-4": 0.000125,
+              "1-5": 1.3e-05,
+              "1-6": 1e-06,
+              "1-7": 0.0,
+              "1-8": 0.0,
+              "2-0": 0.075562,
+              "2-1": 0.0407,
+              "2-2": 0.010961,
+              "2-3": 0.001968,
+              "2-4": 0.000265,
+              "2-5": 2.9e-05,
+              "2-6": 3e-06,
+              "2-7": 0.0,
+              "2-8": 0.0,
+              "3-0": 0.106802,
+              "3-1": 0.057527,
+              "3-2": 0.015493,
+              "3-3": 0.002782,
+              "3-4": 0.000375,
+              "3-5": 4e-05,
+              "3-6": 4e-06,
+              "3-7": 0.0,
+              "3-8": 0.0,
+              "4-0": 0.113217,
+              "4-1": 0.060982,
+              "4-2": 0.016423,
+              "4-3": 0.002949,
+              "4-4": 0.000397,
+              "4-5": 4.3e-05,
+              "4-6": 4e-06,
+              "4-7": 0.0,
+              "4-8": 0.0,
+              "5-0": 0.096015,
+              "5-1": 0.051716,
+              "5-2": 0.013928,
+              "5-3": 0.002501,
+              "5-4": 0.000337,
+              "5-5": 3.6e-05,
+              "5-6": 3e-06,
+              "5-7": 0.0,
+              "5-8": 0.0,
+              "6-0": 0.067855,
+              "6-1": 0.036549,
+              "6-2": 0.009843,
+              "6-3": 0.001767,
+              "6-4": 0.000238,
+              "6-5": 2.6e-05,
+              "6-6": 2e-06,
+              "6-7": 0.0,
+              "6-8": 0.0,
+              "7-0": 0.041103,
+              "7-1": 0.02214,
+              "7-2": 0.005962,
+              "7-3": 0.001071,
+              "7-4": 0.000144,
+              "7-5": 1.6e-05,
+              "7-6": 1e-06,
+              "7-7": 0.0,
+              "7-8": 0.0,
+              "8-0": 0.021786,
+              "8-1": 0.011735,
+              "8-2": 0.00316,
+              "8-3": 0.000567,
+              "8-4": 7.6e-05,
+              "8-5": 8e-06,
+              "8-6": 1e-06,
+              "8-7": 0.0,
+              "8-8": 0.0
+            }
+          }
+        },
+        "confidence": {
+          "score": 0.358,
+          "label": "low",
+          "data_quality": 0.65
+        },
+        "explanation": {
+          "top_factors": [
+            "Home team has stronger pre-match Elo rating",
+            "Home team stronger attacking xG profile"
+          ],
+          "risk_factors": []
+        },
+        "ensemble": {
+          "weights": {
+            "Poisson Regression": 0.1584,
+            "Ridge Regression": 0.1239,
+            "Random Forest": 0.1557,
+            "Gradient Boosting": 0.1416,
+            "XGBoost": 0.142,
+            "LightGBM": 0.1338,
+            "Neural Network": 0.1446
+          },
+          "model_agreement": 0.5
+        },
+        "fixture_id": 1567311,
+        "round": "Round of 32",
+        "kickoff": "2026-07-02T19:00:00+00:00",
+        "source": "future_cache"
+      },
+      "created_at": "2026-06-28T18:43:31.085685+00:00",
+      "updated_at": "2026-06-28T18:43:31.085685+00:00"
+    },
+    "1567309": {
+      "fixture_id": 1567309,
+      "league_id": 1,
+      "season": 2026,
+      "round": "Round of 32",
+      "date": "2026-07-02T23:00:00+00:00",
+      "venue": {
+        "id": 0,
+        "name": "BMO Field",
+        "city": null
+      },
+      "home_team": "Portugal",
+      "away_team": "Croatia",
+      "home_team_id": 27,
+      "away_team_id": 3,
+      "home_team_api": "Portugal",
+      "away_team_api": "Croatia",
+      "predicted_score": "3-1",
+      "predicted_home_goals": 3,
+      "predicted_away_goals": 1,
+      "probabilities": {
+        "home_win": 0.6901,
+        "draw": 0.1781,
+        "away_win": 0.1318,
+        "projected_home_goals": 2.54,
+        "projected_away_goals": 0.85
+      },
+      "confidence": {
+        "score": 0.458,
+        "label": "low",
+        "data_quality": 0.65
+      },
+      "model_version": {
+        "Poisson Regression": "1.0.0",
+        "Ridge Regression": "1.0.0",
+        "Random Forest": "1.0.0",
+        "Gradient Boosting": "1.0.0",
+        "XGBoost": "1.0.0",
+        "LightGBM": "1.0.0",
+        "Neural Network": "1.0.0"
+      },
+      "ml_match": {
+        "mn": 1567309,
+        "group": "R32",
+        "home": "Portugal",
+        "away": "Croatia",
+        "home_flag": "🇵🇹",
+        "away_flag": "🇭🇷",
+        "models": {
+          "Poisson": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 2.1132530705236583,
+            "ra": 0.914254350519189
+          },
+          "Ridge": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 2.2181379146882576,
+            "ra": 0.844262354007675
+          },
+          "Random Forest": {
+            "gh": 3,
+            "ga": 1,
+            "rh": 2.777386090789344,
+            "ra": 0.7555011318965258
+          },
+          "Gradient Boost": {
+            "gh": 3,
+            "ga": 1,
+            "rh": 2.56629835219485,
+            "ra": 0.7135262882737959
+          },
+          "XGBoost": {
+            "gh": 3,
+            "ga": 1,
+            "rh": 2.703615665435791,
+            "ra": 0.7492245435714722
+          },
+          "LightGBM": {
+            "gh": 3,
+            "ga": 1,
+            "rh": 2.742659193526886,
+            "ra": 0.77325881643107
+          },
+          "Neural Net": {
+            "gh": 3,
+            "ga": 1,
+            "rh": 2.6432220616735527,
+            "ra": 1.2099425174263723
+          }
+        },
+        "ens_h": 3,
+        "ens_a": 1,
+        "ens": "3-1",
+        "prediction": {
+          "home_win": 0.6901,
+          "draw": 0.1781,
+          "away_win": 0.1318,
+          "projected_home_goals": 2.54,
+          "projected_away_goals": 0.85,
+          "over_2_5": 0.6586,
+          "over_3_5": 0.4398,
+          "both_teams_score": 0.5285,
+          "over_under": {
+            "2.5": {
+              "line": 2.5,
+              "over": 0.6586,
+              "under": 0.3414
+            },
+            "3.5": {
+              "line": 3.5,
+              "over": 0.4398,
+              "under": 0.5602
+            },
+            "line": 2.5,
+            "over": 0.6586,
+            "under": 0.3414
+          },
+          "score_matrix": {
+            "top_exact_scores": [
+              {
+                "score": "2-0",
+                "probability": 0.108458
+              },
+              {
+                "score": "2-1",
+                "probability": 0.092503
+              },
+              {
+                "score": "3-0",
+                "probability": 0.091773
+              },
+              {
+                "score": "1-0",
+                "probability": 0.085451
+              },
+              {
+                "score": "3-1",
+                "probability": 0.078273
+              }
+            ],
+            "score_matrix": {
+              "0-0": 0.033662,
+              "0-1": 0.02871,
+              "0-2": 0.012244,
+              "0-3": 0.003481,
+              "0-4": 0.000742,
+              "0-5": 0.000127,
+              "0-6": 1.8e-05,
+              "0-7": 2e-06,
+              "0-8": 0.0,
+              "1-0": 0.085451,
+              "1-1": 0.072881,
+              "1-2": 0.03108,
+              "1-3": 0.008836,
+              "1-4": 0.001884,
+              "1-5": 0.000321,
+              "1-6": 4.6e-05,
+              "1-7": 6e-06,
+              "1-8": 1e-06,
+              "2-0": 0.108458,
+              "2-1": 0.092503,
+              "2-2": 0.039448,
+              "2-3": 0.011215,
+              "2-4": 0.002391,
+              "2-5": 0.000408,
+              "2-6": 5.8e-05,
+              "2-7": 7e-06,
+              "2-8": 1e-06,
+              "3-0": 0.091773,
+              "3-1": 0.078273,
+              "3-2": 0.033379,
+              "3-3": 0.00949,
+              "3-4": 0.002023,
+              "3-5": 0.000345,
+              "3-6": 4.9e-05,
+              "3-7": 6e-06,
+              "3-8": 1e-06,
+              "4-0": 0.058241,
+              "4-1": 0.049674,
+              "4-2": 0.021183,
+              "4-3": 0.006022,
+              "4-4": 0.001284,
+              "4-5": 0.000219,
+              "4-6": 3.1e-05,
+              "4-7": 4e-06,
+              "4-8": 0.0,
+              "5-0": 0.029569,
+              "5-1": 0.025219,
+              "5-2": 0.010755,
+              "5-3": 0.003058,
+              "5-4": 0.000652,
+              "5-5": 0.000111,
+              "5-6": 1.6e-05,
+              "5-7": 2e-06,
+              "5-8": 0.0,
+              "6-0": 0.01251,
+              "6-1": 0.01067,
+              "6-2": 0.00455,
+              "6-3": 0.001294,
+              "6-4": 0.000276,
+              "6-5": 4.7e-05,
+              "6-6": 7e-06,
+              "6-7": 1e-06,
+              "6-8": 0.0,
+              "7-0": 0.004537,
+              "7-1": 0.003869,
+              "7-2": 0.00165,
+              "7-3": 0.000469,
+              "7-4": 0.0001,
+              "7-5": 1.7e-05,
+              "7-6": 2e-06,
+              "7-7": 0.0,
+              "7-8": 0.0,
+              "8-0": 0.00144,
+              "8-1": 0.001228,
+              "8-2": 0.000524,
+              "8-3": 0.000149,
+              "8-4": 3.2e-05,
+              "8-5": 5e-06,
+              "8-6": 1e-06,
+              "8-7": 0.0,
+              "8-8": 0.0
+            }
+          }
+        },
+        "confidence": {
+          "score": 0.458,
+          "label": "low",
+          "data_quality": 0.65
+        },
+        "explanation": {
+          "top_factors": [
+            "Home team has stronger pre-match Elo rating",
+            "Home team stronger attacking xG profile"
+          ],
+          "risk_factors": []
+        },
+        "ensemble": {
+          "weights": {
+            "Poisson Regression": 0.1584,
+            "Ridge Regression": 0.1239,
+            "Random Forest": 0.1557,
+            "Gradient Boosting": 0.1416,
+            "XGBoost": 0.142,
+            "LightGBM": 0.1338,
+            "Neural Network": 0.1446
+          },
+          "model_agreement": 0.833
+        },
+        "fixture_id": 1567309,
+        "round": "Round of 32",
+        "kickoff": "2026-07-02T23:00:00+00:00",
+        "source": "future_cache"
+      },
+      "created_at": "2026-06-28T18:43:31.323388+00:00",
+      "updated_at": "2026-06-28T18:43:31.323388+00:00"
+    },
+    "1567312": {
+      "fixture_id": 1567312,
+      "league_id": 1,
+      "season": 2026,
+      "round": "Round of 32",
+      "date": "2026-07-03T03:00:00+00:00",
+      "venue": {
+        "id": null,
+        "name": "BC Place",
+        "city": null
+      },
+      "home_team": "Switzerland",
+      "away_team": "Algeria",
+      "home_team_id": 15,
+      "away_team_id": 1532,
+      "home_team_api": "Switzerland",
+      "away_team_api": "Algeria",
+      "predicted_score": "2-1",
+      "predicted_home_goals": 2,
+      "predicted_away_goals": 1,
+      "probabilities": {
+        "home_win": 0.6655,
+        "draw": 0.2012,
+        "away_win": 0.1333,
+        "projected_home_goals": 2.15,
+        "projected_away_goals": 0.69
+      },
+      "confidence": {
+        "score": 0.507,
+        "label": "low",
+        "data_quality": 0.65
+      },
+      "model_version": {
+        "Poisson Regression": "1.0.0",
+        "Ridge Regression": "1.0.0",
+        "Random Forest": "1.0.0",
+        "Gradient Boosting": "1.0.0",
+        "XGBoost": "1.0.0",
+        "LightGBM": "1.0.0",
+        "Neural Network": "1.0.0"
+      },
+      "ml_match": {
+        "mn": 1567312,
+        "group": "R32",
+        "home": "Switzerland",
+        "away": "Algeria",
+        "home_flag": "🇨🇭",
+        "away_flag": "🇩🇿",
+        "models": {
+          "Poisson": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 2.109154357771721,
+            "ra": 0.7897553775390597
+          },
+          "Ridge": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 2.001148644086224,
+            "ra": 0.8205150456705269
+          },
+          "Random Forest": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 2.189597755681195,
+            "ra": 0.5661027467004459
+          },
+          "Gradient Boost": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 2.060410505757704,
+            "ra": 0.6990139362353135
+          },
+          "XGBoost": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 2.0633606910705566,
+            "ra": 0.6339991092681885
+          },
+          "LightGBM": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 2.1023233494950144,
+            "ra": 0.660807858478456
+          },
+          "Neural Net": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 2.474408385447199,
+            "ra": 0.6576744763992174
+          }
+        },
+        "ens_h": 2,
+        "ens_a": 1,
+        "ens": "2-1",
+        "prediction": {
+          "home_win": 0.6655,
+          "draw": 0.2012,
+          "away_win": 0.1333,
+          "projected_home_goals": 2.15,
+          "projected_away_goals": 0.69,
+          "over_2_5": 0.5387,
+          "over_3_5": 0.3157,
+          "both_teams_score": 0.439,
+          "over_under": {
+            "2.5": {
+              "line": 2.5,
+              "over": 0.5387,
+              "under": 0.4613
+            },
+            "3.5": {
+              "line": 3.5,
+              "over": 0.3157,
+              "under": 0.6843
+            },
+            "line": 2.5,
+            "over": 0.5387,
+            "under": 0.4613
+          },
+          "score_matrix": {
+            "top_exact_scores": [
+              {
+                "score": "2-0",
+                "probability": 0.135414
+              },
+              {
+                "score": "1-0",
+                "probability": 0.126155
+              },
+              {
+                "score": "3-0",
+                "probability": 0.096902
+              },
+              {
+                "score": "2-1",
+                "probability": 0.093087
+              },
+              {
+                "score": "1-1",
+                "probability": 0.086722
+              }
+            ],
+            "score_matrix": {
+              "0-0": 0.058764,
+              "0-1": 0.040396,
+              "0-2": 0.013885,
+              "0-3": 0.003182,
+              "0-4": 0.000547,
+              "0-5": 7.5e-05,
+              "0-6": 9e-06,
+              "0-7": 1e-06,
+              "0-8": 0.0,
+              "1-0": 0.126155,
+              "1-1": 0.086722,
+              "1-2": 0.029807,
+              "1-3": 0.00683,
+              "1-4": 0.001174,
+              "1-5": 0.000161,
+              "1-6": 1.8e-05,
+              "1-7": 2e-06,
+              "1-8": 0.0,
+              "2-0": 0.135414,
+              "2-1": 0.093087,
+              "2-2": 0.031995,
+              "2-3": 0.007331,
+              "2-4": 0.00126,
+              "2-5": 0.000173,
+              "2-6": 2e-05,
+              "2-7": 2e-06,
+              "2-8": 0.0,
+              "3-0": 0.096902,
+              "3-1": 0.066613,
+              "3-2": 0.022896,
+              "3-3": 0.005246,
+              "3-4": 0.000902,
+              "3-5": 0.000124,
+              "3-6": 1.4e-05,
+              "3-7": 1e-06,
+              "3-8": 0.0,
+              "4-0": 0.052007,
+              "4-1": 0.035751,
+              "4-2": 0.012288,
+              "4-3": 0.002816,
+              "4-4": 0.000484,
+              "4-5": 6.7e-05,
+              "4-6": 8e-06,
+              "4-7": 1e-06,
+              "4-8": 0.0,
+              "5-0": 0.02233,
+              "5-1": 0.01535,
+              "5-2": 0.005276,
+              "5-3": 0.001209,
+              "5-4": 0.000208,
+              "5-5": 2.9e-05,
+              "5-6": 3e-06,
+              "5-7": 0.0,
+              "5-8": 0.0,
+              "6-0": 0.00799,
+              "6-1": 0.005492,
+              "6-2": 0.001888,
+              "6-3": 0.000433,
+              "6-4": 7.4e-05,
+              "6-5": 1e-05,
+              "6-6": 1e-06,
+              "6-7": 0.0,
+              "6-8": 0.0,
+              "7-0": 0.00245,
+              "7-1": 0.001684,
+              "7-2": 0.000579,
+              "7-3": 0.000133,
+              "7-4": 2.3e-05,
+              "7-5": 3e-06,
+              "7-6": 0.0,
+              "7-7": 0.0,
+              "7-8": 0.0,
+              "8-0": 0.000658,
+              "8-1": 0.000452,
+              "8-2": 0.000155,
+              "8-3": 3.6e-05,
+              "8-4": 6e-06,
+              "8-5": 1e-06,
+              "8-6": 0.0,
+              "8-7": 0.0,
+              "8-8": 0.0
+            }
+          }
+        },
+        "confidence": {
+          "score": 0.507,
+          "label": "low",
+          "data_quality": 0.65
+        },
+        "explanation": {
+          "top_factors": [
+            "Home team has stronger pre-match Elo rating"
+          ],
+          "risk_factors": []
+        },
+        "ensemble": {
+          "weights": {
+            "Poisson Regression": 0.1584,
+            "Ridge Regression": 0.1239,
+            "Random Forest": 0.1557,
+            "Gradient Boosting": 0.1416,
+            "XGBoost": 0.142,
+            "LightGBM": 0.1338,
+            "Neural Network": 0.1446
+          },
+          "model_agreement": 1.0
+        },
+        "fixture_id": 1567312,
+        "round": "Round of 32",
+        "kickoff": "2026-07-03T03:00:00+00:00",
+        "source": "future_cache"
+      },
+      "created_at": "2026-06-28T18:43:31.551729+00:00",
+      "updated_at": "2026-06-28T18:43:31.551729+00:00"
+    },
+    "1565178": {
+      "fixture_id": 1565178,
+      "league_id": 1,
+      "season": 2026,
+      "round": "Round of 32",
+      "date": "2026-07-03T18:00:00+00:00",
+      "venue": {
+        "id": 0,
+        "name": null,
+        "city": null
+      },
+      "home_team": "Australia",
+      "away_team": "Egypt",
+      "home_team_id": 20,
+      "away_team_id": 32,
+      "home_team_api": "Australia",
+      "away_team_api": "Egypt",
+      "predicted_score": "1-1",
+      "predicted_home_goals": 1,
+      "predicted_away_goals": 1,
+      "probabilities": {
+        "home_win": 0.403,
+        "draw": 0.2739,
+        "away_win": 0.3231,
+        "projected_home_goals": 1.37,
+        "projected_away_goals": 1.18
+      },
+      "confidence": {
+        "score": 0.458,
+        "label": "low",
+        "data_quality": 0.65
+      },
+      "model_version": {
+        "Poisson Regression": "1.0.0",
+        "Ridge Regression": "1.0.0",
+        "Random Forest": "1.0.0",
+        "Gradient Boosting": "1.0.0",
+        "XGBoost": "1.0.0",
+        "LightGBM": "1.0.0",
+        "Neural Network": "1.0.0"
+      },
+      "ml_match": {
+        "mn": 1565178,
+        "group": "R32",
+        "home": "Australia",
+        "away": "Egypt",
+        "home_flag": "🇦🇺",
+        "away_flag": "🇪🇬",
+        "models": {
+          "Poisson": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 1.5290675258251334,
+            "ra": 1.1212331601512426
+          },
+          "Ridge": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 1.580172751605364,
+            "ra": 1.2192990784225195
+          },
+          "Random Forest": {
+            "gh": 1,
+            "ga": 1,
+            "rh": 1.3639082716825053,
+            "ra": 1.139492545334181
+          },
+          "Gradient Boost": {
+            "gh": 1,
+            "ga": 1,
+            "rh": 1.3979284737666278,
+            "ra": 1.1184710123065085
+          },
+          "XGBoost": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 1.6398730278015137,
+            "ra": 1.2017933130264282
+          },
+          "LightGBM": {
+            "gh": 1,
+            "ga": 1,
+            "rh": 1.3204405991802957,
+            "ra": 1.3569559790166892
+          },
+          "Neural Net": {
+            "gh": 1,
+            "ga": 1,
+            "rh": 0.7652025118617498,
+            "ra": 1.103943711129944
+          }
+        },
+        "ens_h": 1,
+        "ens_a": 1,
+        "ens": "1-1",
+        "prediction": {
+          "home_win": 0.403,
+          "draw": 0.2739,
+          "away_win": 0.3231,
+          "projected_home_goals": 1.37,
+          "projected_away_goals": 1.18,
+          "over_2_5": 0.4676,
+          "over_3_5": 0.252,
+          "both_teams_score": 0.5156,
+          "over_under": {
+            "2.5": {
+              "line": 2.5,
+              "over": 0.4676,
+              "under": 0.5324
+            },
+            "3.5": {
+              "line": 3.5,
+              "over": 0.252,
+              "under": 0.748
+            },
+            "line": 2.5,
+            "over": 0.4676,
+            "under": 0.5324
+          },
+          "score_matrix": {
+            "top_exact_scores": [
+              {
+                "score": "1-1",
+                "probability": 0.126349
+              },
+              {
+                "score": "1-0",
+                "probability": 0.107411
+              },
+              {
+                "score": "0-1",
+                "probability": 0.092328
+              },
+              {
+                "score": "2-1",
+                "probability": 0.086453
+              },
+              {
+                "score": "0-0",
+                "probability": 0.078489
+              }
+            ],
+            "score_matrix": {
+              "0-0": 0.078489,
+              "0-1": 0.092328,
+              "0-2": 0.054303,
+              "0-3": 0.021293,
+              "0-4": 0.006262,
+              "0-5": 0.001473,
+              "0-6": 0.000289,
+              "0-7": 4.9e-05,
+              "0-8": 7e-06,
+              "1-0": 0.107411,
+              "1-1": 0.126349,
+              "1-2": 0.074313,
+              "1-3": 0.029139,
+              "1-4": 0.008569,
+              "1-5": 0.002016,
+              "1-6": 0.000395,
+              "1-7": 6.6e-05,
+              "1-8": 1e-05,
+              "2-0": 0.073495,
+              "2-1": 0.086453,
+              "2-2": 0.050848,
+              "2-3": 0.019938,
+              "2-4": 0.005863,
+              "2-5": 0.001379,
+              "2-6": 0.00027,
+              "2-7": 4.5e-05,
+              "2-8": 7e-06,
+              "3-0": 0.033525,
+              "3-1": 0.039436,
+              "3-2": 0.023195,
+              "3-3": 0.009095,
+              "3-4": 0.002675,
+              "3-5": 0.000629,
+              "3-6": 0.000123,
+              "3-7": 2.1e-05,
+              "3-8": 3e-06,
+              "4-0": 0.01147,
+              "4-1": 0.013492,
+              "4-2": 0.007935,
+              "4-3": 0.003112,
+              "4-4": 0.000915,
+              "4-5": 0.000215,
+              "4-6": 4.2e-05,
+              "4-7": 7e-06,
+              "4-8": 1e-06,
+              "5-0": 0.003139,
+              "5-1": 0.003693,
+              "5-2": 0.002172,
+              "5-3": 0.000852,
+              "5-4": 0.00025,
+              "5-5": 5.9e-05,
+              "5-6": 1.2e-05,
+              "5-7": 2e-06,
+              "5-8": 0.0,
+              "6-0": 0.000716,
+              "6-1": 0.000842,
+              "6-2": 0.000495,
+              "6-3": 0.000194,
+              "6-4": 5.7e-05,
+              "6-5": 1.3e-05,
+              "6-6": 3e-06,
+              "6-7": 0.0,
+              "6-8": 0.0,
+              "7-0": 0.00014,
+              "7-1": 0.000165,
+              "7-2": 9.7e-05,
+              "7-3": 3.8e-05,
+              "7-4": 1.1e-05,
+              "7-5": 3e-06,
+              "7-6": 1e-06,
+              "7-7": 0.0,
+              "7-8": 0.0,
+              "8-0": 2.4e-05,
+              "8-1": 2.8e-05,
+              "8-2": 1.7e-05,
+              "8-3": 6e-06,
+              "8-4": 2e-06,
+              "8-5": 0.0,
+              "8-6": 0.0,
+              "8-7": 0.0,
+              "8-8": 0.0
+            }
+          }
+        },
+        "confidence": {
+          "score": 0.458,
+          "label": "low",
+          "data_quality": 0.65
+        },
+        "explanation": {
+          "top_factors": [],
+          "risk_factors": []
+        },
+        "ensemble": {
+          "weights": {
+            "Poisson Regression": 0.1584,
+            "Ridge Regression": 0.1239,
+            "Random Forest": 0.1557,
+            "Gradient Boosting": 0.1416,
+            "XGBoost": 0.142,
+            "LightGBM": 0.1338,
+            "Neural Network": 0.1446
+          },
+          "model_agreement": 0.833
+        },
+        "fixture_id": 1565178,
+        "round": "Round of 32",
+        "kickoff": "2026-07-03T18:00:00+00:00",
+        "source": "future_cache"
+      },
+      "created_at": "2026-06-28T18:43:31.764301+00:00",
+      "updated_at": "2026-06-28T18:43:31.764301+00:00"
+    },
+    "1565179": {
+      "fixture_id": 1565179,
+      "league_id": 1,
+      "season": 2026,
+      "round": "Round of 32",
+      "date": "2026-07-03T22:00:00+00:00",
+      "venue": {
+        "id": 0,
+        "name": "Hard Rock Stadium",
+        "city": null
+      },
+      "home_team": "Argentina",
+      "away_team": "Cabo Verde",
+      "home_team_id": 26,
+      "away_team_id": 1533,
+      "home_team_api": "Argentina",
+      "away_team_api": "Cape Verde Islands",
+      "predicted_score": "5-0",
+      "predicted_home_goals": 5,
+      "predicted_away_goals": 0,
+      "probabilities": {
+        "home_win": 0.8201,
+        "draw": 0.0985,
+        "away_win": 0.0814,
+        "projected_home_goals": 4.67,
+        "projected_away_goals": 0.48
+      },
+      "confidence": {
+        "score": 0.408,
+        "label": "low",
+        "data_quality": 0.65
+      },
+      "model_version": {
+        "Poisson Regression": "1.0.0",
+        "Ridge Regression": "1.0.0",
+        "Random Forest": "1.0.0",
+        "Gradient Boosting": "1.0.0",
+        "XGBoost": "1.0.0",
+        "LightGBM": "1.0.0",
+        "Neural Network": "1.0.0"
+      },
+      "ml_match": {
+        "mn": 1565179,
+        "group": "R32",
+        "home": "Argentina",
+        "away": "Cabo Verde",
+        "home_flag": "🇦🇷",
+        "away_flag": "🇨🇻",
+        "models": {
+          "Poisson": {
+            "gh": 5,
+            "ga": 0,
+            "rh": 4.745781089970204,
+            "ra": 0.2565929351259649
+          },
+          "Ridge": {
+            "gh": 4,
+            "ga": 0,
+            "rh": 4.279303709607747,
+            "ra": 0.46172830338015425
+          },
+          "Random Forest": {
+            "gh": 5,
+            "ga": 0,
+            "rh": 4.63604136660125,
+            "ra": 0.4032364178806067
+          },
+          "Gradient Boost": {
+            "gh": 5,
+            "ga": 0,
+            "rh": 4.865750260083566,
+            "ra": 0.44779619784571884
+          },
+          "XGBoost": {
+            "gh": 5,
+            "ga": 0,
+            "rh": 4.775545120239258,
+            "ra": 0.3396358788013458
+          },
+          "LightGBM": {
+            "gh": 5,
+            "ga": 1,
+            "rh": 4.695035468555709,
+            "ra": 0.5887618772638212
+          },
+          "Neural Net": {
+            "gh": 5,
+            "ga": 1,
+            "rh": 4.635272269669859,
+            "ra": 0.8876204617903575
+          }
+        },
+        "ens_h": 5,
+        "ens_a": 0,
+        "ens": "5-0",
+        "prediction": {
+          "home_win": 0.8201,
+          "draw": 0.0985,
+          "away_win": 0.0814,
+          "projected_home_goals": 4.67,
+          "projected_away_goals": 0.48,
+          "over_2_5": 0.8873,
+          "over_3_5": 0.7552,
+          "both_teams_score": 0.3773,
+          "over_under": {
+            "2.5": {
+              "line": 2.5,
+              "over": 0.8873,
+              "under": 0.1127
+            },
+            "3.5": {
+              "line": 3.5,
+              "over": 0.7552,
+              "under": 0.2448
+            },
+            "line": 2.5,
+            "over": 0.8873,
+            "under": 0.1127
+          },
+          "score_matrix": {
+            "top_exact_scores": [
+              {
+                "score": "4-0",
+                "probability": 0.115012
+              },
+              {
+                "score": "5-0",
+                "probability": 0.107406
+              },
+              {
+                "score": "3-0",
+                "probability": 0.098525
+              },
+              {
+                "score": "6-0",
+                "probability": 0.083586
+              },
+              {
+                "score": "2-0",
+                "probability": 0.063301
+              }
+            ],
+            "score_matrix": {
+              "0-0": 0.005807,
+              "0-1": 0.002784,
+              "0-2": 0.000667,
+              "0-3": 0.000107,
+              "0-4": 1.3e-05,
+              "0-5": 1e-06,
+              "0-6": 0.0,
+              "0-7": 0.0,
+              "0-8": 0.0,
+              "1-0": 0.027114,
+              "1-1": 0.012998,
+              "1-2": 0.003116,
+              "1-3": 0.000498,
+              "1-4": 6e-05,
+              "1-5": 6e-06,
+              "1-6": 0.0,
+              "1-7": 0.0,
+              "1-8": 0.0,
+              "2-0": 0.063301,
+              "2-1": 0.030346,
+              "2-2": 0.007274,
+              "2-3": 0.001162,
+              "2-4": 0.000139,
+              "2-5": 1.3e-05,
+              "2-6": 1e-06,
+              "2-7": 0.0,
+              "2-8": 0.0,
+              "3-0": 0.098525,
+              "3-1": 0.047233,
+              "3-2": 0.011322,
+              "3-3": 0.001809,
+              "3-4": 0.000217,
+              "3-5": 2.1e-05,
+              "3-6": 2e-06,
+              "3-7": 0.0,
+              "3-8": 0.0,
+              "4-0": 0.115012,
+              "4-1": 0.055136,
+              "4-2": 0.013216,
+              "4-3": 0.002112,
+              "4-4": 0.000253,
+              "4-5": 2.4e-05,
+              "4-6": 2e-06,
+              "4-7": 0.0,
+              "4-8": 0.0,
+              "5-0": 0.107406,
+              "5-1": 0.05149,
+              "5-2": 0.012342,
+              "5-3": 0.001972,
+              "5-4": 0.000236,
+              "5-5": 2.3e-05,
+              "5-6": 2e-06,
+              "5-7": 0.0,
+              "5-8": 0.0,
+              "6-0": 0.083586,
+              "6-1": 0.040071,
+              "6-2": 0.009605,
+              "6-3": 0.001535,
+              "6-4": 0.000184,
+              "6-5": 1.8e-05,
+              "6-6": 1e-06,
+              "6-7": 0.0,
+              "6-8": 0.0,
+              "7-0": 0.055756,
+              "7-1": 0.026729,
+              "7-2": 0.006407,
+              "7-3": 0.001024,
+              "7-4": 0.000123,
+              "7-5": 1.2e-05,
+              "7-6": 1e-06,
+              "7-7": 0.0,
+              "7-8": 0.0,
+              "8-0": 0.032543,
+              "8-1": 0.015601,
+              "8-2": 0.00374,
+              "8-3": 0.000598,
+              "8-4": 7.2e-05,
+              "8-5": 7e-06,
+              "8-6": 1e-06,
+              "8-7": 0.0,
+              "8-8": 0.0
+            }
+          }
+        },
+        "confidence": {
+          "score": 0.408,
+          "label": "low",
+          "data_quality": 0.65
+        },
+        "explanation": {
+          "top_factors": [
+            "Home team has stronger pre-match Elo rating",
+            "Home team stronger attacking xG profile"
+          ],
+          "risk_factors": []
+        },
+        "ensemble": {
+          "weights": {
+            "Poisson Regression": 0.1584,
+            "Ridge Regression": 0.1239,
+            "Random Forest": 0.1557,
+            "Gradient Boosting": 0.1416,
+            "XGBoost": 0.142,
+            "LightGBM": 0.1338,
+            "Neural Network": 0.1446
+          },
+          "model_agreement": 0.667
+        },
+        "fixture_id": 1565179,
+        "round": "Round of 32",
+        "kickoff": "2026-07-03T22:00:00+00:00",
+        "source": "future_cache"
+      },
+      "created_at": "2026-06-28T18:43:31.990080+00:00",
+      "updated_at": "2026-06-28T18:43:31.990080+00:00"
+    },
+    "1567310": {
+      "fixture_id": 1567310,
+      "league_id": 1,
+      "season": 2026,
+      "round": "Round of 32",
+      "date": "2026-07-04T01:30:00+00:00",
+      "venue": {
+        "id": 0,
+        "name": "Arrowhead Stadium",
+        "city": null
+      },
+      "home_team": "Colombia",
+      "away_team": "Ghana",
+      "home_team_id": 8,
+      "away_team_id": 1504,
+      "home_team_api": "Colombia",
+      "away_team_api": "Ghana",
+      "predicted_score": "2-1",
+      "predicted_home_goals": 2,
+      "predicted_away_goals": 1,
+      "probabilities": {
+        "home_win": 0.7049,
+        "draw": 0.179,
+        "away_win": 0.1161,
+        "projected_home_goals": 2.39,
+        "projected_away_goals": 0.68
+      },
+      "confidence": {
+        "score": 0.408,
+        "label": "low",
+        "data_quality": 0.65
+      },
+      "model_version": {
+        "Poisson Regression": "1.0.0",
+        "Ridge Regression": "1.0.0",
+        "Random Forest": "1.0.0",
+        "Gradient Boosting": "1.0.0",
+        "XGBoost": "1.0.0",
+        "LightGBM": "1.0.0",
+        "Neural Network": "1.0.0"
+      },
+      "ml_match": {
+        "mn": 1567310,
+        "group": "R32",
+        "home": "Colombia",
+        "away": "Ghana",
+        "home_flag": "🇨🇴",
+        "away_flag": "🇬🇭",
+        "models": {
+          "Poisson": {
+            "gh": 3,
+            "ga": 1,
+            "rh": 2.5928434405922975,
+            "ra": 0.6418639499874419
+          },
+          "Ridge": {
+            "gh": 3,
+            "ga": 1,
+            "rh": 2.697203666567925,
+            "ra": 0.5753620538739146
+          },
+          "Random Forest": {
+            "gh": 3,
+            "ga": 1,
+            "rh": 2.6578260293405185,
+            "ra": 0.6870470031423231
+          },
+          "Gradient Boost": {
+            "gh": 3,
+            "ga": 1,
+            "rh": 2.516320361305331,
+            "ra": 0.5016996481374327
+          },
+          "XGBoost": {
+            "gh": 2,
+            "ga": 0,
+            "rh": 2.469526767730713,
+            "ra": 0.4421829581260681
+          },
+          "LightGBM": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 2.2548748023165466,
+            "ra": 0.5692210076078849
+          },
+          "Neural Net": {
+            "gh": 2,
+            "ga": 1,
+            "rh": 1.5679237679809879,
+            "ra": 1.289979420143161
+          }
+        },
+        "ens_h": 2,
+        "ens_a": 1,
+        "ens": "2-1",
+        "prediction": {
+          "home_win": 0.7049,
+          "draw": 0.179,
+          "away_win": 0.1161,
+          "projected_home_goals": 2.39,
+          "projected_away_goals": 0.68,
+          "over_2_5": 0.5924,
+          "over_3_5": 0.3686,
+          "both_teams_score": 0.4467,
+          "over_under": {
+            "2.5": {
+              "line": 2.5,
+              "over": 0.5924,
+              "under": 0.4076
+            },
+            "3.5": {
+              "line": 3.5,
+              "over": 0.3686,
+              "under": 0.6314
+            },
+            "line": 2.5,
+            "over": 0.5924,
+            "under": 0.4076
+          },
+          "score_matrix": {
+            "top_exact_scores": [
+              {
+                "score": "2-0",
+                "probability": 0.132962
+              },
+              {
+                "score": "1-0",
+                "probability": 0.111074
+              },
+              {
+                "score": "3-0",
+                "probability": 0.106109
+              },
+              {
+                "score": "2-1",
+                "probability": 0.089943
+              },
+              {
+                "score": "1-1",
+                "probability": 0.075136
+              }
+            ],
+            "score_matrix": {
+              "0-0": 0.046394,
+              "0-1": 0.031384,
+              "0-2": 0.010615,
+              "0-3": 0.002393,
+              "0-4": 0.000405,
+              "0-5": 5.5e-05,
+              "0-6": 6e-06,
+              "0-7": 1e-06,
+              "0-8": 0.0,
+              "1-0": 0.111074,
+              "1-1": 0.075136,
+              "1-2": 0.025413,
+              "1-3": 0.00573,
+              "1-4": 0.000969,
+              "1-5": 0.000131,
+              "1-6": 1.5e-05,
+              "1-7": 1e-06,
+              "1-8": 0.0,
+              "2-0": 0.132962,
+              "2-1": 0.089943,
+              "2-2": 0.030421,
+              "2-3": 0.00686,
+              "2-4": 0.00116,
+              "2-5": 0.000157,
+              "2-6": 1.8e-05,
+              "2-7": 2e-06,
+              "2-8": 0.0,
+              "3-0": 0.106109,
+              "3-1": 0.071778,
+              "3-2": 0.024277,
+              "3-3": 0.005474,
+              "3-4": 0.000926,
+              "3-5": 0.000125,
+              "3-6": 1.4e-05,
+              "3-7": 1e-06,
+              "3-8": 0.0,
+              "4-0": 0.06351,
+              "4-1": 0.042961,
+              "4-2": 0.014531,
+              "4-3": 0.003276,
+              "4-4": 0.000554,
+              "4-5": 7.5e-05,
+              "4-6": 8e-06,
+              "4-7": 1e-06,
+              "4-8": 0.0,
+              "5-0": 0.03041,
+              "5-1": 0.020571,
+              "5-2": 0.006958,
+              "5-3": 0.001569,
+              "5-4": 0.000265,
+              "5-5": 3.6e-05,
+              "5-6": 4e-06,
+              "5-7": 0.0,
+              "5-8": 0.0,
+              "6-0": 0.012134,
+              "6-1": 0.008208,
+              "6-2": 0.002776,
+              "6-3": 0.000626,
+              "6-4": 0.000106,
+              "6-5": 1.4e-05,
+              "6-6": 2e-06,
+              "6-7": 0.0,
+              "6-8": 0.0,
+              "7-0": 0.00415,
+              "7-1": 0.002807,
+              "7-2": 0.00095,
+              "7-3": 0.000214,
+              "7-4": 3.6e-05,
+              "7-5": 5e-06,
+              "7-6": 1e-06,
+              "7-7": 0.0,
+              "7-8": 0.0,
+              "8-0": 0.001242,
+              "8-1": 0.00084,
+              "8-2": 0.000284,
+              "8-3": 6.4e-05,
+              "8-4": 1.1e-05,
+              "8-5": 1e-06,
+              "8-6": 0.0,
+              "8-7": 0.0,
+              "8-8": 0.0
+            }
+          }
+        },
+        "confidence": {
+          "score": 0.408,
+          "label": "low",
+          "data_quality": 0.65
+        },
+        "explanation": {
+          "top_factors": [
+            "Home team has stronger pre-match Elo rating",
+            "Home team stronger attacking xG profile"
+          ],
+          "risk_factors": []
+        },
+        "ensemble": {
+          "weights": {
+            "Poisson Regression": 0.1584,
+            "Ridge Regression": 0.1239,
+            "Random Forest": 0.1557,
+            "Gradient Boosting": 0.1416,
+            "XGBoost": 0.142,
+            "LightGBM": 0.1338,
+            "Neural Network": 0.1446
+          },
+          "model_agreement": 0.667
+        },
+        "fixture_id": 1567310,
+        "round": "Round of 32",
+        "kickoff": "2026-07-04T01:30:00+00:00",
+        "source": "future_cache"
+      },
+      "created_at": "2026-06-28T18:43:32.219402+00:00",
+      "updated_at": "2026-06-28T18:43:32.219402+00:00"
+    }
+  },
+  "last_refresh": {
+    "status": "ok",
+    "force": false,
+    "found": 14,
+    "already_cached": 14,
+    "predicted": 0,
+    "skipped": [],
+    "errors": [],
+    "fixture_ids_predicted": [],
+    "completed_at": "2026-06-29T20:05:12.740051+00:00"
+  }
+}

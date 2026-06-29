@@ -51,7 +51,7 @@ MARKET_TYPES = (
     "home_double_chance", "away_double_chance", "no_draw",
 )
 
-WC_TICKER_PREFIXES = ("KXWCGAME-", "KXWCBTTS-", "KXWCTOTAL-")
+WC_TICKER_PREFIXES = ("KXWCGAME-", "KXWCBTTS-", "KXWCTOTAL-", "KXWCADVANCE-")
 
 
 def is_wc_ticker(ticker: str | None) -> bool:
@@ -200,11 +200,20 @@ def _auto_match_markets(home: str, away: str, markets: list[dict]) -> dict[str, 
             continue
         if h not in title or a not in title:
             continue
-        if "draw" in title or "tie" in title:
+        # Word-boundary match — avoid matching "tie" inside "winner" or "win" in "winner".
+        if re.search(r"\bdraw\b", title) or re.search(r"\btie\b", title):
             result.setdefault("draw", ticker)
-        elif re.search(rf"\b{re.escape(h)}\b.*win", title) or f"{h} wins" in title:
+        elif re.search(r"\bwinner\b", title):
+            t_up = ticker.upper()
+            if t_up.endswith("-TIE"):
+                result.setdefault("draw", ticker)
+            elif h in title and not a.endswith(" win"):
+                result.setdefault("home_win", ticker)
+            elif a in title:
+                result.setdefault("away_win", ticker)
+        elif re.search(rf"\b{re.escape(h)}\b.*\bwin", title) or f"{h} wins" in title:
             result.setdefault("home_win", ticker)
-        elif re.search(rf"\b{re.escape(a)}\b.*win", title) or f"{a} wins" in title:
+        elif re.search(rf"\b{re.escape(a)}\b.*\bwin", title) or f"{a} wins" in title:
             result.setdefault("away_win", ticker)
         elif "both teams" in title or "btts" in title:
             if "no" not in title and "not" not in title:
@@ -229,10 +238,13 @@ def all_fixture_mappings(ml_data: list[dict], kalshi_markets: list[dict] | None 
         pass
     out = []
     for m in ml_data:
+        kickoff = m.get("kickoff") or m.get("date")
+        match_date = str(kickoff)[:10] if kickoff else get_fixture_date(m.get("mn"))
         out.append(map_fixture_to_tickers(
             m.get("home", ""),
             m.get("away", ""),
             mn=m.get("mn"),
+            date=match_date,
             kalshi_markets=kalshi_markets,
             discovery_cache=discovery_cache,
         ))
@@ -286,7 +298,9 @@ def list_unmapped_fixtures(ml_data: list[dict]) -> list[dict[str, Any]]:
         home = match.get("home", "")
         away = match.get("away", "")
         mn = match.get("mn")
-        match_date = match.get("date") or get_fixture_date(mn)
+        match_date = match.get("date") or (
+            str(match.get("kickoff") or "")[:10] if match.get("kickoff") else None
+        ) or get_fixture_date(mn)
         if is_fixture_mapped(home, away, mn=mn, date=match_date, manual=manual, discovery_cache=cache):
             continue
         unmapped.append({

@@ -1,66 +1,24 @@
 {
-  "discovered_at": "2026-06-28T03:37:11.878746+00:00",
-  "discovered_at_ts": 1782617831.8787465,
+  "discovered_at": "2026-06-29T20:22:15.377836+00:00",
+  "discovered_at_ts": 1782764535.3778367,
   "kalshi_wc_url": "https://kalshi.com/category/sports/soccer/fifa-world-cup/world-cup/games",
   "series_scanned": [
     "KXWCGAME",
     "KXWCBTTS",
-    "KXWCTOTAL"
+    "KXWCTOTAL",
+    "KXWCADVANCE"
   ],
   "series_counts": {
-    "KXWCGAME": 48,
+    "KXWCGAME": 42,
     "KXWCBTTS": 14,
-    "KXWCTOTAL": 94
+    "KXWCTOTAL": 84,
+    "KXWCADVANCE": 28
   },
-  "game_events": 16,
-  "matched_fixtures": 2,
-  "unmatched_kalshi_games": 14,
+  "game_events": 14,
+  "advance_events": 14,
+  "matched_fixtures": 14,
+  "unmatched_kalshi_games": 0,
   "matched": [
-    {
-      "kalshi_event_ticker": "KXWCGAME-26JUN27DZAAUT",
-      "kalshi_title": "Algeria vs Austria Winner?",
-      "kalshi_url": "https://kalshi.com/markets/kxwcgame/world-cup-game/kxwcgame-26jun27dzaaut",
-      "home": "Algeria",
-      "away": "Austria",
-      "date": "2026-06-27",
-      "fixture_key": "Algeria|Austria|2026-06-27",
-      "tickers": {
-        "draw": "KXWCGAME-26JUN27DZAAUT-TIE",
-        "home_win": "KXWCGAME-26JUN27DZAAUT-DZA",
-        "away_win": "KXWCGAME-26JUN27DZAAUT-AUT",
-        "over_4_5": "KXWCTOTAL-26JUN27DZAAUT-5",
-        "over_3_5": "KXWCTOTAL-26JUN27DZAAUT-4"
-      },
-      "mapped_markets": 5,
-      "in_predictions": true,
-      "mn": 71,
-      "prediction_home": "Algeria",
-      "prediction_away": "Austria"
-    },
-    {
-      "kalshi_event_ticker": "KXWCGAME-26JUN27JORARG",
-      "kalshi_title": "Jordan vs Argentina Winner?",
-      "kalshi_url": "https://kalshi.com/markets/kxwcgame/world-cup-game/kxwcgame-26jun27jorarg",
-      "home": "Jordan",
-      "away": "Argentina",
-      "date": "2026-06-27",
-      "fixture_key": "Jordan|Argentina|2026-06-27",
-      "tickers": {
-        "draw": "KXWCGAME-26JUN27JORARG-TIE",
-        "home_win": "KXWCGAME-26JUN27JORARG-JOR",
-        "away_win": "KXWCGAME-26JUN27JORARG-ARG",
-        "over_4_5": "KXWCTOTAL-26JUN27JORARG-5",
-        "over_3_5": "KXWCTOTAL-26JUN27JORARG-4",
-        "over_2_5": "KXWCTOTAL-26JUN27JORARG-3"
-      },
-      "mapped_markets": 6,
-      "in_predictions": true,
-      "mn": 72,
-      "prediction_home": "Jordan",
-      "prediction_away": "Argentina"
-    }
-  ],
-  "unmatched_kalshi": [
     {
       "kalshi_event_ticker": "KXWCGAME-26JUL01BELSEN",
       "kalshi_title": "Belgium vs Senegal Winner?",
@@ -78,11 +36,17 @@
         "over_3_5": "KXWCTOTAL-26JUL01BELSEN-4",
         "over_2_5": "KXWCTOTAL-26JUL01BELSEN-3",
         "over_1_5": "KXWCTOTAL-26JUL01BELSEN-2",
-        "over_0_5": "KXWCTOTAL-26JUL01BELSEN-1"
+        "over_0_5": "KXWCTOTAL-26JUL01BELSEN-1",
+        "away_advance": "KXWCADVANCE-26JUL01BELSEN-SEN",
+        "home_advance": "KXWCADVANCE-26JUL01BELSEN-BEL"
       },
-      "mapped_markets": 9,
-      "in_predictions": false,
-      "mn": null
+      "mapped_markets": 11,
+      "kalshi_advance_url": "https://kalshi.com/markets/kxwcadvance/world-cup-advance/kxwcadvance-26jul01belsen?op_market_ticker=KXWCADVANCE-26JUL01BELSEN-SEN",
+      "kalshi_advance_event_ticker": "KXWCADVANCE-26JUL01BELSEN",
+      "in_predictions": true,
+      "mn": 1567308,
+      "prediction_home": "Belgium",
+      "prediction_away": "Senegal"
     },
     {
       "kalshi_event_ticker": "KXWCGAME-26JUL01ENGCOD",
@@ -101,11 +65,17 @@
         "over_3_5": "KXWCTOTAL-26JUL01ENGCOD-4",
         "over_2_5": "KXWCTOTAL-26JUL01ENGCOD-3",
         "over_1_5": "KXWCTOTAL-26JUL01ENGCOD-2",
-        "over_0_5": "KXWCTOTAL-26JUL01ENGCOD-1"
+        "over_0_5": "KXWCTOTAL-26JUL01ENGCOD-1",
+        "home_advance": "KXWCADVANCE-26JUL01ENGCOD-ENG",
+        "away_advance": "KXWCADVANCE-26JUL01ENGCOD-COD"
       },
-      "mapped_markets": 9,
-      "in_predictions": false,
-      "mn": null
+      "mapped_markets": 11,
+      "kalshi_advance_url": "https://kalshi.com/markets/kxwcadvance/world-cup-advance/kxwcadvance-26jul01engcod?op_market_ticker=KXWCADVANCE-26JUL01ENGCOD-ENG",
+      "kalshi_advance_event_ticker": "KXWCADVANCE-26JUL01ENGCOD",
+      "in_predictions": true,
+      "mn": 1567307,
+      "prediction_home": "England",
+      "prediction_away": "DRC"
     },
     {
       "kalshi_event_ticker": "KXWCGAME-26JUL01USABIH",
@@ -124,11 +94,46 @@
         "over_3_5": "KXWCTOTAL-26JUL01USABIH-4",
         "over_2_5": "KXWCTOTAL-26JUL01USABIH-3",
         "over_1_5": "KXWCTOTAL-26JUL01USABIH-2",
-        "over_0_5": "KXWCTOTAL-26JUL01USABIH-1"
+        "over_0_5": "KXWCTOTAL-26JUL01USABIH-1",
+        "home_advance": "KXWCADVANCE-26JUL01USABIH-USA",
+        "away_advance": "KXWCADVANCE-26JUL01USABIH-BIH"
       },
-      "mapped_markets": 9,
-      "in_predictions": false,
-      "mn": null
+      "mapped_markets": 11,
+      "kalshi_advance_url": "https://kalshi.com/markets/kxwcadvance/world-cup-advance/kxwcadvance-26jul01usabih?op_market_ticker=KXWCADVANCE-26JUL01USABIH-USA",
+      "kalshi_advance_event_ticker": "KXWCADVANCE-26JUL01USABIH",
+      "in_predictions": true,
+      "mn": 1562586,
+      "prediction_home": "USA",
+      "prediction_away": "Bosnia and Herzegovina"
+    },
+    {
+      "kalshi_event_ticker": "KXWCGAME-26JUL02ESPAUT",
+      "kalshi_title": "Spain vs Austria Winner?",
+      "kalshi_url": "https://kalshi.com/markets/kxwcgame/world-cup-game/kxwcgame-26jul02espaut",
+      "home": "Spain",
+      "away": "Austria",
+      "date": "2026-07-02",
+      "fixture_key": "Spain|Austria|2026-07-02",
+      "tickers": {
+        "draw": "KXWCGAME-26JUL02ESPAUT-TIE",
+        "home_win": "KXWCGAME-26JUL02ESPAUT-ESP",
+        "away_win": "KXWCGAME-26JUL02ESPAUT-AUT",
+        "btts_yes": "KXWCBTTS-26JUL02ESPAUT-BTTS",
+        "over_4_5": "KXWCTOTAL-26JUL02ESPAUT-5",
+        "over_3_5": "KXWCTOTAL-26JUL02ESPAUT-4",
+        "over_2_5": "KXWCTOTAL-26JUL02ESPAUT-3",
+        "over_1_5": "KXWCTOTAL-26JUL02ESPAUT-2",
+        "over_0_5": "KXWCTOTAL-26JUL02ESPAUT-1",
+        "home_advance": "KXWCADVANCE-26JUL02ESPAUT-ESP",
+        "away_advance": "KXWCADVANCE-26JUL02ESPAUT-AUT"
+      },
+      "mapped_markets": 11,
+      "kalshi_advance_url": "https://kalshi.com/markets/kxwcadvance/world-cup-advance/kxwcadvance-26jul02espaut?op_market_ticker=KXWCADVANCE-26JUL02ESPAUT-ESP",
+      "kalshi_advance_event_ticker": "KXWCADVANCE-26JUL02ESPAUT",
+      "in_predictions": true,
+      "mn": 1567311,
+      "prediction_home": "Spain",
+      "prediction_away": "Austria"
     },
     {
       "kalshi_event_ticker": "KXWCGAME-26JUL02PORCRO",
@@ -147,11 +152,46 @@
         "over_3_5": "KXWCTOTAL-26JUL02PORCRO-4",
         "over_2_5": "KXWCTOTAL-26JUL02PORCRO-3",
         "over_1_5": "KXWCTOTAL-26JUL02PORCRO-2",
-        "over_0_5": "KXWCTOTAL-26JUL02PORCRO-1"
+        "over_0_5": "KXWCTOTAL-26JUL02PORCRO-1",
+        "home_advance": "KXWCADVANCE-26JUL02PORCRO-POR",
+        "away_advance": "KXWCADVANCE-26JUL02PORCRO-CRO"
       },
-      "mapped_markets": 9,
-      "in_predictions": false,
-      "mn": null
+      "mapped_markets": 11,
+      "kalshi_advance_url": "https://kalshi.com/markets/kxwcadvance/world-cup-advance/kxwcadvance-26jul02porcro?op_market_ticker=KXWCADVANCE-26JUL02PORCRO-POR",
+      "kalshi_advance_event_ticker": "KXWCADVANCE-26JUL02PORCRO",
+      "in_predictions": true,
+      "mn": 1567309,
+      "prediction_home": "Portugal",
+      "prediction_away": "Croatia"
+    },
+    {
+      "kalshi_event_ticker": "KXWCGAME-26JUL02SUIDZA",
+      "kalshi_title": "Switzerland vs Algeria Winner?",
+      "kalshi_url": "https://kalshi.com/markets/kxwcgame/world-cup-game/kxwcgame-26jul02suidza",
+      "home": "Switzerland",
+      "away": "Algeria",
+      "date": "2026-07-02",
+      "fixture_key": "Switzerland|Algeria|2026-07-02",
+      "tickers": {
+        "draw": "KXWCGAME-26JUL02SUIDZA-TIE",
+        "home_win": "KXWCGAME-26JUL02SUIDZA-SUI",
+        "away_win": "KXWCGAME-26JUL02SUIDZA-DZA",
+        "btts_yes": "KXWCBTTS-26JUL02SUIDZA-BTTS",
+        "over_4_5": "KXWCTOTAL-26JUL02SUIDZA-5",
+        "over_3_5": "KXWCTOTAL-26JUL02SUIDZA-4",
+        "over_2_5": "KXWCTOTAL-26JUL02SUIDZA-3",
+        "over_1_5": "KXWCTOTAL-26JUL02SUIDZA-2",
+        "over_0_5": "KXWCTOTAL-26JUL02SUIDZA-1",
+        "home_advance": "KXWCADVANCE-26JUL02SUIDZA-SUI",
+        "away_advance": "KXWCADVANCE-26JUL02SUIDZA-DZA"
+      },
+      "mapped_markets": 11,
+      "kalshi_advance_url": "https://kalshi.com/markets/kxwcadvance/world-cup-advance/kxwcadvance-26jul02suidza?op_market_ticker=KXWCADVANCE-26JUL02SUIDZA-SUI",
+      "kalshi_advance_event_ticker": "KXWCADVANCE-26JUL02SUIDZA",
+      "in_predictions": true,
+      "mn": 1567312,
+      "prediction_home": "Switzerland",
+      "prediction_away": "Algeria"
     },
     {
       "kalshi_event_ticker": "KXWCGAME-26JUL03ARGCPV",
@@ -170,11 +210,17 @@
         "over_3_5": "KXWCTOTAL-26JUL03ARGCPV-4",
         "over_2_5": "KXWCTOTAL-26JUL03ARGCPV-3",
         "over_1_5": "KXWCTOTAL-26JUL03ARGCPV-2",
-        "over_0_5": "KXWCTOTAL-26JUL03ARGCPV-1"
+        "over_0_5": "KXWCTOTAL-26JUL03ARGCPV-1",
+        "away_advance": "KXWCADVANCE-26JUL03ARGCPV-CPV",
+        "home_advance": "KXWCADVANCE-26JUL03ARGCPV-ARG"
       },
-      "mapped_markets": 9,
-      "in_predictions": false,
-      "mn": null
+      "mapped_markets": 11,
+      "kalshi_advance_url": "https://kalshi.com/markets/kxwcadvance/world-cup-advance/kxwcadvance-26jul03argcpv?op_market_ticker=KXWCADVANCE-26JUL03ARGCPV-CPV",
+      "kalshi_advance_event_ticker": "KXWCADVANCE-26JUL03ARGCPV",
+      "in_predictions": true,
+      "mn": 1565179,
+      "prediction_home": "Argentina",
+      "prediction_away": "Cabo Verde"
     },
     {
       "kalshi_event_ticker": "KXWCGAME-26JUL03AUSEGY",
@@ -193,11 +239,17 @@
         "over_3_5": "KXWCTOTAL-26JUL03AUSEGY-4",
         "over_2_5": "KXWCTOTAL-26JUL03AUSEGY-3",
         "over_1_5": "KXWCTOTAL-26JUL03AUSEGY-2",
-        "over_0_5": "KXWCTOTAL-26JUL03AUSEGY-1"
+        "over_0_5": "KXWCTOTAL-26JUL03AUSEGY-1",
+        "away_advance": "KXWCADVANCE-26JUL03AUSEGY-EGY",
+        "home_advance": "KXWCADVANCE-26JUL03AUSEGY-AUS"
       },
-      "mapped_markets": 9,
-      "in_predictions": false,
-      "mn": null
+      "mapped_markets": 11,
+      "kalshi_advance_url": "https://kalshi.com/markets/kxwcadvance/world-cup-advance/kxwcadvance-26jul03ausegy?op_market_ticker=KXWCADVANCE-26JUL03AUSEGY-EGY",
+      "kalshi_advance_event_ticker": "KXWCADVANCE-26JUL03AUSEGY",
+      "in_predictions": true,
+      "mn": 1565178,
+      "prediction_home": "Australia",
+      "prediction_away": "Egypt"
     },
     {
       "kalshi_event_ticker": "KXWCGAME-26JUL03COLGHA",
@@ -216,57 +268,17 @@
         "over_3_5": "KXWCTOTAL-26JUL03COLGHA-4",
         "over_2_5": "KXWCTOTAL-26JUL03COLGHA-3",
         "over_1_5": "KXWCTOTAL-26JUL03COLGHA-2",
-        "over_0_5": "KXWCTOTAL-26JUL03COLGHA-1"
+        "over_0_5": "KXWCTOTAL-26JUL03COLGHA-1",
+        "away_advance": "KXWCADVANCE-26JUL03COLGHA-GHA",
+        "home_advance": "KXWCADVANCE-26JUL03COLGHA-COL"
       },
-      "mapped_markets": 9,
-      "in_predictions": false,
-      "mn": null
-    },
-    {
-      "kalshi_event_ticker": "KXWCGAME-26JUN28RSACAN",
-      "kalshi_title": "South Africa vs Canada Winner?",
-      "kalshi_url": "https://kalshi.com/markets/kxwcgame/world-cup-game/kxwcgame-26jun28rsacan",
-      "home": "South Africa",
-      "away": "Canada",
-      "date": "2026-06-28",
-      "fixture_key": "South Africa|Canada|2026-06-28",
-      "tickers": {
-        "draw": "KXWCGAME-26JUN28RSACAN-TIE",
-        "home_win": "KXWCGAME-26JUN28RSACAN-RSA",
-        "away_win": "KXWCGAME-26JUN28RSACAN-CAN",
-        "btts_yes": "KXWCBTTS-26JUN28RSACAN-BTTS",
-        "over_4_5": "KXWCTOTAL-26JUN28RSACAN-5",
-        "over_3_5": "KXWCTOTAL-26JUN28RSACAN-4",
-        "over_2_5": "KXWCTOTAL-26JUN28RSACAN-3",
-        "over_1_5": "KXWCTOTAL-26JUN28RSACAN-2",
-        "over_0_5": "KXWCTOTAL-26JUN28RSACAN-1"
-      },
-      "mapped_markets": 9,
-      "in_predictions": false,
-      "mn": null
-    },
-    {
-      "kalshi_event_ticker": "KXWCGAME-26JUN29BRAJPN",
-      "kalshi_title": "Brazil vs Japan Winner?",
-      "kalshi_url": "https://kalshi.com/markets/kxwcgame/world-cup-game/kxwcgame-26jun29brajpn",
-      "home": "Brazil",
-      "away": "Japan",
-      "date": "2026-06-29",
-      "fixture_key": "Brazil|Japan|2026-06-29",
-      "tickers": {
-        "draw": "KXWCGAME-26JUN29BRAJPN-TIE",
-        "away_win": "KXWCGAME-26JUN29BRAJPN-JPN",
-        "home_win": "KXWCGAME-26JUN29BRAJPN-BRA",
-        "btts_yes": "KXWCBTTS-26JUN29BRAJPN-BTTS",
-        "over_4_5": "KXWCTOTAL-26JUN29BRAJPN-5",
-        "over_3_5": "KXWCTOTAL-26JUN29BRAJPN-4",
-        "over_2_5": "KXWCTOTAL-26JUN29BRAJPN-3",
-        "over_1_5": "KXWCTOTAL-26JUN29BRAJPN-2",
-        "over_0_5": "KXWCTOTAL-26JUN29BRAJPN-1"
-      },
-      "mapped_markets": 9,
-      "in_predictions": false,
-      "mn": null
+      "mapped_markets": 11,
+      "kalshi_advance_url": "https://kalshi.com/markets/kxwcadvance/world-cup-advance/kxwcadvance-26jul03colgha?op_market_ticker=KXWCADVANCE-26JUL03COLGHA-GHA",
+      "kalshi_advance_event_ticker": "KXWCADVANCE-26JUL03COLGHA",
+      "in_predictions": true,
+      "mn": 1567310,
+      "prediction_home": "Colombia",
+      "prediction_away": "Ghana"
     },
     {
       "kalshi_event_ticker": "KXWCGAME-26JUN29GERPAR",
@@ -285,11 +297,17 @@
         "over_3_5": "KXWCTOTAL-26JUN29GERPAR-4",
         "over_2_5": "KXWCTOTAL-26JUN29GERPAR-3",
         "over_1_5": "KXWCTOTAL-26JUN29GERPAR-2",
-        "over_0_5": "KXWCTOTAL-26JUN29GERPAR-1"
+        "over_0_5": "KXWCTOTAL-26JUN29GERPAR-1",
+        "away_advance": "KXWCADVANCE-26JUN29GERPAR-PAR",
+        "home_advance": "KXWCADVANCE-26JUN29GERPAR-GER"
       },
-      "mapped_markets": 9,
-      "in_predictions": false,
-      "mn": null
+      "mapped_markets": 11,
+      "kalshi_advance_url": "https://kalshi.com/markets/kxwcadvance/world-cup-advance/kxwcadvance-26jun29gerpar?op_market_ticker=KXWCADVANCE-26JUN29GERPAR-PAR",
+      "kalshi_advance_event_ticker": "KXWCADVANCE-26JUN29GERPAR",
+      "in_predictions": true,
+      "mn": 1565176,
+      "prediction_home": "Germany",
+      "prediction_away": "Paraguay"
     },
     {
       "kalshi_event_ticker": "KXWCGAME-26JUN29NEDMAR",
@@ -308,11 +326,17 @@
         "over_3_5": "KXWCTOTAL-26JUN29NEDMAR-4",
         "over_2_5": "KXWCTOTAL-26JUN29NEDMAR-3",
         "over_1_5": "KXWCTOTAL-26JUN29NEDMAR-2",
-        "over_0_5": "KXWCTOTAL-26JUN29NEDMAR-1"
+        "over_0_5": "KXWCTOTAL-26JUN29NEDMAR-1",
+        "home_advance": "KXWCADVANCE-26JUN29NEDMAR-NED",
+        "away_advance": "KXWCADVANCE-26JUN29NEDMAR-MAR"
       },
-      "mapped_markets": 9,
-      "in_predictions": false,
-      "mn": null
+      "mapped_markets": 11,
+      "kalshi_advance_url": "https://kalshi.com/markets/kxwcadvance/world-cup-advance/kxwcadvance-26jun29nedmar?op_market_ticker=KXWCADVANCE-26JUN29NEDMAR-NED",
+      "kalshi_advance_event_ticker": "KXWCADVANCE-26JUN29NEDMAR",
+      "in_predictions": true,
+      "mn": 1562345,
+      "prediction_home": "Netherlands",
+      "prediction_away": "Morocco"
     },
     {
       "kalshi_event_ticker": "KXWCGAME-26JUN30CIVNOR",
@@ -331,11 +355,17 @@
         "over_3_5": "KXWCTOTAL-26JUN30CIVNOR-4",
         "over_2_5": "KXWCTOTAL-26JUN30CIVNOR-3",
         "over_1_5": "KXWCTOTAL-26JUN30CIVNOR-2",
-        "over_0_5": "KXWCTOTAL-26JUN30CIVNOR-1"
+        "over_0_5": "KXWCTOTAL-26JUN30CIVNOR-1",
+        "away_advance": "KXWCADVANCE-26JUN30CIVNOR-NOR",
+        "home_advance": "KXWCADVANCE-26JUN30CIVNOR-CIV"
       },
-      "mapped_markets": 9,
-      "in_predictions": false,
-      "mn": null
+      "mapped_markets": 11,
+      "kalshi_advance_url": "https://kalshi.com/markets/kxwcadvance/world-cup-advance/kxwcadvance-26jun30civnor?op_market_ticker=KXWCADVANCE-26JUN30CIVNOR-NOR",
+      "kalshi_advance_event_ticker": "KXWCADVANCE-26JUN30CIVNOR",
+      "in_predictions": true,
+      "mn": 1564789,
+      "prediction_home": "Ivory Coast",
+      "prediction_away": "Norway"
     },
     {
       "kalshi_event_ticker": "KXWCGAME-26JUN30FRASWE",
@@ -354,11 +384,17 @@
         "over_3_5": "KXWCTOTAL-26JUN30FRASWE-4",
         "over_2_5": "KXWCTOTAL-26JUN30FRASWE-3",
         "over_1_5": "KXWCTOTAL-26JUN30FRASWE-2",
-        "over_0_5": "KXWCTOTAL-26JUN30FRASWE-1"
+        "over_0_5": "KXWCTOTAL-26JUN30FRASWE-1",
+        "away_advance": "KXWCADVANCE-26JUN30FRASWE-SWE",
+        "home_advance": "KXWCADVANCE-26JUN30FRASWE-FRA"
       },
-      "mapped_markets": 9,
-      "in_predictions": false,
-      "mn": null
+      "mapped_markets": 11,
+      "kalshi_advance_url": "https://kalshi.com/markets/kxwcadvance/world-cup-advance/kxwcadvance-26jun30fraswe?op_market_ticker=KXWCADVANCE-26JUN30FRASWE-SWE",
+      "kalshi_advance_event_ticker": "KXWCADVANCE-26JUN30FRASWE",
+      "in_predictions": true,
+      "mn": 1565177,
+      "prediction_home": "France",
+      "prediction_away": "Sweden"
     },
     {
       "kalshi_event_ticker": "KXWCGAME-26JUN30MEXECU",
@@ -377,11 +413,18 @@
         "over_3_5": "KXWCTOTAL-26JUN30MEXECU-4",
         "over_2_5": "KXWCTOTAL-26JUN30MEXECU-3",
         "over_1_5": "KXWCTOTAL-26JUN30MEXECU-2",
-        "over_0_5": "KXWCTOTAL-26JUN30MEXECU-1"
+        "over_0_5": "KXWCTOTAL-26JUN30MEXECU-1",
+        "home_advance": "KXWCADVANCE-26JUN30MEXECU-MEX",
+        "away_advance": "KXWCADVANCE-26JUN30MEXECU-ECU"
       },
-      "mapped_markets": 9,
-      "in_predictions": false,
-      "mn": null
+      "mapped_markets": 11,
+      "kalshi_advance_url": "https://kalshi.com/markets/kxwcadvance/world-cup-advance/kxwcadvance-26jun30mexecu?op_market_ticker=KXWCADVANCE-26JUN30MEXECU-MEX",
+      "kalshi_advance_event_ticker": "KXWCADVANCE-26JUN30MEXECU",
+      "in_predictions": true,
+      "mn": 1567306,
+      "prediction_home": "Mexico",
+      "prediction_away": "Ecuador"
     }
-  ]
+  ],
+  "unmatched_kalshi": []
 }

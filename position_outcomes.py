@@ -60,6 +60,15 @@ def yes_leg_outcome(
             winner = "draw"
         return mt == winner
 
+    if mt in ("home_advance", "away_advance"):
+        if not match_final:
+            return None
+        if score_home > score_away:
+            return mt == "home_advance"
+        if score_away > score_home:
+            return mt == "away_advance"
+        return None
+
     return None
 
 

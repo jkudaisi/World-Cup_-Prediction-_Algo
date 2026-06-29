@@ -360,6 +360,36 @@ a{color:inherit;text-decoration:none}
 .trading-help-body{display:none;font-size:11px;color:var(--muted);line-height:1.55;margin-top:8px}
 .trading-help-body.open{display:block}
 
+/* Weekly P/L chart */
+.pnl-week-panel{margin-bottom:1.25rem}
+.pnl-week-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.pnl-week-head h3{font-size:13px;font-weight:700;color:var(--text);margin:0}
+.pnl-week-nav{display:flex;gap:6px;flex-wrap:wrap}
+.pnl-week-range{font-size:11px;color:var(--muted);margin-bottom:8px}
+.pnl-week-chart{display:flex;align-items:flex-end;gap:6px;height:150px;padding:8px 4px 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.pnl-week-col{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;height:100%}
+.pnl-week-bar-area{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;position:relative}
+.pnl-week-bar{width:72%;max-width:44px;border-radius:4px 4px 0 0;transition:height .2s ease}
+.pnl-week-bar.pos{background:linear-gradient(180deg,#4ade80,#22c55e)}
+.pnl-week-bar.neg{background:linear-gradient(180deg,#f87171,#ef4444)}
+.pnl-week-bar.zero{background:var(--border);height:2px!important;min-height:2px}
+.pnl-week-val{font-size:10px;font-family:ui-monospace,monospace;margin-bottom:4px;white-space:nowrap}
+.pnl-week-val.pos{color:#4ade80}
+.pnl-week-val.neg{color:#f87171}
+.pnl-week-val.zero{color:var(--dim)}
+.pnl-week-dow{font-size:10px;color:var(--muted);margin-top:6px;font-weight:600}
+.pnl-week-date{font-size:9px;color:var(--dim);margin-top:2px}
+.pnl-week-footer{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--muted)}
+.pnl-week-footer b{color:var(--text);font-weight:700}
+.pnl-week-footer .pos{color:#4ade80}
+.pnl-week-footer .neg{color:#f87171}
+.pnl-week-legend{display:flex;gap:12px;font-size:10px;color:var(--dim);margin-top:6px}
+.pnl-week-legend span{display:inline-flex;align-items:center;gap:4px}
+.pnl-week-dot{width:8px;height:8px;border-radius:2px;display:inline-block}
+.pnl-week-dot.live{background:#4ade80}
+.pnl-week-dot.paper{background:#60a5fa}
+.pnl-week-empty{padding:1.5rem;text-align:center;color:var(--muted);font-size:12px}
+
 /* SCROLLBAR */
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:transparent}
@@ -375,6 +405,45 @@ a{color:inherit;text-decoration:none}
   .ens-score{font-size:28px}
   .model-row{grid-template-columns:90px 1fr auto}
 }
+.kalshi-links-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.kalshi-links-title{font-size:22px;font-weight:700;color:var(--text)}
+.kalshi-links-sub{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5}
+.kalshi-links-actions{display:flex;gap:8px;flex-wrap:wrap}
+.kalshi-links-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px}
+.kalshi-links-table-wrap{overflow:auto;border:1px solid var(--border);border-radius:10px;background:var(--card)}
+.kalshi-links-table{width:100%;border-collapse:collapse;font-size:12px}
+.kalshi-links-table th,.kalshi-links-table td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--border);vertical-align:top}
+.kalshi-links-table th{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--muted);background:rgba(255,255,255,.02);position:sticky;top:0}
+.kalshi-links-table tr:last-child td{border-bottom:none}
+.kalshi-links-table a{color:var(--gold2);text-decoration:none}
+.kalshi-links-table a:hover{text-decoration:underline}
+.kalshi-link-pill{display:inline-block;font-size:10px;padding:2px 7px;border-radius:999px;background:rgba(124,110,224,.15);color:#c4b5fd;margin-right:4px;margin-bottom:2px}
+.kalshi-links-empty{color:var(--muted);padding:24px;text-align:center}
+.mm-header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:16px;flex-wrap:wrap}
+.mm-title{font-size:22px;font-weight:700;color:var(--text)}
+.mm-sub{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5}
+.mm-actions{display:flex;gap:8px;flex-wrap:wrap}
+.mm-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px;margin-bottom:16px}
+.mm-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:14px}
+.mm-card{border:1px solid var(--border);border-radius:12px;background:var(--card);padding:14px 16px}
+.mm-card-head{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}
+.mm-match{font-size:15px;font-weight:700;color:var(--text)}
+.mm-round{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;margin-top:2px}
+.mm-qual{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px}
+.mm-qual-box{background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:8px;padding:8px 10px;text-align:center}
+.mm-qual-label{font-size:10px;color:var(--muted);text-transform:uppercase;margin-bottom:4px}
+.mm-qual-val{font-size:20px;font-weight:700;font-family:monospace;color:var(--gold)}
+.mm-qual-val.away{color:#60a5fa}
+.mm-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);padding:3px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.mm-row:last-child{border-bottom:none}
+.mm-row span:last-child{color:var(--text);font-family:monospace}
+.mm-badge{display:inline-block;font-size:9px;padding:2px 6px;border-radius:999px;background:rgba(34,197,94,.15);color:#86efac;margin-left:6px}
+.mm-details{margin-top:10px;font-size:11px;color:var(--muted);display:none}
+.mm-details.open{display:block}
+.mm-toggle{font-size:10px;color:var(--gold2);cursor:pointer;margin-top:8px;display:inline-block}
+.mm-empty{color:var(--muted);padding:24px;text-align:center}
+.mm-kalshi{margin-top:10px;padding-top:10px;border-top:1px solid var(--border)}
+.mm-kalshi-title{font-size:10px;text-transform:uppercase;color:var(--muted);margin-bottom:6px;letter-spacing:.04em}
 </style>
 </head>
 <body>
@@ -387,6 +456,8 @@ a{color:inherit;text-decoration:none}
     <button onclick="showView('all',this)">All 72</button>
     <button onclick="showView('stats',this)">Model Stats</button>
     <button onclick="showView('trading',this)">Trading</button>
+    <button onclick="showView('multimarket',this)">Multi-Market</button>
+    <button onclick="showView('kalshi',this)">Kalshi Links</button>
   </div>
   <div class="topbar-right">
     <div id="budget-bar" style="display:none">
@@ -507,6 +578,26 @@ a{color:inherit;text-decoration:none}
     <div class="trading-empty-inline">Loading trading status…</div>
   </div>
 
+  <div class="trading-panel pnl-week-panel" id="pnl-week-panel">
+    <div class="pnl-week-head">
+      <h3>Profit by day</h3>
+      <div class="pnl-week-nav">
+        <button type="button" class="trading-btn" id="pnl-week-older" onclick="shiftPnlWeek(1)">← Older</button>
+        <button type="button" class="trading-btn" onclick="shiftPnlWeek(0)">Recent</button>
+        <button type="button" class="trading-btn" id="pnl-week-newer" onclick="shiftPnlWeek(-1)" disabled>Newer →</button>
+      </div>
+    </div>
+    <div class="pnl-week-range" id="pnl-week-range">Loading…</div>
+    <div id="pnl-week-chart" class="pnl-week-chart">
+      <div class="pnl-week-empty">Loading chart…</div>
+    </div>
+    <div class="pnl-week-legend">
+      <span><i class="pnl-week-dot live"></i> Live realized</span>
+      <span><i class="pnl-week-dot paper"></i> Paper realized</span>
+    </div>
+    <div class="pnl-week-footer" id="pnl-week-footer"></div>
+  </div>
+
   <div class="trading-layout">
     <div class="trading-main">
       <div class="trading-tabs" id="trading-tabs">
@@ -561,6 +652,54 @@ a{color:inherit;text-decoration:none}
         </div>
       </div>
     </aside>
+  </div>
+</div>
+
+<div id="view-multimarket" class="view" style="display:none;padding:1.5rem 2rem">
+  <div class="mm-header">
+    <div>
+      <div class="mm-title">Knockout Multi-Market Probabilities</div>
+      <div class="mm-sub" id="mm-sub">Full qualification cascade (90′ → ET → pens) with ML adjustments for knockout fixtures.</div>
+    </div>
+    <div class="mm-actions">
+      <button class="trading-btn" onclick="fetchMultiMarket(false)">Refresh</button>
+      <button class="trading-btn" onclick="fetchMultiMarket(true)">Rebuild Cache</button>
+    </div>
+  </div>
+  <div class="mm-stats" id="mm-stats"></div>
+  <div id="mm-content">
+    <div class="mm-empty">Loading multi-market bundles…</div>
+  </div>
+</div>
+
+<div id="view-kalshi" class="view" style="display:none;padding:1.5rem 2rem">
+  <div class="kalshi-links-header">
+    <div>
+      <div class="kalshi-links-title">Kalshi Linked Matches</div>
+      <div class="kalshi-links-sub" id="kalshi-links-sub">Matches fetched from Kalshi with direct market links.</div>
+    </div>
+    <div class="kalshi-links-actions">
+      <button class="trading-btn" onclick="fetchKalshiLinkedMatches(false)">Refresh</button>
+      <button class="trading-btn" onclick="fetchKalshiLinkedMatches(true)">Re-fetch from Kalshi</button>
+    </div>
+  </div>
+  <div class="kalshi-links-stats" id="kalshi-links-stats"></div>
+  <div class="kalshi-links-table-wrap">
+    <table class="kalshi-links-table">
+      <thead>
+        <tr>
+          <th>Match</th>
+          <th>Date</th>
+          <th>Markets</th>
+          <th>Advance</th>
+          <th>Game</th>
+          <th>Source</th>
+        </tr>
+      </thead>
+      <tbody id="kalshi-links-tbody">
+        <tr><td colspan="6" class="kalshi-links-empty">Loading Kalshi links…</td></tr>
+      </tbody>
+    </table>
   </div>
 </div>
 

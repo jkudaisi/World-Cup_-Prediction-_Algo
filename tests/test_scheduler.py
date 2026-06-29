@@ -19,11 +19,15 @@ def reset_scheduler_state(monkeypatch):
     monkeypatch.setattr(sched, "_all_today_fixtures", [])
     monkeypatch.setattr(sched, "_scheduler_thread", None)
     monkeypatch.setattr(sched, "_last_status_refresh", None)
+    monkeypatch.setattr(sched, "_fixture_finalized_at", {})
 
 
 class TestMorningInit:
     def test_builds_schedule_from_fixtures(self, monkeypatch):
-        monkeypatch.setattr(sched, "_fetch_wc_fixtures_for_local_day", lambda: [SAMPLE_FIXTURE])
+        monkeypatch.setattr(
+            sched, "_fetch_wc_fixtures_for_local_day",
+            lambda **kwargs: [SAMPLE_FIXTURE],
+        )
         day = sched.morning_init()
         assert day is not None
         assert day.n_matches == 1
@@ -33,7 +37,10 @@ class TestMorningInit:
         finished = dict(SAMPLE_FIXTURE)
         finished["fixture"] = dict(finished["fixture"])
         finished["fixture"]["status"] = {"short": "FT", "elapsed": 90}
-        monkeypatch.setattr(sched, "_fetch_wc_fixtures_for_local_day", lambda: [finished])
+        monkeypatch.setattr(
+            sched, "_fetch_wc_fixtures_for_local_day",
+            lambda **kwargs: [finished],
+        )
         day = sched.morning_init()
         assert day.n_matches == 0
 
@@ -54,6 +61,16 @@ class TestAnyMatchWindow:
         sched.cached_status[12345] = "NS"
         assert sched._any_match_window() is False
 
+    def test_pre_kickoff_buffer_in_window(self):
+        future = dict(SAMPLE_FIXTURE)
+        kickoff = datetime.now(timezone.utc) + timedelta(minutes=10)
+        future["fixture"] = dict(future["fixture"])
+        future["fixture"]["date"] = kickoff.isoformat()
+        future["fixture"]["status"] = {"short": "NS", "elapsed": None}
+        sched._all_today_fixtures = [future]
+        sched.cached_status[12345] = "NS"
+        assert sched._any_match_window() is True
+
 
 class TestGetTodayView:
     def test_uses_schedule_fixtures(self, monkeypatch):
@@ -71,7 +88,10 @@ class TestGetTodayView:
         assert view["live_count"] == 1
 
     def test_fetches_when_no_schedule(self, monkeypatch):
-        monkeypatch.setattr(sched, "_fetch_wc_fixtures_for_local_day", lambda: [SAMPLE_FIXTURE])
+        monkeypatch.setattr(
+            sched, "_fetch_wc_fixtures_for_local_day",
+            lambda **kwargs: [SAMPLE_FIXTURE],
+        )
         import config
         monkeypatch.setattr(config, "APIFOOTBALL_KEY", "test-key")
         view = sched.get_today_view()

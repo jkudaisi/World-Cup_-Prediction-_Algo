@@ -1,6 +1,6 @@
 {
-  "last_trained_at": "2026-06-28T01:38:30.465340+00:00",
-  "last_trained_fixture_date": "2026-06-27",
+  "last_trained_at": "2026-06-29T19:10:08.676483+00:00",
+  "last_trained_fixture_date": "2026-06-29",
   "trained_fixture_ids": [
     1489369,
     1489370,
@@ -51,8 +51,10 @@
     1489415,
     1489416,
     1489417,
+    1489418,
     1489419,
     1489420,
+    1489421,
     1489422,
     1538999,
     1539000,
@@ -71,7 +73,9 @@
     1539013,
     1539016,
     1539017,
-    1539074
+    1539074,
+    1561329,
+    1562344
   ],
   "model_versions": {
     "Poisson Regression": "1.0.0",
@@ -82,10 +86,10 @@
     "LightGBM": "1.0.0",
     "Neural Network": "1.0.0"
   },
-  "training_rows_count": 5070,
+  "training_rows_count": 5074,
   "new_matches_added": 1,
   "last_incremental_run_status": "success",
   "errors": [],
-  "dataset_checksum": "acd32139055da3f0",
-  "total_world_cup_matches_used": 70
+  "dataset_checksum": "8e87dbab5fe4fc82",
+  "total_world_cup_matches_used": 74
 }

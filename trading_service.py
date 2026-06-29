@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import shutil
 import threading
 import time
 from pathlib import Path
@@ -23,6 +24,7 @@ from trade_executor import execute_order
 from trade_logger import log_decision, load_all_logs
 from trading_config import can_place_live_orders, config_summary, get_config
 from live_trader import load_live_positions
+from training_store import atomic_write_json
 
 log = logging.getLogger(__name__)
 
@@ -54,10 +56,13 @@ MARKET_LABELS = {
     "home_double_chance": "Home or Draw",
     "away_double_chance": "Away or Draw",
     "no_draw": "No Draw",
+    "home_advance": "Home Advance",
+    "away_advance": "Away Advance",
 }
 
 SCAN_MARKETS_1X2 = ("home_win", "draw", "away_win")
 SCAN_MARKETS_GOALS = ("btts_yes", "btts_no", "over_2_5", "over_3_5")
+SCAN_MARKETS_ADVANCE = ("home_advance", "away_advance")
 EXACT_SCORES_TO_SCAN = 3
 
 LIVE_STATUSES = frozenset({"1H", "HT", "2H", "ET", "P", "LIVE", "BT"})
@@ -143,27 +148,38 @@ def _model_prob_for_scan(
     is_live: bool,
     score_home: int = 0,
     score_away: int = 0,
+    qualification_probs: dict[str, float] | None = None,
 ) -> float | None:
     """Use score-aware goal markets in live play; pre-match envelope otherwise."""
+    mt = market_type.lower()
+    if mt in SCAN_MARKETS_ADVANCE and qualification_probs:
+        if mt == "home_advance":
+            return float(qualification_probs["home_qualifies"])
+        if mt == "away_advance":
+            return float(qualification_probs["away_qualifies"])
+
     use_live_model = is_live or score_home > 0 or score_away > 0
     if use_live_model:
         gm_p = model_prob_for_market_type(goal_mkts, market_type)
         if gm_p is not None:
             return float(gm_p)
         outcomes = goal_mkts.get("outcomes") or {}
-        mt = market_type.lower()
         if mt in outcomes:
             return float(outcomes[mt])
     return _model_prob_from_envelope(match, goal_mkts, market_type)
 
 
-def _scan_market_types(match: dict, goal_mkts: dict) -> list[str]:
+def _scan_market_types(match: dict, goal_mkts: dict, mapping: dict | None = None) -> list[str]:
     """All market types to evaluate for one fixture."""
     types = list(SCAN_MARKETS_1X2) + list(SCAN_MARKETS_GOALS)
     for item in _top_exact_scores_from_envelope(match, goal_mkts):
         score = item.get("score")
         if score:
             types.append(exact_score_market_type(str(score)))
+    tickers = filter_wc_tickers((mapping or {}).get("tickers") or {})
+    for mt in SCAN_MARKETS_ADVANCE:
+        if tickers.get(mt):
+            types.append(mt)
     return types
 
 
@@ -185,7 +201,7 @@ def scan_opportunities(
     away = match.get("away", "")
     mn = match.get("mn")
     is_live = _is_live_row(live_row)
-    conf = _confidence_score(match, live_row)
+    fixture_conf = _confidence_score(match, live_row)
     sh, sa, match_status = _score_from_live_row(live_row)
     match_final = match_status in FINAL_STATUSES
     match_status = live_row.get("status") if live_row and live_row.get("status") else ("LIVE" if is_live else "NS")
@@ -193,7 +209,20 @@ def scan_opportunities(
     fixture_opps: list[dict] = []
     cache = price_cache if price_cache is not None else {}
 
-    for mt in _scan_market_types(match, goal_mkts):
+    qualification_probs = None
+    if any(tickers.get(mt) for mt in SCAN_MARKETS_ADVANCE):
+        try:
+            from multi_market_cache import qualification_probs_for_match
+            qualification_probs = qualification_probs_for_match(
+                match,
+                score_h=sh,
+                score_a=sa,
+                live=is_live,
+            )
+        except Exception as exc:
+            log.debug("Advance market qualification lookup failed: %s", exc)
+
+    for mt in _scan_market_types(match, goal_mkts, mapping):
         model_p = _model_prob_for_scan(
             match,
             goal_mkts,
@@ -201,9 +230,17 @@ def scan_opportunities(
             is_live=is_live,
             score_home=sh,
             score_away=sa,
+            qualification_probs=qualification_probs,
         )
         if model_p is None:
             continue
+
+        market_conf, conf_source = _confidence_for_market(
+            match,
+            live_row,
+            mt,
+            qualification_probs=qualification_probs,
+        )
 
         ticker = tickers.get(mt, "")
         pricing = None
@@ -250,7 +287,7 @@ def scan_opportunities(
             edge_result = evaluate_edge(
                 model_probability=float(model_p),
                 market_implied_probability=float(kalshi_p),
-                confidence=conf,
+                confidence=market_conf,
                 spread=spread,
                 liquidity=liquidity,
                 market_type=mt,
@@ -267,7 +304,7 @@ def scan_opportunities(
                 model_probability=float(model_p),
                 kalshi_probability=kalshi_p,
                 edge=edge_result.get("edge"),
-                confidence=conf,
+                confidence=market_conf,
                 spread=spread,
                 liquidity=liquidity,
                 decision=edge_result["decision"],
@@ -275,6 +312,10 @@ def scan_opportunities(
                 risk_approval=None,
                 extra={"scan": True, "mn": mn, "market_type": mt},
             )
+
+        prob_source = None
+        if mt in SCAN_MARKETS_ADVANCE and qualification_probs:
+            prob_source = "knockout_qualification"
 
         row = {
             "mn": mn,
@@ -287,12 +328,15 @@ def scan_opportunities(
             "ticker": ticker or None,
             "model_probability": round(float(model_p), 4),
             "model_pct": round(float(model_p) * 100, 1),
+            "model_prob_source": prob_source,
+            "confidence_source": conf_source,
             "kalshi_probability": kalshi_p,
             "kalshi_pct": round(float(kalshi_p) * 100, 1) if kalshi_p is not None else None,
             "edge": edge_result.get("edge"),
             "edge_pct": round(float(edge_result["edge"]) * 100, 1) if edge_result.get("edge") is not None else None,
-            "confidence": round(conf, 3),
-            "confidence_pct": round(conf * 100, 1),
+            "confidence": market_conf,
+            "confidence_pct": round(market_conf * 100, 1),
+            "fixture_confidence": round(fixture_conf, 3),
             "spread": spread,
             "liquidity": liquidity,
             "recommendation": edge_result["decision"],
@@ -307,18 +351,119 @@ def scan_opportunities(
 
 
 def _load_predictions() -> list[dict]:
-    if not PREDICTIONS_FILE.exists():
-        return []
-    with open(PREDICTIONS_FILE, encoding="utf-8") as f:
-        return json.load(f).get("ml_data", [])
+    from future_fixture_predictions import load_merged_ml_data
+
+    return load_merged_ml_data()
+
+
+def _load_live_index() -> tuple[dict[tuple[str, str], dict], dict[int, dict]]:
+    """Index live_predictions by team pair and fixture_id."""
+    if not LIVE_PREDICTIONS_FILE.exists():
+        return {}, {}
+    with open(LIVE_PREDICTIONS_FILE, encoding="utf-8") as f:
+        doc = json.load(f)
+    by_team: dict[tuple[str, str], dict] = {}
+    by_fixture: dict[int, dict] = {}
+    for fid_str, row in (doc.get("matches") or {}).items():
+        try:
+            fid = int(fid_str)
+        except (TypeError, ValueError):
+            fid = row.get("fixture_id")
+        if fid is not None:
+            by_fixture[int(fid)] = row
+        home = row.get("home")
+        away = row.get("away")
+        if home and away:
+            by_team[(home, away)] = row
+    return by_team, by_fixture
 
 
 def _load_live_by_teams() -> dict[tuple[str, str], dict]:
-    if not LIVE_PREDICTIONS_FILE.exists():
+    by_team, _ = _load_live_index()
+    return by_team
+
+
+def _scheduler_fixture_snapshots() -> dict[int, dict[str, Any]]:
+    try:
+        import scheduler as sched
+        return sched.get_trading_fixture_snapshots()
+    except Exception:
         return {}
-    with open(LIVE_PREDICTIONS_FILE, encoding="utf-8") as f:
-        doc = json.load(f)
-    return {(m.get("home"), m.get("away")): m for m in (doc.get("matches") or {}).values()}
+
+
+def _in_api_poll_window() -> bool:
+    try:
+        import scheduler as sched
+        return sched.should_poll_api_football()
+    except Exception:
+        return False
+
+
+def _match_fixture_id(match: dict) -> int | None:
+    fid = match.get("fixture_id")
+    if fid is not None:
+        try:
+            return int(fid)
+        except (TypeError, ValueError):
+            pass
+    mn = match.get("mn")
+    if mn is not None:
+        try:
+            return int(mn)
+        except (TypeError, ValueError):
+            pass
+    return None
+
+
+def _resolve_fixture_live_state(
+    match: dict,
+    *,
+    live_by_team: dict[tuple[str, str], dict],
+    live_by_fixture: dict[int, dict],
+    sched_snaps: dict[int, dict[str, Any]],
+) -> tuple[dict | None, bool, int, int, str, bool]:
+    """Return live_row, is_live, score_home, score_away, match_status, match_final."""
+    home = match.get("home", "")
+    away = match.get("away", "")
+    fixture_id = _match_fixture_id(match)
+
+    live_row: dict | None = None
+    if fixture_id is not None:
+        live_row = live_by_fixture.get(fixture_id)
+    if live_row is None:
+        live_row = live_by_team.get((home, away))
+
+    sched = sched_snaps.get(fixture_id) if fixture_id is not None else None
+
+    if sched and sched.get("is_live"):
+        sh = int(sched.get("score_home") or 0)
+        sa = int(sched.get("score_away") or 0)
+        status = (sched.get("status") or "LIVE").upper()
+        synthetic = dict(live_row or {})
+        synthetic.update({
+            "status": status,
+            "score": {"home": sh, "away": sa},
+            "is_live": True,
+        })
+        return synthetic, True, sh, sa, status, status in FINAL_STATUSES
+
+    if live_row and _is_live_row(live_row):
+        sh, sa, status = _score_from_live_row(live_row)
+        return live_row, True, sh, sa, status, status in FINAL_STATUSES
+
+    if sched:
+        sh = int(sched.get("score_home") or 0)
+        sa = int(sched.get("score_away") or 0)
+        status = (sched.get("status") or "NS").upper()
+        is_live = bool(sched.get("is_live"))
+        row = dict(live_row or {})
+        row.setdefault("status", status)
+        row.setdefault("score", {"home": sh, "away": sa})
+        return (row or None), is_live, sh, sa, status, status in FINAL_STATUSES
+
+    sh, sa, status = _score_from_live_row(live_row)
+    is_live = _is_live_row(live_row)
+    return live_row, is_live, sh, sa, status, status in FINAL_STATUSES
 
 
 def _confidence_score(match: dict, live_row: dict | None) -> float:
@@ -332,6 +477,37 @@ def _confidence_score(match: dict, live_row: dict | None) -> float:
     if isinstance(conf, dict):
         return float(conf.get("score", 0.5))
     return 0.5
+
+
+def _prematch_confidence(match: dict) -> float:
+    conf = match.get("confidence") or {}
+    if isinstance(conf, dict):
+        return float(conf.get("score", 0.5))
+    if isinstance(conf, (int, float)):
+        return float(conf)
+    return 0.5
+
+
+def _confidence_for_market(
+    match: dict,
+    live_row: dict | None,
+    market_type: str,
+    *,
+    qualification_probs: dict[str, float] | None = None,
+) -> tuple[float, str]:
+    """
+    Per-market confidence for edge evaluation.
+
+    Advance/qualification markets use the knockout cascade (more stable than live 90′
+    win probs at minute 5), blended with pre-match model agreement.
+    """
+    base = _confidence_score(match, live_row)
+    mt = market_type.lower()
+    if mt in SCAN_MARKETS_ADVANCE and qualification_probs:
+        prematch = _prematch_confidence(match)
+        blended = max(base, prematch * 0.88, 0.52)
+        return round(blended, 3), "knockout_qualification"
+    return round(base, 3), "fixture"
 
 
 def _is_live_row(live_row: dict | None) -> bool:
@@ -467,14 +643,22 @@ def _tradeable_fixture_mns() -> set[int]:
         return set()
 
 
-def _should_fetch_prices(*, mapping: dict, is_live: bool, mn: int | None = None) -> bool:
+def _should_fetch_prices(
+    *,
+    mapping: dict,
+    is_live: bool,
+    mn: int | None = None,
+    in_poll_window: bool = False,
+) -> bool:
     tickers = filter_wc_tickers(mapping.get("tickers") or {})
     if not tickers:
         return False
+    if is_live or in_poll_window:
+        return True
     tradeable = _tradeable_fixture_mns()
     if mn is not None and mn in tradeable:
         return True
-    if is_live and float(mapping.get("match_confidence") or 0) >= 0.95:
+    if float(mapping.get("match_confidence") or 0) >= 0.95:
         return True
     return False
 
@@ -485,12 +669,16 @@ def _prefetch_pricing(
     live_flags: list[bool],
     mns: list[int | None],
     cfg: Any,
+    *,
+    in_poll_window: bool = False,
 ) -> dict[str, dict | None]:
-    """Batch-fetch Kalshi prices only for discovery-matched live fixtures."""
+    """Batch-fetch Kalshi prices for mapped fixtures in the poll window or live."""
     cache: dict[str, dict | None] = {}
     tickers: set[str] = set()
     for mapping, is_live, mn in zip(mappings, live_flags, mns):
-        if not _should_fetch_prices(mapping=mapping, is_live=is_live, mn=mn):
+        if not _should_fetch_prices(
+            mapping=mapping, is_live=is_live, mn=mn, in_poll_window=in_poll_window,
+        ):
             continue
         for ticker in filter_wc_tickers(mapping.get("tickers") or {}).values():
             tickers.add(ticker)
@@ -499,6 +687,27 @@ def _prefetch_pricing(
         if i + 1 < len(tickers):
             time.sleep(0.08)
     return cache
+
+
+def _opportunities_cache_stale() -> bool:
+    """True when cached scan should rebuild (poll window or newer Kalshi discovery)."""
+    if not _in_api_poll_window():
+        return False
+    data = _load_opportunities_from_disk()
+    if not data:
+        return True
+    cache_ts = float(data.get("updated_at") or 0)
+    if time.time() - cache_ts > 120:
+        return True
+    try:
+        from kalshi_market_discovery import load_discovery_cache
+        disc = load_discovery_cache()
+        disc_ts = float(disc.get("discovered_at_ts") or 0)
+        if disc_ts > cache_ts:
+            return True
+    except Exception:
+        pass
+    return False
 
 
 def _kalshi_client_if_configured() -> KalshiClient | None:
@@ -549,7 +758,9 @@ def _build_opportunities_inner(
     """Scan all fixtures and build trading opportunity rows."""
     cfg = get_config()
     ml_data = _load_predictions()
-    live_by_team = _load_live_by_teams()
+    live_by_team, live_by_fixture = _load_live_index()
+    sched_snaps = _scheduler_fixture_snapshots()
+    in_poll_window = _in_api_poll_window()
     cli = client or KalshiClient()
 
     try:
@@ -568,28 +779,41 @@ def _build_opportunities_inner(
     fixture_mns: list[int | None] = []
 
     for match, mapping in zip(ml_data, mappings):
-        home = match.get("home", "")
-        away = match.get("away", "")
         mn = match.get("mn")
-        live_row = live_by_team.get((home, away))
-        _, _, _, _, is_live = _lambdas_from_match(match, live_row)
+        live_row, is_live, _, _, _, _ = _resolve_fixture_live_state(
+            match,
+            live_by_team=live_by_team,
+            live_by_fixture=live_by_fixture,
+            sched_snaps=sched_snaps,
+        )
         live_flags.append(is_live)
         fixture_mns.append(mn)
 
-    price_cache = _prefetch_pricing(cli, mappings, live_flags, fixture_mns, cfg)
+    price_cache = _prefetch_pricing(
+        cli, mappings, live_flags, fixture_mns, cfg, in_poll_window=in_poll_window,
+    )
 
     for match, mapping in zip(ml_data, mappings):
         home = match.get("home", "")
         away = match.get("away", "")
         mn = match.get("mn")
-        fkey = fixture_key(home, away, mapping.get("date"), mn)
-        live_row = live_by_team.get((home, away))
-        lh, la, sh, sa, is_live = _lambdas_from_match(match, live_row)
+        fkey = fixture_key(
+            home, away,
+            mapping.get("date") or (str(match.get("kickoff") or "")[:10] or None),
+            mn,
+        )
+        live_row, is_live, sh, sa, match_status, match_final = _resolve_fixture_live_state(
+            match,
+            live_by_team=live_by_team,
+            live_by_fixture=live_by_fixture,
+            sched_snaps=sched_snaps,
+        )
+        lh, la, _, _, _ = _lambdas_from_match(match, live_row)
         conf = _confidence_score(match, live_row)
-        _, _, match_status = _score_from_live_row(live_row)
-        match_final = match_status in FINAL_STATUSES
         goal_mkts = build_goal_markets(lh, la, score_h=sh, score_a=sa, live=is_live or (sh > 0 or sa > 0))
-        fetch_prices = _should_fetch_prices(mapping=mapping, is_live=is_live, mn=mn)
+        fetch_prices = _should_fetch_prices(
+            mapping=mapping, is_live=is_live, mn=mn, in_poll_window=in_poll_window,
+        )
 
         fixture_opps = scan_opportunities(
             match=match,
@@ -611,6 +835,7 @@ def _build_opportunities_inner(
         )
         fixture_details.append({
             "mn": mn,
+            "fixture_id": _match_fixture_id(match),
             "group": match.get("group"),
             "home": home,
             "away": away,
@@ -654,14 +879,19 @@ def _build_opportunities_inner(
     }
 
     OPPORTUNITIES_CACHE.parent.mkdir(parents=True, exist_ok=True)
-    with open(OPPORTUNITIES_CACHE, "w", encoding="utf-8") as f:
-        json.dump(payload, f, indent=2)
+    _save_opportunities_cache(payload)
 
     with _cache_lock:
         _cached_opportunities.clear()
         _cached_opportunities.update(payload)
 
     return payload
+
+
+def _save_opportunities_cache(payload: dict[str, Any]) -> None:
+    """Atomic write so readers never see a half-written JSON file."""
+    with _cache_lock:
+        atomic_write_json(OPPORTUNITIES_CACHE, payload)
 
 
 def _load_opportunities_from_disk() -> dict[str, Any] | None:
@@ -671,7 +901,20 @@ def _load_opportunities_from_disk() -> dict[str, Any] | None:
         with open(OPPORTUNITIES_CACHE, encoding="utf-8") as f:
             return json.load(f)
     except (OSError, json.JSONDecodeError) as exc:
-        log.warning("Could not read opportunities cache: %s", exc)
+        backup = OPPORTUNITIES_CACHE.with_suffix(".json.corrupt")
+        try:
+            shutil.copy2(OPPORTUNITIES_CACHE, backup)
+        except OSError:
+            pass
+        log.warning(
+            "Could not read opportunities cache (%s); backup at %s — will rebuild",
+            exc,
+            backup.name,
+        )
+        with _cache_lock:
+            mem = _cached_opportunities.get("opportunities")
+            if mem:
+                return dict(_cached_opportunities)
         return None
 
 
@@ -689,10 +932,16 @@ def _sync_cache_from_disk_if_newer() -> dict[str, Any] | None:
 
 
 def get_opportunities(*, refresh: bool = False) -> dict[str, Any]:
+    if not refresh and _opportunities_cache_stale():
+        refresh = True
+
     if not refresh:
         synced = _sync_cache_from_disk_if_newer()
         if synced and _cached_opportunities.get("opportunities"):
             with _cache_lock:
+                return dict(_cached_opportunities)
+        with _cache_lock:
+            if _cached_opportunities.get("opportunities"):
                 return dict(_cached_opportunities)
 
     if refresh or not _cached_opportunities.get("opportunities"):
@@ -773,6 +1022,9 @@ def run_paper_trading_scan() -> dict[str, Any]:
 def refresh_trading_cycle() -> None:
     """Called from scheduler during live polling."""
     try:
+        import scheduler as sched
+        if sched.should_poll_api_football():
+            sched.refresh_poll_window_statuses()
         build_opportunities()
         cfg = get_config()
         if can_place_live_orders() and cfg.auto_live_trading:

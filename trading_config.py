@@ -42,6 +42,7 @@ class TradingConfig:
     min_edge_prematch: float = 0.08
     min_edge_live: float = 0.10
     min_confidence: float = 0.60
+    min_confidence_live: float = 0.40
     max_spread_cents: float = 6.0
     min_liquidity_contracts: int = 20
     max_slippage_cents: float = 2.0
@@ -85,6 +86,7 @@ def load_trading_config() -> TradingConfig:
         min_edge_prematch=_env_float("MIN_EDGE_PREMATCH", 0.08),
         min_edge_live=_env_float("MIN_EDGE_LIVE", 0.10),
         min_confidence=_env_float("MIN_CONFIDENCE", 0.60),
+        min_confidence_live=_env_float("MIN_CONFIDENCE_LIVE", 0.40),
         max_spread_cents=_env_float("MAX_SPREAD_CENTS", 6.0),
         min_liquidity_contracts=_env_int("MIN_LIQUIDITY_CONTRACTS", 20),
         max_slippage_cents=_env_float("MAX_SLIPPAGE_CENTS", 2.0),
@@ -165,6 +167,7 @@ def config_summary() -> dict:
         "min_edge_prematch": cfg.min_edge_prematch,
         "min_edge_live": cfg.min_edge_live,
         "min_confidence": cfg.min_confidence,
+        "min_confidence_live": cfg.min_confidence_live,
         "max_spread_cents": cfg.max_spread_cents,
         "min_liquidity_contracts": cfg.min_liquidity_contracts,
         "bankroll": cfg.bankroll,

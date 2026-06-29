@@ -8,6 +8,12 @@ import time
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta, timezone
 
+from api_polling_window import (
+    POST_FT_BUFFER,
+    PRE_MATCH_BUFFER,
+    any_fixture_in_poll_window,
+    seconds_until_next_poll_window,
+)
 from apifootball_client import (
     APIFootballError,
     calls_remaining,
@@ -40,8 +46,10 @@ _today_view_fetched: str = ""
 _all_today_fixtures: list[dict] = []
 _last_incremental_check: datetime | None = None
 _last_status_refresh: datetime | None = None
+_fixture_finalized_at: dict[int, datetime] = {}
 INCREMENTAL_CHECK_INTERVAL = timedelta(minutes=5)
 STATUS_REFRESH_INTERVAL = timedelta(seconds=60)
+OUTSIDE_WINDOW_MIN_SLEEP = 30
 
 
 @dataclass
@@ -119,6 +127,7 @@ def _refresh_fixture_statuses(*, force: bool = False) -> None:
         cached_status[fid] = status
         if status in FINAL_STATUSES:
             if old not in FINAL_STATUSES:
+                _fixture_finalized_at[fid] = now
                 log.info("Match %s finished (%s) — queued for incremental training", fid, status)
                 mark_fixture_for_training(fid)
                 mark_fixture_final(fid)
@@ -153,18 +162,64 @@ def morning_init() -> DaySchedule | None:
     return DaySchedule(date=today, fixtures=wc_fixtures, n_matches=len(active))
 
 
-def _any_match_window() -> bool:
-    now = datetime.now(timezone.utc)
+def should_poll_api_football() -> bool:
+    """True when any fixture is in its T-15min … FT+15min API polling window."""
+    return _any_match_window()
+
+
+def refresh_poll_window_statuses(*, force: bool = False) -> None:
+    """Refresh today's fixture list and cached statuses during the poll window."""
+    if force or should_poll_api_football():
+        _refresh_fixture_statuses(force=force)
+
+
+def get_in_play_wc_fixtures() -> list[dict]:
+    """WC fixtures currently in play from the scheduler's today list."""
+    out: list[dict] = []
     for f in _all_today_fixtures:
-        status = cached_status.get(f["fixture"]["id"]) or f["fixture"]["status"]["short"]
+        fid = f["fixture"]["id"]
+        status = (cached_status.get(fid) or f["fixture"]["status"]["short"] or "").upper()
         if status in LIVE_STATUSES:
-            return True
-        if status in SKIP_STATUSES:
-            continue
-        kickoff = parse_kickoff(f)
-        if kickoff <= now <= kickoff + timedelta(minutes=103):
-            return True
-    return False
+            out.append(f)
+    return out
+
+
+def get_trading_fixture_snapshots() -> dict[int, dict]:
+    """Latest status/score for fixtures on today's schedule (for trading scans)."""
+    snapshots: dict[int, dict] = {}
+    for f in _all_today_fixtures:
+        fix = f["fixture"]
+        fid = fix["id"]
+        status = (cached_status.get(fid) or fix["status"]["short"] or "NS").upper()
+        goals = f.get("goals") or {}
+        sh = goals.get("home")
+        sa = goals.get("away")
+        snapshots[fid] = {
+            "fixture_id": fid,
+            "status": status,
+            "score_home": int(sh) if sh is not None else 0,
+            "score_away": int(sa) if sa is not None else 0,
+            "is_live": status in LIVE_STATUSES,
+            "elapsed": (fix.get("status") or {}).get("elapsed"),
+            "home_api": f["teams"]["home"]["name"],
+            "away_api": f["teams"]["away"]["name"],
+        }
+    return snapshots
+
+
+def _any_match_window() -> bool:
+    return any_fixture_in_poll_window(
+        _all_today_fixtures, cached_status, _fixture_finalized_at,
+    )
+
+
+def _seconds_until_poll_window() -> float:
+    return seconds_until_next_poll_window(
+        _all_today_fixtures,
+        cached_status,
+        _fixture_finalized_at,
+        min_sleep=OUTSIDE_WINDOW_MIN_SLEEP,
+    )
 
 
 def run_scheduler() -> None:
@@ -180,9 +235,11 @@ def run_scheduler() -> None:
                 time.sleep(1800)
                 continue
 
-        _refresh_fixture_statuses()
+        in_poll_window = _any_match_window()
+        if in_poll_window:
+            _refresh_fixture_statuses()
 
-        if calls_remaining() > RESERVE_CALLS and _any_match_window():
+        if calls_remaining() > RESERVE_CALLS and in_poll_window:
             try:
                 result = run_live_cycle()
                 if schedule:
@@ -204,7 +261,10 @@ def run_scheduler() -> None:
             time.sleep(REFRESH_INTERVAL)
         else:
             _maybe_run_incremental_training()
-            time.sleep(60)
+            sleep_secs = _seconds_until_poll_window() if not in_poll_window else 60
+            if not in_poll_window and sleep_secs > OUTSIDE_WINDOW_MIN_SLEEP:
+                log.debug("Outside API poll window — sleeping %.0fs until next match", sleep_secs)
+            time.sleep(sleep_secs)
 
 
 def start_scheduler() -> None:
@@ -231,11 +291,16 @@ def get_scheduler_status() -> dict:
     from apifootball_client import DAILY_LIMIT
     from live_updater import get_live_status
     live_status = get_live_status()
+    in_window = _any_match_window()
     return {
         "date": schedule.date if schedule else local_today_iso(),
         "local_timezone": display_timezone_label(),
         "n_matches": schedule.n_matches if schedule else 0,
         "live_poll_interval_seconds": REFRESH_INTERVAL,
+        "api_poll_window_active": in_window,
+        "api_poll_pre_match_minutes": int(PRE_MATCH_BUFFER.total_seconds() // 60),
+        "api_poll_post_ft_minutes": int(POST_FT_BUFFER.total_seconds() // 60),
+        "seconds_until_poll_window": 0 if in_window else int(_seconds_until_poll_window()),
         "live_cycles": schedule.live_cycles if schedule else 0,
         "calls_used_today": schedule.calls_used if schedule else 0,
         "api_budget_remaining": calls_remaining(),
@@ -246,11 +311,20 @@ def get_scheduler_status() -> dict:
     }
 
 
-def _fetch_wc_fixtures_for_local_day() -> list[dict]:
-    """Load World Cup fixtures for the local calendar day (+ merge live=all)."""
+def _fetch_wc_fixtures_for_local_day(*, include_live_merge: bool | None = None) -> list[dict]:
+    """Load World Cup fixtures for the local calendar day.
+
+    ``include_live_merge`` adds a live=all call when True. Defaults to True only
+    while a fixture is in its T-15min … FT+15min poll window.
+    """
     from local_schedule import fetch_wc_fixtures_for_local_day
 
-    wc = merge_live_wc_fixtures(fetch_wc_fixtures_for_local_day())
+    if include_live_merge is None:
+        include_live_merge = _any_match_window()
+
+    wc = fetch_wc_fixtures_for_local_day()
+    if include_live_merge:
+        wc = merge_live_wc_fixtures(wc)
     for f in wc:
         fid = f["fixture"]["id"]
         cached_status[fid] = f["fixture"]["status"]["short"]
@@ -292,11 +366,15 @@ def get_today_view(*, refresh: bool = False) -> dict:
     fixtures: list[dict] = []
     if refresh and APIFOOTBALL_KEY:
         try:
-            fixtures = _fetch_wc_fixtures_for_local_day()
+            fixtures = _fetch_wc_fixtures_for_local_day(
+                include_live_merge=should_poll_api_football(),
+            )
             _all_today_fixtures = list(fixtures)
             _today_view_fetched = today
             active = [f for f in fixtures if f["fixture"]["status"]["short"] not in SKIP_STATUSES]
             schedule = DaySchedule(date=today, fixtures=fixtures, n_matches=len(active))
+            if should_poll_api_football():
+                _refresh_fixture_statuses(force=True)
         except APIFootballError as exc:
             log.warning("get_today_view refresh failed: %s", exc)
     elif _all_today_fixtures and schedule and schedule.date == today:
@@ -305,7 +383,7 @@ def get_today_view(*, refresh: bool = False) -> dict:
         fixtures = list(schedule.fixtures)
     elif _today_view_fetched != today and APIFOOTBALL_KEY:
         try:
-            fixtures = _fetch_wc_fixtures_for_local_day()
+            fixtures = _fetch_wc_fixtures_for_local_day(include_live_merge=False)
             _all_today_fixtures = list(fixtures)
             _today_view_fetched = today
             if schedule is None or schedule.date != today:
@@ -313,7 +391,7 @@ def get_today_view(*, refresh: bool = False) -> dict:
                 schedule = DaySchedule(date=today, fixtures=fixtures, n_matches=len(active))
         except APIFootballError as exc:
             log.warning("get_today_view fetch failed: %s", exc)
-    elif refresh:
+    elif refresh and should_poll_api_football():
         _refresh_fixture_statuses(force=True)
         if _all_today_fixtures and schedule and schedule.date == today:
             fixtures = list(_all_today_fixtures)
@@ -381,6 +459,14 @@ def get_today_view(*, refresh: bool = False) -> dict:
             }
 
         matches.append(entry)
+
+    from future_fixture_predictions import attach_ml_predictions_to_today_matches
+
+    attach_ml_predictions_to_today_matches(matches, fixtures)
+
+    from today_kalshi_linker import attach_kalshi_links_to_today_matches
+
+    attach_kalshi_links_to_today_matches(matches)
 
     matches.sort(key=_today_match_sort_key)
 

@@ -93,6 +93,9 @@ def compute_confidence(
 ) -> dict[str, Any]:
     """Combined confidence score 0–1."""
     live_boost = min(0.15, (minute / 90.0) * 0.15) if minute > 0 else 0
+    # Early live: pitch stats matter more than missing pre-match lineups/odds.
+    if minute > 0 and live_stats_completeness >= 0.7:
+        data_quality = max(float(data_quality), 0.55)
     raw = (
         0.30 * model_agreement
         + 0.25 * data_quality
@@ -122,3 +125,60 @@ def log_loss_multiclass(
         p = max(eps, min(1 - eps, row.get(outcome, eps)))
         total -= math.log(p)
     return total / max(len(outcomes), 1)
+
+
+def fit_platt_calibrator(y_true: list[int], y_prob: list[float]):
+    """Fit Platt scaling (logistic on logit of raw prob)."""
+    if not SKLEARN_CALIBRATION or len(y_true) < 30:
+        return None
+    import numpy as np
+    x = np.array(y_prob).reshape(-1, 1)
+    y = np.array(y_true)
+    lr = LogisticRegression(max_iter=1000)
+    lr.fit(x, y)
+    return lr
+
+
+def select_best_calibrator(
+    y_true: list[int],
+    y_prob: list[float],
+) -> dict[str, Any]:
+    """
+    Compare Platt vs Isotonic on validation data; pick lower Brier score.
+    Returns method name and fitted calibrator (or None).
+    """
+    if len(y_true) < 30:
+        return {"method": "shrink_uniform", "calibrator": None, "brier_score": None}
+
+    candidates: list[tuple[str, Any, float]] = []
+
+    iso = fit_isotonic_calibrator(y_true, y_prob)
+    if iso is not None:
+        calibrated = [float(iso.predict([p])[0]) for p in y_prob]
+        candidates.append(("isotonic", iso, brier_score(calibrated, y_true)))
+
+    platt = fit_platt_calibrator(y_true, y_prob)
+    if platt is not None:
+        import numpy as np
+        calibrated = [float(platt.predict_proba(np.array([[p]]))[0, 1]) for p in y_prob]
+        candidates.append(("platt", platt, brier_score(calibrated, y_true)))
+
+    if not candidates:
+        return {"method": "shrink_uniform", "calibrator": None, "brier_score": None}
+
+    method, calibrator, score = min(candidates, key=lambda x: x[2])
+    return {"method": method, "calibrator": calibrator, "brier_score": round(score, 6)}
+
+
+def apply_calibrator(raw_prob: float, calibrator_info: dict[str, Any]) -> float:
+    """Apply selected calibrator or fall back to shrink_toward_uniform."""
+    method = calibrator_info.get("method", "shrink_uniform")
+    cal = calibrator_info.get("calibrator")
+    p = max(0.001, min(0.999, float(raw_prob)))
+
+    if method == "isotonic" and cal is not None:
+        return round(float(cal.predict([p])[0]), 4)
+    if method == "platt" and cal is not None:
+        import numpy as np
+        return round(float(cal.predict_proba(np.array([[p]]))[0, 1]), 4)
+    return round(shrink_toward_uniform({"home_win": p, "draw": 0, "away_win": 0})["home_win"], 4)

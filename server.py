@@ -2,6 +2,7 @@
 
 import json
 import logging
+import threading
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -10,6 +11,12 @@ from flask import Flask, jsonify, request, send_from_directory
 import config
 import scheduler
 from apifootball_client import DAILY_LIMIT, calls_remaining
+from future_fixture_predictions import (
+    load_future_prediction_cache,
+    merge_future_predictions_into_doc,
+    refresh_future_fixture_predictions,
+    refresh_future_fixture_predictions_on_startup,
+)
 from live_trainer import get_all_live_states
 from live_updater import build_live_api_response, get_live_status, run_live_cycle
 from live_snapshot_store import load_snapshots
@@ -33,9 +40,44 @@ except ImportError:
 
 ROOT = Path(__file__).parent
 PREDICTIONS_FILE = ROOT / "predictions.json"
+BOOTSTRAP_STATE_PATH = ROOT / "data" / "bootstrap_state.json"
+_bootstrap_running = threading.Event()
 
 app = Flask(__name__, static_folder=str(ROOT), static_url_path="")
 _scheduler_booted = False
+_future_cache_booted = False
+_kalshi_today_booted = False
+
+
+def _boot_future_cache() -> None:
+    global _future_cache_booted
+    if _future_cache_booted:
+        return
+    _future_cache_booted = True
+    if config.APIFOOTBALL_KEY:
+        refresh_future_fixture_predictions_on_startup()
+    try:
+        from multi_market_cache import refresh_multi_market_on_startup
+        refresh_multi_market_on_startup()
+    except Exception as exc:
+        logging.getLogger(__name__).warning("Multi-market cache startup skipped: %s", exc)
+    try:
+        from knockout_models import train_knockout_models_on_startup
+        train_knockout_models_on_startup()
+    except Exception as exc:
+        logging.getLogger(__name__).warning("Knockout model training skipped: %s", exc)
+
+
+def _boot_kalshi_today_links() -> None:
+    global _kalshi_today_booted
+    if _kalshi_today_booted:
+        return
+    _kalshi_today_booted = True
+    try:
+        from today_kalshi_linker import refresh_today_kalshi_links_on_startup
+        refresh_today_kalshi_links_on_startup()
+    except Exception as exc:
+        logging.getLogger(__name__).warning("Today Kalshi link startup skipped: %s", exc)
 
 
 def _load_saved():
@@ -47,6 +89,8 @@ def _load_saved():
 
 def _ensure_scheduler() -> None:
     global _scheduler_booted
+    _boot_future_cache()
+    _boot_kalshi_today_links()
     if _scheduler_booted:
         return
     if config.APIFOOTBALL_KEY:
@@ -67,7 +111,101 @@ def index():
 
 @app.route("/api/predictions")
 def get_predictions():
-    return jsonify(_load_saved())
+    return jsonify(merge_future_predictions_into_doc(_load_saved()))
+
+
+@app.route("/api/future-fixture-cache")
+def api_future_fixture_cache():
+    cache = load_future_prediction_cache()
+    return jsonify(cache)
+
+
+@app.route("/api/future-fixture-cache/refresh", methods=["POST"])
+def api_future_fixture_cache_refresh():
+    force = request.args.get("force", "").lower() in ("1", "true", "yes")
+    try:
+        result = refresh_future_fixture_predictions(force=force)
+        cache = load_future_prediction_cache()
+        try:
+            from multi_market_cache import refresh_multi_market_cache
+            mm = refresh_multi_market_cache(force=force)
+        except Exception as mm_exc:
+            mm = {"status": "error", "error": str(mm_exc)}
+        return jsonify({"refresh": result, "cache": cache, "multi_market": mm})
+    except Exception as exc:
+        logging.exception("future-fixture-cache refresh failed")
+        return jsonify({"status": "error", "error": str(exc)}), 500
+
+
+@app.route("/api/multi-market")
+def api_multi_market_list():
+    """List all cached multi-market bundles (knockout fixtures)."""
+    try:
+        from multi_market_cache import list_cached_fixtures, load_multi_market_cache
+        doc = load_multi_market_cache()
+        return jsonify({
+            "updated_at": doc.get("updated_at"),
+            "count": len(doc.get("fixtures") or {}),
+            "stats": doc.get("stats"),
+            "fixtures": list_cached_fixtures(include_api=True),
+        })
+    except Exception as exc:
+        logging.exception("multi-market list failed")
+        return jsonify({"error": str(exc), "fixtures": [], "count": 0}), 500
+
+
+@app.route("/api/multi-market/<int:fixture_id>")
+def api_multi_market_fixture(fixture_id: int):
+    """Full multi-market probability bundle for one fixture."""
+    try:
+        from multi_market_cache import get_cached_bundle, build_and_cache_fixture
+        from future_fixture_predictions import lookup_ml_prediction
+        from multi_market_engine import flatten_for_api
+
+        bundle = get_cached_bundle(fixture_id)
+        if bundle is None:
+            ml = lookup_ml_prediction(fixture_id, "", "")
+            if not ml:
+                return jsonify({"error": "Fixture not found", "fixture_id": fixture_id}), 404
+            bundle = build_and_cache_fixture(ml, force=True)
+        return jsonify(flatten_for_api(bundle))
+    except Exception as exc:
+        logging.exception("multi-market fixture failed")
+        return jsonify({"error": str(exc), "fixture_id": fixture_id}), 500
+
+
+@app.route("/api/multi-market/refresh", methods=["POST"])
+def api_multi_market_refresh():
+    force = request.args.get("force", "").lower() in ("1", "true", "yes")
+    try:
+        from multi_market_cache import refresh_multi_market_cache, load_multi_market_cache
+        result = refresh_multi_market_cache(force=force)
+        doc = load_multi_market_cache()
+        return jsonify({"refresh": result, "cache": {"updated_at": doc.get("updated_at"), "count": len(doc.get("fixtures") or {})}})
+    except Exception as exc:
+        logging.exception("multi-market refresh failed")
+        return jsonify({"status": "error", "error": str(exc)}), 500
+
+
+@app.route("/api/knockout-models/refresh", methods=["POST"])
+def api_knockout_models_refresh():
+    force = request.args.get("force", "").lower() in ("1", "true", "yes")
+    try:
+        from knockout_models import train_knockout_models
+        result = train_knockout_models(use_api=True, force=force)
+        return jsonify(result)
+    except Exception as exc:
+        logging.exception("knockout-models refresh failed")
+        return jsonify({"status": "error", "error": str(exc)}), 500
+
+
+@app.route("/api/knockout-models")
+def api_knockout_models_status():
+    try:
+        from knockout_models import load_knockout_model_meta
+        return jsonify(load_knockout_model_meta())
+    except Exception as exc:
+        return jsonify({"status": "error", "error": str(exc)}), 500
 
 
 @app.route("/api/run", methods=["POST"])
@@ -88,6 +226,44 @@ def api_training_state():
     state = load_training_state()
     state["live_update"] = get_live_status()
     return jsonify(state)
+
+
+@app.route("/api/bootstrap/status")
+def api_bootstrap_status():
+    if BOOTSTRAP_STATE_PATH.exists():
+        try:
+            with open(BOOTSTRAP_STATE_PATH, encoding="utf-8") as f:
+                data = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            data = {}
+    else:
+        data = {"status": "not_started"}
+    data["running"] = _bootstrap_running.is_set()
+    if "status" not in data:
+        data["status"] = "not_started" if not data.get("last_run") else "in_progress"
+    return jsonify(data)
+
+
+@app.route("/api/bootstrap/run", methods=["POST"])
+def api_bootstrap_run():
+    if _bootstrap_running.is_set():
+        return jsonify({"status": "already_running"}), 409
+
+    def _worker() -> None:
+        _bootstrap_running.set()
+        try:
+            from historical_bootstrap import run_bootstrap
+            run_bootstrap()
+        except Exception as exc:
+            logging.getLogger(__name__).exception("Bootstrap background run failed: %s", exc)
+        finally:
+            _bootstrap_running.clear()
+
+    threading.Thread(target=_worker, daemon=True, name="wc-bootstrap").start()
+    return jsonify({
+        "status": "started",
+        "message": "Bootstrap running in background. Poll /api/bootstrap/status for progress.",
+    })
 
 
 @app.route("/api/train-incremental", methods=["POST"])
@@ -112,8 +288,14 @@ def api_train_incremental():
 def get_live():
     """Refresh live data if key configured, then return merged predictions."""
     try:
-        if config.APIFOOTBALL_KEY:
+        if config.APIFOOTBALL_KEY and scheduler.should_poll_api_football():
+            scheduler.refresh_poll_window_statuses()
             run_live_cycle()
+            try:
+                from trading_service import refresh_trading_cycle
+                refresh_trading_cycle()
+            except Exception as trade_exc:
+                logging.getLogger(__name__).debug("Trading refresh on /api/live skipped: %s", trade_exc)
         return jsonify(build_live_api_response())
     except Exception as exc:
         logging.exception("api/live failed")
@@ -209,9 +391,20 @@ def api_kalshi_orderbook(ticker: str):
 def api_kalshi_unmapped():
     if list_unmapped_fixtures is None:
         return jsonify({"unmapped": [], "count": 0, "error": "Trading module unavailable"}), 503
-    data = _load_saved()
+    data = merge_future_predictions_into_doc(_load_saved())
     unmapped = list_unmapped_fixtures(data.get("ml_data") or [])
     return jsonify({"unmapped": unmapped, "count": len(unmapped)})
+
+
+@app.route("/api/kalshi/linked-matches")
+def api_kalshi_linked_matches():
+    """All Kalshi-linked fixtures (discovery cache + today's persisted links)."""
+    try:
+        from today_kalshi_linker import build_kalshi_linked_matches_view
+        return jsonify(build_kalshi_linked_matches_view())
+    except Exception as exc:
+        logging.exception("kalshi linked-matches failed")
+        return jsonify({"error": str(exc), "matches": [], "count": 0}), 500
 
 
 @app.route("/api/kalshi/discover", methods=["GET", "POST"])
@@ -233,7 +426,7 @@ def api_kalshi_discover():
     try:
         if force:
             client = KalshiClient()
-            data = _load_saved()
+            data = merge_future_predictions_into_doc(_load_saved())
             result = discover_wc_markets(client, ml_data=data.get("ml_data") or [])
             apply_result = apply_discoveries_to_mapping(result) if auto_apply else {}
             result["apply"] = apply_result
@@ -282,6 +475,18 @@ def api_trading_logs():
 @app.route("/api/trading/exposure")
 def api_trading_exposure():
     return jsonify(risk_dashboard())
+
+
+@app.route("/api/trading/pnl/weekly")
+def api_trading_pnl_weekly():
+    from pnl_history import weekly_pnl_history
+
+    try:
+        week_offset = int(request.args.get("week_offset", 0))
+    except (TypeError, ValueError):
+        week_offset = 0
+    week_offset = max(0, week_offset)
+    return jsonify(weekly_pnl_history(week_offset=week_offset))
 
 
 @app.route("/api/trading/live/run", methods=["POST"])
@@ -370,8 +575,10 @@ if __name__ == "__main__":
         save_predictions(PREDICTIONS_FILE, verbose=False)
         print("Initial predictions saved.")
     if config.APIFOOTBALL_KEY:
+        _boot_future_cache()
         scheduler.start_scheduler()
     else:
         print("APIFOOTBALL_KEY not set — live scheduler disabled")
+    _boot_kalshi_today_links()
     print("\nOpen http://127.0.0.1:5000 in your browser")
     app.run(host="127.0.0.1", port=5000, debug=False)

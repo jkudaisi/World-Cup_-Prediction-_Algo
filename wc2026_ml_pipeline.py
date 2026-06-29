@@ -7,11 +7,14 @@ Training data: synthetic historical features built from ELO, xG, form, H2H.
 """
 
 import math, warnings, json
+import logging
 import numpy as np
 import pandas as pd
 from collections import defaultdict
 
 warnings.filterwarnings("ignore")
+
+log = logging.getLogger(__name__)
 
 # ── 1. TEAM FEATURE DATABASE ──────────────────────────────────────────────────
 # Source: eloratings.net, FBref xG averages, Transfermarkt squad values,
@@ -275,11 +278,21 @@ def train_models_from_frame(df: "pd.DataFrame", feature_cols: list[str] | None =
 
     if feature_cols is None:
         feature_cols = get_feature_cols()
+    sw = None
+    if "sample_weight" in df.columns:
+        sw = df["sample_weight"].to_numpy().astype(float)
+        if sample_weight is not None and len(sample_weight) == len(sw):
+            missing = np.isnan(sw)
+            sw = sw.copy()
+            sw[missing] = sample_weight[missing]
+        else:
+            sw = np.nan_to_num(sw, nan=1.0)
+    elif sample_weight is not None:
+        sw = sample_weight
     df = sanitize_training_frame(df, feature_cols)
     X = df[feature_cols].values.astype(float)
     y_h = df["goals_h"].values.astype(float)
     y_a = df["goals_a"].values.astype(float)
-    sw = sample_weight
 
     scaler = StandardScaler()
     X_sc = scaler.fit_transform(X)
@@ -290,7 +303,11 @@ def train_models_from_frame(df: "pd.DataFrame", feature_cols: list[str] | None =
 
     trained = {}
     for name, (mh, ma, Xtr) in model_defs.items():
-        if sw is not None:
+        if sw is not None and name == "Neural Network":
+            log.debug("MLP does not support sample_weight, training with uniform weights")
+            mh.fit(Xtr, y_h)
+            ma.fit(Xtr, y_a)
+        elif sw is not None:
             mh.fit(Xtr, y_h, sample_weight=sw)
             ma.fit(Xtr, y_a, sample_weight=sw)
         else:
@@ -300,6 +317,81 @@ def train_models_from_frame(df: "pd.DataFrame", feature_cols: list[str] | None =
         if verbose:
             print(f"  OK {name}")
     return trained, scaler
+
+
+def predict_single_match(
+    home: str,
+    away: str,
+    *,
+    group: str = "KO",
+    match_number: int | None = None,
+    trained=None,
+    scaler=None,
+    feature_cols: list[str] | None = None,
+    knockout: bool = True,
+) -> dict:
+    """Predict one fixture using saved or provided model artifacts."""
+    from ensemble import build_prediction_envelope, weighted_ensemble_goals
+    from model_store import load_artifacts
+
+    if home not in TEAM_STATS or away not in TEAM_STATS:
+        raise ValueError(f"Unknown teams for prediction: {home} vs {away}")
+
+    if trained is None or scaler is None or feature_cols is None:
+        artifacts = load_artifacts()
+        if not artifacts:
+            raise RuntimeError("No trained model artifacts found — run training first")
+        trained = artifacts["trained"]
+        scaler = artifacts["scaler"]
+        feature_cols = artifacts["feature_cols"]
+
+    ctx = {"knockout_stage": 1.0 if knockout else 0.0}
+    feats = build_features(home, away, context=ctx)
+    feat_vec = np.array([feats[c] for c in feature_cols]).reshape(1, -1)
+    feat_vec_sc = scaler.transform(feat_vec)
+
+    model_preds = {}
+    for name, (mh, ma) in trained.items():
+        Xin = feat_vec_sc if name in SCALED_MODELS else feat_vec
+        raw_h = float(mh.predict(Xin)[0])
+        raw_a = float(ma.predict(Xin)[0])
+        gh = max(0, round(raw_h))
+        ga = max(0, round(raw_a))
+        model_preds[name] = (gh, ga, raw_h, raw_a)
+
+    rh, ra, model_agreement = weighted_ensemble_goals(model_preds)
+    ens_h = max(0, round(rh))
+    ens_a = max(0, round(ra))
+
+    html_models = {
+        MODEL_HTML_NAMES[name]: {"gh": gh, "ga": ga, "rh": rh, "ra": ra}
+        for name, (gh, ga, rh, ra) in model_preds.items()
+    }
+
+    envelope = build_prediction_envelope(
+        home, away, model_preds,
+        data_quality=0.65,
+        lineup_completeness=0.5,
+    )
+    envelope["ensemble"]["model_agreement"] = round(model_agreement, 3)
+
+    entry = {
+        "mn": match_number,
+        "group": group,
+        "home": home,
+        "away": away,
+        "home_flag": FLAGS.get(home, "🏳️"),
+        "away_flag": FLAGS.get(away, "🏳️"),
+        "models": html_models,
+        "ens_h": ens_h,
+        "ens_a": ens_a,
+        "ens": f"{ens_h}-{ens_a}",
+        "prediction": envelope["prediction"],
+        "confidence": envelope["confidence"],
+        "explanation": envelope["explanation"],
+        "ensemble": envelope["ensemble"],
+    }
+    return entry
 
 
 def predict_all_fixtures(trained, scaler, feature_cols: list[str], verbose: bool = False) -> list[dict]:

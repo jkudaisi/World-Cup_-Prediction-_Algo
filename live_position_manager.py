@@ -234,28 +234,32 @@ def _try_enter_fixture_live(
     *,
     kalshi_client: KalshiClient | None = None,
     only_live: bool = True,
-) -> dict | None:
-    """Place a live Kalshi order when edge and risk rules pass."""
+) -> list[dict]:
+    """Place live Kalshi orders for ranked TRADE signals (up to max per match)."""
     cfg = get_config()
     if not can_place_live_orders():
-        return None
+        return []
     if only_live and not fixture.get("live"):
-        return None
+        return []
 
     fkey = fixture.get("fixture_key") or f"{fixture.get('home')}|{fixture.get('away')}"
-    existing = open_live_positions_for_fixture(fkey)
-    if len(existing) >= cfg.max_trades_per_match:
-        return None
+    entered: list[dict] = []
 
     opps = fixture.get("opportunities") or []
     candidates = [o for o in opps if o.get("market_type") in ENTRY_MARKETS and o.get("ticker")]
     ranked = _ranked_opportunities(candidates, trade_only=True)
     if not ranked:
-        return None
+        return []
 
-    held = {(p.get("market_type"), (p.get("side") or "yes").lower()) for p in existing}
+    held = {
+        (p.get("market_type"), (p.get("side") or "yes").lower())
+        for p in open_live_positions_for_fixture(fkey)
+    }
 
     for best in ranked:
+        if len(open_live_positions_for_fixture(fkey)) >= cfg.max_trades_per_match:
+            break
+
         mt = best["market_type"]
         ticker = str(best.get("ticker") or "")
         if not ticker or ticker.startswith("PAPER|"):
@@ -327,8 +331,10 @@ def _try_enter_fixture_live(
                 mt,
                 side,
             )
-            return result
-    return None
+            entered.append(result)
+            held.add((mt, side))
+
+    return entered
 
 
 def enter_live_for_fixtures(
@@ -337,17 +343,13 @@ def enter_live_for_fixtures(
     kalshi_client: KalshiClient | None = None,
     only_live: bool = True,
 ) -> list[dict]:
-    cfg = get_config()
     entered: list[dict] = []
     for fx in fixtures:
         if only_live and not fx.get("live"):
             continue
-        fkey = fx.get("fixture_key") or f"{fx.get('home')}|{fx.get('away')}"
-        while len(open_live_positions_for_fixture(fkey)) < cfg.max_trades_per_match:
-            result = _try_enter_fixture_live(fx, kalshi_client=kalshi_client, only_live=only_live)
-            if not result:
-                break
-            entered.append(result)
+        entered.extend(
+            _try_enter_fixture_live(fx, kalshi_client=kalshi_client, only_live=only_live),
+        )
     return entered
 
 

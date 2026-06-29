@@ -416,6 +416,33 @@ function findPrediction(homeName, awayName, mlHome, mlAway) {
   return ML_DATA.find(m => m.home === home && m.away === away);
 }
 
+function findPredictionForToday(m) {
+  if (m.ml_prediction) return m.ml_prediction;
+  return findPrediction(m.home.name, m.away.name, m.ml_home, m.ml_away);
+}
+
+function formatPreMatchProbs(pred, homeName, awayName) {
+  const p = pred && pred.prediction;
+  if (!p || p.home_win == null) return '';
+  const h = Math.round(p.home_win * 100);
+  const d = Math.round((p.draw || 0) * 100);
+  const a = Math.round((p.away_win || 0) * 100);
+  const homeShort = (homeName || 'Home').split(' ')[0];
+  const awayShort = (awayName || 'Away').split(' ')[0];
+  return `<div class="live-probs" style="margin-top:8px">
+    <div class="live-prob-bar" title="Win / Draw / Win">
+      <div class="live-prob-bar-h" style="width:${h}%"></div>
+      <div class="live-prob-bar-d" style="width:${d}%"></div>
+      <div class="live-prob-bar-a" style="width:${a}%"></div>
+    </div>
+    <div class="live-prob-labels">
+      <span class="live-prob-h">${homeShort} ${h}%</span>
+      <span class="live-prob-d">Draw ${d}%</span>
+      <span class="live-prob-a">${awayShort} ${a}%</span>
+    </div>
+  </div>`;
+}
+
 function formatKickoff(iso) {
   try {
     const d = new Date(iso);
@@ -445,7 +472,7 @@ function statusLabel(status, elapsed) {
 }
 
 function buildTodayCard(m) {
-  const pred = findPrediction(m.home.name, m.away.name, m.ml_home, m.ml_away);
+  const pred = findPredictionForToday(m);
   const sh = m.score.home != null ? m.score.home : '-';
   const sa = m.score.away != null ? m.score.away : '-';
   const hasScore = m.score.home != null || m.score.away != null;
@@ -483,7 +510,13 @@ function buildTodayCard(m) {
     </div>` : '';
 
   const predLine = pred && !livePanel
-    ? `<div class="today-ml-pred" style="text-align:center;padding:0 1.5rem 1rem">ML prediction: ${pred.ens_h}–${pred.ens_a}</div>`
+    ? `<div class="today-ml-pred" style="text-align:center;padding:0 1.5rem 1rem">
+        ML prediction: ${pred.ens_h}–${pred.ens_a}
+        ${confidenceScore(pred.confidence) != null
+          ? ` · ${Math.round(confidenceScore(pred.confidence) * 100)}% confidence`
+          : ''}
+        ${formatPreMatchProbs(pred, m.ml_home || m.home.name, m.ml_away || m.away.name)}
+      </div>`
     : '';
 
   return `<div class="today-card${m.is_live ? ' live' : ''}${isFinished ? ' finished' : ''}">
@@ -498,6 +531,7 @@ function buildTodayCard(m) {
           : (pred ? `<div style="font-size:20px;font-weight:700;color:var(--gold);font-family:monospace">${pred.ens_h}–${pred.ens_a}</div>` : '')}
         <div class="today-status ${sc}">${statusLabel(m.status, m.elapsed)}</div>
         ${m.round ? `<div style="font-size:10px;color:var(--dim);margin-top:4px">${m.round}</div>` : ''}
+        ${m.kalshi && m.kalshi.url ? `<a href="${m.kalshi.url}" target="_blank" rel="noopener" style="font-size:10px;color:var(--gold2);margin-top:6px;display:inline-block">Kalshi ↗</a>` : ''}
       </div>
       <div class="today-team right">
         ${teamNameHTML(m.away.name, m.ml_away)}
@@ -878,6 +912,9 @@ async function runPaperScanForToday() {
 
 async function fetchTodayView(forceRefresh) {
   try {
+    const predRes = await fetch('/api/predictions');
+    if (predRes.ok) applyData(await predRes.json());
+
     const url = '/api/today' + (forceRefresh ? '?refresh=1' : '');
     const res = await fetch(url);
     if (!res.ok) {
@@ -1053,6 +1090,12 @@ function showView(v, btn) {
   } else {
     stopTradingPolling();
   }
+  if (v === 'kalshi') {
+    fetchKalshiLinkedMatches(false);
+  }
+  if (v === 'multimarket') {
+    fetchMultiMarket(false);
+  }
 }
 
 let TRADING_POLL_INTERVAL = null;
@@ -1061,6 +1104,8 @@ let TRADING_DATA = null;
 let TRADING_TODAY = null;
 let TRADING_TAB = 'now';
 let TRADING_SEARCH = '';
+let PNL_WEEK_OFFSET = 0;
+let PNL_WEEK_DATA = null;
 
 const TRADING_TAB_HINTS = {
   now: 'Open positions and matches with buy signals — your main trading view.',
@@ -1130,6 +1175,83 @@ function formatPnl(v) {
 function pnlClass(v) {
   if (v == null || v === 0) return '';
   return v > 0 ? 'pos' : 'neg';
+}
+
+async function fetchPnlWeek() {
+  try {
+    const res = await fetch('/api/trading/pnl/weekly?week_offset=' + PNL_WEEK_OFFSET);
+    if (!res.ok) throw new Error('P/L history unavailable');
+    PNL_WEEK_DATA = await res.json();
+    renderPnlWeekChart(PNL_WEEK_DATA);
+  } catch (e) {
+    const chart = document.getElementById('pnl-week-chart');
+    if (chart) {
+      chart.innerHTML = '<div class="pnl-week-empty">Could not load profit chart.</div>';
+    }
+  }
+}
+
+function shiftPnlWeek(delta) {
+  if (delta === 0) {
+    PNL_WEEK_OFFSET = 0;
+  } else {
+    PNL_WEEK_OFFSET = Math.max(0, PNL_WEEK_OFFSET + delta);
+  }
+  fetchPnlWeek();
+}
+
+function renderPnlWeekChart(data) {
+  const rangeEl = document.getElementById('pnl-week-range');
+  const chartEl = document.getElementById('pnl-week-chart');
+  const footerEl = document.getElementById('pnl-week-footer');
+  const olderBtn = document.getElementById('pnl-week-older');
+  const newerBtn = document.getElementById('pnl-week-newer');
+  if (!chartEl || !data) return;
+
+  if (rangeEl) {
+    rangeEl.textContent = data.week_label || (data.week_start + ' – ' + data.week_end);
+  }
+  if (olderBtn) olderBtn.disabled = !data.has_older_weeks;
+  if (newerBtn) newerBtn.disabled = !data.has_newer_weeks;
+
+  const days = data.days || [];
+  const maxAbs = Math.max(
+    1,
+    ...days.map(d => Math.abs(Number(d.total_pnl) || 0))
+  );
+
+  if (!days.length) {
+    chartEl.innerHTML = '<div class="pnl-week-empty">No data for this period.</div>';
+  } else {
+    chartEl.innerHTML = days.map(d => {
+      const total = Number(d.total_pnl) || 0;
+      const live = Number(d.live_pnl) || 0;
+      const paper = Number(d.paper_pnl) || 0;
+      const cls = total > 0 ? 'pos' : (total < 0 ? 'neg' : 'zero');
+      const barPct = total === 0 ? 0 : Math.max(8, Math.round((Math.abs(total) / maxAbs) * 100));
+      const title = (d.trades ? d.trades + ' trade(s). ' : '') +
+        'Live ' + formatPnl(live) + ', Paper ' + formatPnl(paper);
+      return '<div class="pnl-week-col" title="' + esc(title) + '">' +
+        '<div class="pnl-week-val ' + cls + '">' + formatPnl(total) + '</div>' +
+        '<div class="pnl-week-bar-area">' +
+          '<div class="pnl-week-bar ' + cls + '" style="height:' + barPct + '%"></div>' +
+        '</div>' +
+        '<div class="pnl-week-dow">' + esc(d.weekday || '') + '</div>' +
+        '<div class="pnl-week-date">' + esc(d.label || d.date || '') + '</div>' +
+      '</div>';
+    }).join('');
+  }
+
+  if (footerEl) {
+    const wt = Number(data.week_total) || 0;
+    const wl = Number(data.week_live_total) || 0;
+    const wp = Number(data.week_paper_total) || 0;
+    footerEl.innerHTML =
+      '<span>Week total <b class="' + pnlClass(wt) + '">' + formatPnl(wt) + '</b></span>' +
+      '<span>Live <b class="' + pnlClass(wl) + '">' + formatPnl(wl) + '</b></span>' +
+      '<span>Paper <b class="' + pnlClass(wp) + '">' + formatPnl(wp) + '</b></span>' +
+      '<span><b>' + (data.week_trades || 0) + '</b> closed trades</span>';
+  }
 }
 
 function renderPositionRow(p) {
@@ -1429,6 +1551,7 @@ function buildMatchCard(f, opts) {
       '<td>' + esc(o.market) + (o.ticker && !compact ? '<br><span style="color:var(--dim);font-size:9px">' + esc(o.ticker) + '</span>' : '') + '</td>' +
       '<td>' + pct(o.model_probability) + '</td>' +
       '<td>' + (o.kalshi_pct != null ? o.kalshi_pct + '%' : '—') + '</td>' +
+      '<td>' + (o.confidence_pct != null ? o.confidence_pct + '%' : '—') + '</td>' +
       '<td>' + edgeStr(o.edge) + '</td>' +
       '<td class="' + recCls + '">' + esc(recLabel(o.recommendation)) + '</td>' +
       '<td style="white-space:normal;max-width:140px;color:var(--muted)">' + esc(shortReason) + '</td>' +
@@ -1494,7 +1617,7 @@ function buildMatchCard(f, opts) {
     renderMatchPaperTrades(f) +
     '<div class="tmc-section-label">' + oppsLabel + '</div>' +
     (oppsRows
-      ? '<table class="tmc-opps-table"><thead><tr><th>Market</th><th>Model</th><th>Kalshi</th><th>Edge</th><th>Action</th><th>Why</th></tr></thead><tbody>' + oppsRows + '</tbody></table>'
+      ? '<table class="tmc-opps-table"><thead><tr><th>Market</th><th>Model</th><th>Kalshi</th><th>Conf</th><th>Edge</th><th>Action</th><th>Why</th></tr></thead><tbody>' + oppsRows + '</tbody></table>'
       : '<div class="tmc-opps-empty">' + (opts.ideasOnly ? 'No buy signals for this match' : 'No markets scanned') + '</div>');
 
   return '<div class="' + cardCls + '" data-mn="' + f.mn + '">' +
@@ -1654,6 +1777,245 @@ function renderTradingMatchList() {
 }
 
 let TRADING_DISCOVERY = null;
+let KALSHI_LINKS_DATA = null;
+let MULTI_MARKET_DATA = null;
+
+function toggleMmDetails(id) {
+  const el = document.getElementById('mm-details-' + id);
+  if (el) el.classList.toggle('open');
+}
+
+async function fetchMultiMarket(rebuild) {
+  const content = document.getElementById('mm-content');
+  const sub = document.getElementById('mm-sub');
+  if (content && !MULTI_MARKET_DATA) {
+    content.innerHTML = '<div class="mm-empty">Loading multi-market bundles…</div>';
+  }
+  try {
+    if (rebuild) {
+      const refreshRes = await fetch('/api/multi-market/refresh?force=1', { method: 'POST' });
+      const refreshData = await refreshRes.json().catch(() => ({}));
+      if (!refreshRes.ok) {
+        throw new Error(refreshData.error || ('Rebuild HTTP ' + refreshRes.status));
+      }
+    }
+    const res = await fetch('/api/multi-market');
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || ('HTTP ' + res.status));
+    }
+    MULTI_MARKET_DATA = data;
+    renderMultiMarketView(data);
+    return data;
+  } catch (e) {
+    if (sub) sub.textContent = 'Failed to load: ' + (e.message || 'unknown error');
+    if (content) {
+      content.innerHTML = '<div class="mm-empty" style="color:#f87171">' + esc(e.message || 'Failed to load') + '</div>';
+    }
+    return null;
+  }
+}
+
+function renderMultiMarketView(d) {
+  if (!d) return;
+  const sub = document.getElementById('mm-sub');
+  const stats = document.getElementById('mm-stats');
+  const content = document.getElementById('mm-content');
+  if (sub) {
+    const parts = [];
+    if (d.updated_at) parts.push('Cache ' + d.updated_at.replace('T', ' ').slice(0, 19) + ' UTC');
+    parts.push((d.count != null ? d.count : 0) + ' knockout fixture' + (d.count === 1 ? '' : 's'));
+    sub.textContent = parts.join(' · ') || 'Knockout qualification probabilities with ET/pens cascade.';
+  }
+  if (stats) {
+    const builds = (d.stats && d.stats.builds) || '—';
+    stats.innerHTML = [
+      statCard(String(d.count != null ? d.count : '—'), 'Cached fixtures'),
+      statCard(String(builds), 'Total builds'),
+      statCard(String((d.stats && d.stats.hits) || '—'), 'Cache hits'),
+    ].join('');
+  }
+  const fixtures = d.fixtures || [];
+  if (!fixtures.length) {
+    if (content) {
+      content.innerHTML = '<div class="mm-empty">No knockout bundles cached yet — click <strong>Rebuild Cache</strong>.</div>';
+    }
+    return;
+  }
+  if (content) {
+    content.innerHTML = '<div class="mm-grid">' + fixtures.map(renderMultiMarketCard).join('') + '</div>';
+  }
+}
+
+function renderMultiMarketCard(f) {
+  const b = f.bundle || f;
+  const fid = f.fixture_id || b.fixture_id || '';
+  const home = f.home || b.home || '';
+  const away = f.away || b.away || '';
+  const group = f.group || b.group || '';
+  const qual = b.qualification_probability || (b.knockout_progression && b.knockout_progression.qualification) || {};
+  const homeQ = qual.home != null ? qual.home : qual.home_pct != null ? qual.home_pct / 100 : null;
+  const awayQ = qual.away != null ? qual.away : qual.away_pct != null ? qual.away_pct / 100 : null;
+  const mw = b.match_winner || {};
+  const km = b.kalshi_markets || {};
+  const prog = b.knockout_progression || {};
+  const ml = prog.ml_adjustments || {};
+  const etReach = (prog.extra_time && prog.extra_time.reach_probability) != null
+    ? prog.extra_time.reach_probability
+    : km.reach_extra_time;
+  const penReach = (prog.penalties && prog.penalties.reach_probability) != null
+    ? prog.penalties.reach_probability
+    : km.reach_penalties;
+  const mlBadge = ml.available
+    ? '<span class="mm-badge">ML ET/Pens</span>'
+    : '';
+
+  const kalshiRows = [
+    ['Home advance (Kalshi)', km.home_qualifies],
+    ['Away advance (Kalshi)', km.away_qualifies],
+    ['Reach ET', km.reach_extra_time],
+    ['Reach pens', km.reach_penalties],
+  ].filter(function (row) { return row[1] != null; })
+    .map(function (row) {
+      return '<div class="mm-row"><span>' + esc(row[0]) + '</span><span>' + pct(row[1]) + '</span></div>';
+    }).join('');
+
+  const detailsId = 'mm-details-' + fid;
+  const reg = prog.regulation || {};
+  const pens = prog.penalties || {};
+
+  return '<div class="mm-card">' +
+    '<div class="mm-card-head">' +
+      '<div><div class="mm-match">' + esc(home) + ' vs ' + esc(away) + mlBadge + '</div>' +
+      '<div class="mm-round">' + esc(group) + (fid ? ' · #' + fid : '') + '</div></div>' +
+    '</div>' +
+    '<div class="mm-qual">' +
+      '<div class="mm-qual-box"><div class="mm-qual-label">' + esc(home) + ' qualifies</div>' +
+        '<div class="mm-qual-val">' + pct(homeQ) + '</div></div>' +
+      '<div class="mm-qual-box"><div class="mm-qual-label">' + esc(away) + ' qualifies</div>' +
+        '<div class="mm-qual-val away">' + pct(awayQ) + '</div></div>' +
+    '</div>' +
+    '<div class="mm-row"><span>90′ home win</span><span>' + pct(mw.home_win_90 != null ? mw.home_win_90 : reg.home_win) + '</span></div>' +
+    '<div class="mm-row"><span>90′ draw</span><span>' + pct(mw.draw_90 != null ? mw.draw_90 : reg.draw) + '</span></div>' +
+    '<div class="mm-row"><span>90′ away win</span><span>' + pct(mw.away_win_90 != null ? mw.away_win_90 : reg.away_win) + '</span></div>' +
+    '<div class="mm-row"><span>Reach extra time</span><span>' + pct(etReach) + '</span></div>' +
+    '<div class="mm-row"><span>Reach penalties</span><span>' + pct(penReach) + '</span></div>' +
+    (pens.home_win_skill != null
+      ? '<div class="mm-row"><span>Home pen skill</span><span>' + pct(pens.home_win_skill) + '</span></div>'
+      : '') +
+    (kalshiRows ? '<div class="mm-kalshi"><div class="mm-kalshi-title">Kalshi-ready markets</div>' + kalshiRows + '</div>' : '') +
+    '<span class="mm-toggle" onclick="toggleMmDetails(\'' + fid + '\')">▼ Progression details</span>' +
+    '<div class="mm-details" id="' + detailsId + '">' +
+      (b.confidence && b.confidence.score != null
+        ? '<div class="mm-row"><span>Confidence</span><span>' + pct(b.confidence.score) + '</span></div>'
+        : '') +
+      (ml.available && ml.blend_weight != null
+        ? '<div class="mm-row"><span>ML blend weight</span><span>' + pct(ml.blend_weight) + '</span></div>'
+        : '') +
+      (b.generated_at
+        ? '<div class="mm-row"><span>Generated</span><span>' + esc(String(b.generated_at).slice(0, 19)) + '</span></div>'
+        : '') +
+      (f.cached_at
+        ? '<div class="mm-row"><span>Cached</span><span>' + esc(String(f.cached_at).slice(0, 19)) + '</span></div>'
+        : '') +
+    '</div>' +
+  '</div>';
+}
+
+async function fetchKalshiLinkedMatches(refreshDiscovery) {
+  const tbody = document.getElementById('kalshi-links-tbody');
+  const sub = document.getElementById('kalshi-links-sub');
+  if (tbody) {
+    tbody.innerHTML = '<tr><td colspan="6" class="kalshi-links-empty">Loading Kalshi links…</td></tr>';
+  }
+  try {
+    if (refreshDiscovery) {
+      const discoverRes = await fetch('/api/kalshi/discover?refresh=1', { method: 'POST' });
+      const discoverData = await discoverRes.json().catch(() => ({}));
+      if (!discoverRes.ok || discoverData.status === 'error') {
+        throw new Error(discoverData.error || discoverData.message || ('Discovery HTTP ' + discoverRes.status));
+      }
+    }
+    const res = await fetch('/api/kalshi/linked-matches');
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || ('HTTP ' + res.status));
+    }
+    KALSHI_LINKS_DATA = data;
+    renderKalshiLinkedMatchesView(data);
+    return data;
+  } catch (e) {
+    if (sub) {
+      sub.textContent = 'Failed to load Kalshi links: ' + (e.message || 'unknown error');
+    }
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="6" class="kalshi-links-empty" style="color:#f87171">' +
+        esc(e.message || 'Failed to load') + '</td></tr>';
+    }
+    return null;
+  }
+}
+
+function renderKalshiLinkedMatchesView(d) {
+  if (!d) return;
+  const sub = document.getElementById('kalshi-links-sub');
+  const stats = document.getElementById('kalshi-links-stats');
+  const tbody = document.getElementById('kalshi-links-tbody');
+  if (sub) {
+    const parts = [];
+    if (d.updated_at) parts.push('Updated ' + d.updated_at.replace('T', ' ').slice(0, 19) + ' UTC');
+    if (d.discovery_updated_at) {
+      parts.push('Discovery ' + d.discovery_updated_at.replace('T', ' ').slice(0, 19) + ' UTC');
+    }
+    if (d.discovery_status) parts.push('Status: ' + d.discovery_status);
+    sub.textContent = parts.join(' · ') || 'Matches fetched from Kalshi with direct market links.';
+  }
+  if (stats) {
+    stats.innerHTML = [
+      statCard(String(d.count != null ? d.count : '—'), 'Linked matches'),
+      statCard(String(d.today_cached_count != null ? d.today_cached_count : '—'), 'Today cache'),
+      statCard(String(d.discovery_matched_count != null ? d.discovery_matched_count : '—'), 'Discovery matched'),
+      statCard(String(d.advance_events != null ? d.advance_events : '—'), 'Advance events'),
+    ].join('');
+  }
+  if (!tbody) return;
+  const rows = d.matches || [];
+  if (!rows.length) {
+    tbody.innerHTML = '<tr><td colspan="6" class="kalshi-links-empty">No Kalshi links yet — click Re-fetch from Kalshi</td></tr>';
+    return;
+  }
+  tbody.innerHTML = rows.map(function (m) {
+    const matchLabel = esc((m.home || '?') + ' vs ' + (m.away || '?'));
+    const advanceHref = m.kalshi_advance_url || (m.primary_url && (m.primary_url.indexOf('kxwcadvance') >= 0 ? m.primary_url : ''));
+    const gameHref = m.kalshi_game_url || (m.primary_url && (m.primary_url.indexOf('kxwcgame') >= 0 ? m.primary_url : ''));
+    const advanceCell = advanceHref
+      ? '<a href="' + esc(advanceHref) + '" target="_blank" rel="noopener">Advance ↗</a>'
+      : '<span style="color:var(--muted)">—</span>';
+    const gameCell = gameHref
+      ? '<a href="' + esc(gameHref) + '" target="_blank" rel="noopener">Game ↗</a>'
+      : '<span style="color:var(--muted)">—</span>';
+    const tickers = m.tickers || {};
+    const tickerPills = Object.keys(tickers).slice(0, 4).map(function (k) {
+      return '<span class="kalshi-link-pill" title="' + esc(tickers[k]) + '">' + esc(k.replace(/_/g, ' ')) + '</span>';
+    }).join('');
+    const extraMarkets = (m.mapped_markets || 0) > 4
+      ? '<span class="kalshi-link-pill">+' + ((m.mapped_markets || 0) - 4) + ' more</span>'
+      : '';
+    const sources = (m.sources || []).map(function (s) {
+      return '<span class="kalshi-link-pill">' + esc(s) + '</span>';
+    }).join('');
+    return '<tr>' +
+      '<td><strong>' + matchLabel + '</strong>' +
+      (m.fixture_id ? '<div style="font-size:10px;color:var(--muted);margin-top:2px">#' + esc(String(m.fixture_id)) + '</div>' : '') +
+      '</td>' +
+      '<td>' + esc(m.date || '—') + '</td>' +
+      '<td>' + (tickerPills || '<span style="color:var(--muted)">—</span>') + extraMarkets + '</td>' +
+      '<td>' + advanceCell + '</td>' +
+      '<td>' + gameCell + '</td>' +
+      '<td>' + (sources || '<span style="color:var(--muted)">—</span>') + '</td>' +
+      '</tr>';
+  }).join('');
+}
 
 async function discoverKalshiMarkets(force) {
   const list = document.getElementById('trading-discover-list');
@@ -1709,7 +2071,7 @@ function renderKalshiDiscovery(d) {
       return;
     }
     list.innerHTML = rows.map(r => {
-      const kalshiHref = r.kalshi_url || (
+      const kalshiHref = r.kalshi_advance_url || r.kalshi_url || (
         r.kalshi_event_ticker
           ? 'https://kalshi.com/markets/kxwcgame/world-cup-game/' + r.kalshi_event_ticker.toLowerCase()
           : (d.kalshi_wc_url || 'https://kalshi.com/category/sports/soccer/fifa-world-cup/world-cup/games')
@@ -1812,6 +2174,7 @@ function renderTrading(data) {
   }
 
   renderTradingSummary(data);
+  fetchPnlWeek();
 
   const activeTitle = document.getElementById('trading-active-title');
   if (activeTitle) activeTitle.textContent = liveMode ? 'Active Live Trades' : 'Active Trades';

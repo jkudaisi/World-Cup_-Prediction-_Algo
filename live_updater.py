@@ -267,8 +267,10 @@ def process_fixture_live(
     if bundle is None:
         return None
 
-    pred_data = _load_predictions()
-    base = find_ml_match(home_ml, away_ml, pred_data.get("ml_data", [])) or {}
+    from future_fixture_predictions import load_merged_ml_data
+
+    merged_ml = load_merged_ml_data()
+    base = find_ml_match(home_ml, away_ml, merged_ml) or {}
 
     snapshot_input = {
         "fixture_id": fid,
@@ -291,10 +293,32 @@ def process_fixture_live(
     record = _build_snapshot_record(fixture, bundle, live_pred)
     append_snapshot(fid, record)
 
-    _patch_ml_data(pred_data, home_ml, away_ml, live_pred)
-    atomic_write_json(PREDICTIONS_PATH, pred_data)
+    pred_file = _load_predictions()
+    if find_ml_match(home_ml, away_ml, pred_file.get("ml_data", [])):
+        _patch_ml_data(pred_file, home_ml, away_ml, live_pred)
+        atomic_write_json(PREDICTIONS_PATH, pred_file)
 
     return live_pred
+
+
+def _wc_fixtures_in_play(live_fixtures: list[dict]) -> list[dict]:
+    """WC fixtures in LIVE status from live=all plus scheduler today list."""
+    wc_live = [
+        f for f in live_fixtures
+        if f.get("league", {}).get("id") == 1
+        and (f.get("fixture", {}).get("status", {}).get("short") in LIVE_STATUSES)
+    ]
+    seen = {f["fixture"]["id"] for f in wc_live}
+    try:
+        import scheduler as sched
+        for f in sched.get_in_play_wc_fixtures():
+            fid = f["fixture"]["id"]
+            if f.get("league", {}).get("id") == 1 and fid not in seen:
+                wc_live.append(f)
+                seen.add(fid)
+    except Exception as exc:
+        log.debug("Scheduler WC live supplement skipped: %s", exc)
+    return wc_live
 
 
 def run_live_cycle(*, force: bool = False) -> dict[str, Any]:
@@ -303,11 +327,7 @@ def run_live_cycle(*, force: bool = False) -> dict[str, Any]:
 
     with _live_lock:
         live_fixtures = fetch_live_fixtures_list()
-        wc_live = [
-            f for f in live_fixtures
-            if f.get("league", {}).get("id") == 1
-            and (f.get("fixture", {}).get("status", {}).get("short") in LIVE_STATUSES)
-        ]
+        wc_live = _wc_fixtures_in_play(live_fixtures)
 
         matches: dict[str, Any] = {}
         calls_used = 1 if live_fixtures else 0
@@ -320,8 +340,11 @@ def run_live_cycle(*, force: bool = False) -> dict[str, Any]:
                 if live_pred:
                     home_ml = resolve_team_name(fx["teams"]["home"]["name"])
                     away_ml = resolve_team_name(fx["teams"]["away"]["name"])
+                    status = (fx.get("fixture", {}).get("status", {}) or {}).get("short") or "LIVE"
                     matches[str(fid)] = {
                         **live_pred,
+                        "fixture_id": fid,
+                        "status": status,
                         "home": home_ml,
                         "away": away_ml,
                         "home_api": fx["teams"]["home"]["name"],

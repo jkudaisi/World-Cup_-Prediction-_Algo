@@ -202,3 +202,60 @@ class TestGetFixtureFull:
         result = get_fixture_full(12345)
         assert result["partial"] is True
         assert len(result["events"]) == 2
+
+
+class TestGetTeamId:
+    def test_wc_roster_map(self, reset_api_budget, monkeypatch):
+        from unittest.mock import MagicMock
+        from apifootball_client import get_team_id, get_wc_team_id_map
+        import apifootball_client as afc
+
+        afc._wc_team_map = None
+
+        def fake_get(url, params=None, headers=None, timeout=None):
+            resp = MagicMock()
+            resp.ok = True
+            resp.json.return_value = {
+                "response": [
+                    {"team": {"id": 6, "name": "Argentina", "national": True}},
+                    {"team": {"id": 33, "name": "Manchester United", "national": False}},
+                    {"team": {"id": 16, "name": "Mexico", "national": True}},
+                ],
+                "errors": {},
+            }
+            return resp
+
+        session = MagicMock()
+        session.get.side_effect = fake_get
+        monkeypatch.setattr(afc, "_session", session)
+
+        wc_map = get_wc_team_id_map()
+        assert wc_map["Argentina"] == 6
+        assert wc_map["Mexico"] == 16
+        assert "Manchester United" not in wc_map
+        assert get_team_id("Argentina") == 6
+
+    def test_search_fallback_national_only(self, reset_api_budget, monkeypatch):
+        from unittest.mock import MagicMock
+        from apifootball_client import get_team_id
+        import apifootball_client as afc
+
+        afc._wc_team_map = {}
+
+        def fake_get(url, params=None, headers=None, timeout=None):
+            resp = MagicMock()
+            resp.ok = True
+            resp.json.return_value = {
+                "response": [
+                    {"team": {"id": 99, "name": "Club Brugge", "national": False}},
+                    {"team": {"id": 1, "name": "Belgium", "national": True}},
+                ],
+                "errors": {},
+            }
+            return resp
+
+        session = MagicMock()
+        session.get.side_effect = fake_get
+        monkeypatch.setattr(afc, "_session", session)
+
+        assert get_team_id("Belgium") == 1

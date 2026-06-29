@@ -33,18 +33,27 @@ KALSHI_WC_GAMES_URL = (
 def kalshi_game_market_url(event_ticker: str, market_ticker: str | None = None) -> str:
     """Build Kalshi web URL for a WC game event (matches kalshi.com/markets/kxwcgame/...)."""
     slug = (event_ticker or "").lower()
-    if not slug.startswith("kxwcgame-"):
-        slug = slug.replace("kxwcgame", "kxwcgame")
     base = f"https://kalshi.com/markets/kxwcgame/world-cup-game/{slug}"
     if market_ticker:
         return f"{base}?op_market_ticker={market_ticker}"
     return base
 
+
+def kalshi_advance_market_url(event_ticker: str, market_ticker: str | None = None) -> str:
+    """Build Kalshi web URL for knockout advance markets (KXWCADVANCE series)."""
+    slug = (event_ticker or "").lower()
+    base = f"https://kalshi.com/markets/kxwcadvance/world-cup-advance/{slug}"
+    if market_ticker:
+        return f"{base}?op_market_ticker={market_ticker}"
+    return base
+
+
 # Kalshi FIFA World Cup series (see kalshi.com WC games category)
 WC_SERIES = (
-    "KXWCGAME",   # home / draw / away
-    "KXWCBTTS",   # both teams to score
-    "KXWCTOTAL",  # over/under goal lines
+    "KXWCGAME",      # home / draw / away (regulation)
+    "KXWCBTTS",      # both teams to score
+    "KXWCTOTAL",     # over/under goal lines
+    "KXWCADVANCE",   # knockout: who advances
 )
 
 # KXWCTOTAL suffix -> our market_type (Kalshi uses -1=0.5, -2=1.5, -3=2.5, ...)
@@ -57,7 +66,123 @@ TOTAL_SUFFIX_TO_MARKET: dict[str, str] = {
 }
 
 _EVENT_DATE_RE = re.compile(r"-(\d{2})([A-Z]{3})(\d{2})[A-Z-]*$", re.I)
-_VS_TITLE_RE = re.compile(r"(.+?)\s+vs\.?\s+(.+?)(?:\s+Winner|\?|$)", re.I)
+_VS_TITLE_RE = re.compile(
+    r"(.+?)\s+vs\.?\s+(.+?)(?:\s*:\s*To\s+Advance|\s+(?:Winner|Advance|advances)|\?|$)",
+    re.I,
+)
+
+
+def _map_advance_event(event_markets: list[dict], home: str, away: str) -> dict[str, str]:
+    """Map KXWCADVANCE markets to home_advance / away_advance tickers."""
+    tickers: dict[str, str] = {}
+    for m in event_markets:
+        ticker = m.get("ticker") or m.get("market_ticker")
+        if not ticker:
+            continue
+        sub = (m.get("yes_sub_title") or m.get("subtitle") or m.get("title") or "").strip()
+        sub = sub.replace("Advance:", "").replace("Reg Time:", "").strip()
+        sub = re.sub(r"\s+advances?$", "", sub, flags=re.I).strip()
+        if teams_match(sub, home):
+            tickers["home_win"] = ticker
+            tickers["home_advance"] = ticker
+        elif teams_match(sub, away):
+            tickers["away_win"] = ticker
+            tickers["away_advance"] = ticker
+    return tickers
+
+
+def _resolve_prediction_match(
+    home: str,
+    away: str,
+    ml_data: list[dict],
+    today_matches: list[dict] | None,
+) -> dict | None:
+    fx = find_ml_match(home, away, ml_data) or find_ml_match(away, home, ml_data)
+    if fx:
+        return fx
+    for m in today_matches or []:
+        h = m.get("ml_home") or (m.get("home") or {}).get("name", "")
+        a = m.get("ml_away") or (m.get("away") or {}).get("name", "")
+        if teams_match(h, home) and teams_match(a, away):
+            return {
+                "home": resolve_team_name(h),
+                "away": resolve_team_name(a),
+                "mn": m.get("fixture_id"),
+                "fixture_id": m.get("fixture_id"),
+                "kickoff": m.get("kickoff"),
+            }
+    return None
+
+
+def find_discovery_row_for_fixture(
+    home: str,
+    away: str,
+    date: str | None,
+    discovery: dict[str, Any],
+) -> dict | None:
+    """Find a discovery row for home/away (optionally on a given date)."""
+    home_c = resolve_team_name(home)
+    away_c = resolve_team_name(away)
+    best: dict | None = None
+    for row in (discovery.get("matched") or []) + (discovery.get("unmatched_kalshi") or []):
+        if not teams_match(row.get("home", ""), home_c):
+            continue
+        if not teams_match(row.get("away", ""), away_c):
+            continue
+        if date and row.get("date") and row["date"] != date:
+            continue
+        tickers = row.get("tickers") or {}
+        if not tickers:
+            continue
+        if best is None:
+            best = row
+            continue
+        if len(tickers) > len(best.get("tickers") or {}):
+            best = row
+    return best
+
+
+def _merge_fixture_row(
+    rows: dict[str, dict],
+    *,
+    home: str,
+    away: str,
+    date: str | None,
+    event_ticker: str,
+    title: str,
+    tickers: dict[str, str],
+    kalshi_url: str,
+    kalshi_advance_url: str | None = None,
+    kalshi_advance_event_ticker: str | None = None,
+) -> dict:
+    fkey = fixture_key(home, away, date)
+    row = rows.get(fkey) or {
+        "kalshi_event_ticker": event_ticker,
+        "kalshi_title": title,
+        "kalshi_url": kalshi_url,
+        "home": home,
+        "away": away,
+        "date": date,
+        "fixture_key": fkey,
+        "tickers": {},
+        "mapped_markets": 0,
+    }
+    if kalshi_advance_url:
+        row["kalshi_advance_url"] = kalshi_advance_url
+    if kalshi_advance_event_ticker:
+        row["kalshi_advance_event_ticker"] = kalshi_advance_event_ticker
+    if not row.get("kalshi_event_ticker"):
+        row["kalshi_event_ticker"] = event_ticker
+    if not row.get("kalshi_url"):
+        row["kalshi_url"] = kalshi_url
+    merged = dict(row.get("tickers") or {})
+    for k, v in tickers.items():
+        if v:
+            merged.setdefault(k, v)
+    row["tickers"] = merged
+    row["mapped_markets"] = len(merged)
+    rows[fkey] = row
+    return row
 
 
 def parse_event_date(event_ticker: str) -> str | None:
@@ -82,7 +207,8 @@ def parse_match_teams(title: str) -> tuple[str, str] | None:
     if not m:
         return None
     home = resolve_kalshi_team(m.group(1).strip())
-    away = resolve_kalshi_team(m.group(2).strip())
+    away_raw = re.sub(r"\s*:\s*To\s*$", "", m.group(2).strip(), flags=re.I)
+    away = resolve_kalshi_team(away_raw)
     return home, away
 
 
@@ -184,20 +310,25 @@ def discover_wc_markets(
     client: KalshiClient | None = None,
     *,
     ml_data: list[dict] | None = None,
+    today_matches: list[dict] | None = None,
 ) -> dict[str, Any]:
     """
-    Scan Kalshi WC series and match events to prediction fixtures.
+    Scan Kalshi WC series and match events to prediction / today's fixtures.
 
     Returns discovery payload with matched/unmatched Kalshi games and tickers.
     """
     cli = client or KalshiClient()
     if ml_data is None:
-        pred_path = ROOT / "predictions.json"
-        if pred_path.exists():
-            with open(pred_path, encoding="utf-8") as f:
-                ml_data = json.load(f).get("ml_data", [])
-        else:
-            ml_data = []
+        try:
+            from future_fixture_predictions import load_merged_ml_data
+            ml_data = load_merged_ml_data()
+        except ImportError:
+            pred_path = ROOT / "predictions.json"
+            if pred_path.exists():
+                with open(pred_path, encoding="utf-8") as f:
+                    ml_data = json.load(f).get("ml_data", [])
+            else:
+                ml_data = []
 
     by_series: dict[str, list[dict]] = {}
     for series in WC_SERIES:
@@ -206,6 +337,7 @@ def discover_wc_markets(
     game_events = _group_by_event(by_series.get("KXWCGAME", []))
     btts_events = _group_by_event(by_series.get("KXWCBTTS", []))
     total_events = _group_by_event(by_series.get("KXWCTOTAL", []))
+    advance_events = _group_by_event(by_series.get("KXWCADVANCE", []))
 
     def event_suffix(event_ticker: str, series: str) -> str:
         prefix = f"{series}-"
@@ -214,8 +346,7 @@ def discover_wc_markets(
     btts_by_suffix = {event_suffix(et, "KXWCBTTS"): ms for et, ms in btts_events.items()}
     totals_by_suffix = {event_suffix(et, "KXWCTOTAL"): ms for et, ms in total_events.items()}
 
-    matched: list[dict] = []
-    unmatched_kalshi: list[dict] = []
+    rows_by_key: dict[str, dict] = {}
 
     for event_ticker, event_markets in sorted(game_events.items()):
         title = event_markets[0].get("title") or ""
@@ -225,31 +356,58 @@ def discover_wc_markets(
         home, away = teams
         date = parse_event_date(event_ticker)
         suffix = event_suffix(event_ticker, "KXWCGAME")
-
         game_tickers = _map_game_event(event_markets)
         btts_tickers = _map_btts_event(btts_by_suffix.get(suffix, []))
         total_tickers = _map_total_event(totals_by_suffix.get(suffix, []))
         tickers = _merge_event_tickers(game_tickers, btts_tickers, total_tickers)
-        fkey = fixture_key(home, away, date)
+        _merge_fixture_row(
+            rows_by_key,
+            home=home,
+            away=away,
+            date=date,
+            event_ticker=event_ticker,
+            title=title,
+            tickers=tickers,
+            kalshi_url=kalshi_game_market_url(event_ticker),
+        )
 
-        fx = find_ml_match(home, away, ml_data) or find_ml_match(away, home, ml_data)
+    for event_ticker, event_markets in sorted(advance_events.items()):
+        title = event_markets[0].get("title") or ""
+        teams = parse_match_teams(title)
+        if not teams:
+            continue
+        home, away = teams
+        date = parse_event_date(event_ticker)
+        advance_tickers = _map_advance_event(event_markets, home, away)
+        sample_ticker = next(iter(advance_tickers.values()), None)
+        _merge_fixture_row(
+            rows_by_key,
+            home=home,
+            away=away,
+            date=date,
+            event_ticker=event_ticker,
+            title=title,
+            tickers=advance_tickers,
+            kalshi_url=kalshi_game_market_url(event_ticker),
+            kalshi_advance_url=kalshi_advance_market_url(event_ticker, sample_ticker),
+            kalshi_advance_event_ticker=event_ticker,
+        )
 
-        row = {
-            "kalshi_event_ticker": event_ticker,
-            "kalshi_title": title,
-            "kalshi_url": kalshi_game_market_url(event_ticker),
-            "home": home,
-            "away": away,
-            "date": date,
-            "fixture_key": fkey,
-            "tickers": tickers,
-            "mapped_markets": len(tickers),
-            "in_predictions": fx is not None,
-            "mn": fx.get("mn") if fx else None,
-        }
+    matched: list[dict] = []
+    unmatched_kalshi: list[dict] = []
+
+    for row in rows_by_key.values():
+        home = row["home"]
+        away = row["away"]
+        fx = _resolve_prediction_match(home, away, ml_data, today_matches)
+        row = dict(row)
+        row["in_predictions"] = fx is not None
+        row["mn"] = fx.get("mn") if fx else None
         if fx:
             row["prediction_home"] = fx.get("home")
             row["prediction_away"] = fx.get("away")
+            if not row.get("kalshi_advance_url") and row.get("kalshi_url"):
+                row["kalshi_advance_url"] = row["kalshi_url"]
             matched.append(row)
         else:
             unmatched_kalshi.append(row)
@@ -261,6 +419,7 @@ def discover_wc_markets(
         "series_scanned": list(WC_SERIES),
         "series_counts": {s: len(by_series.get(s, [])) for s in WC_SERIES},
         "game_events": len(game_events),
+        "advance_events": len(advance_events),
         "matched_fixtures": len(matched),
         "unmatched_kalshi_games": len(unmatched_kalshi),
         "matched": matched,
@@ -304,9 +463,9 @@ def discovered_tickers_for_fixture(
             continue
         if match_date and row.get("date") and row["date"] != match_date:
             continue
-        tickers = row.get("tickers") or {}
+        tickers = dict(row.get("tickers") or {})
         if tickers:
-            return dict(tickers)
+            return tickers
     return {}
 
 

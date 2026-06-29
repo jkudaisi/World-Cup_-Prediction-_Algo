@@ -40,6 +40,7 @@ from wc2026_ml_pipeline import (
     update_team_stats_from_match,
 )
 from feature_builder import build_features, calc_xg_proxy, sample_weight_for_row
+from knockout_outcomes import is_knockout_fixture, parse_knockout_outcome
 
 log = logging.getLogger(__name__)
 
@@ -154,6 +155,20 @@ def completed_match_to_training_row(
         "away_expected_goals": _float_or(aws.get("expected_goals"), calc_xg_proxy(aws, events, away_id)),
         "source": "world_cup",
     }
+    if is_knockout_fixture(fixture):
+        ko = parse_knockout_outcome(fixture)
+        if ko:
+            row.update({
+                "knockout_round": ko.get("round", ""),
+                "draw_at_90": ko.get("draw_at_90"),
+                "went_to_et": ko.get("went_to_et"),
+                "went_to_pens": ko.get("went_to_pens"),
+                "home_won_et": ko.get("home_won_et"),
+                "away_won_et": ko.get("away_won_et"),
+                "home_won_pens": ko.get("home_won_pens"),
+                "away_won_pens": ko.get("away_won_pens"),
+                "home_qualifies": ko.get("home_qualifies"),
+            })
     return row
 
 
@@ -364,6 +379,7 @@ def wc_rows_to_frame(rows: list[dict[str, Any]]) -> pd.DataFrame:
 
     feature_cols = get_feature_cols()
     records: list[dict[str, Any]] = []
+    raw_weights: list[float] = []
     for r in rows:
         home = r.get("home_team")
         away = r.get("away_team")
@@ -378,7 +394,23 @@ def wc_rows_to_frame(rows: list[dict[str, Any]]) -> pd.DataFrame:
         record["goals_h"] = r["goals_h"]
         record["goals_a"] = r["goals_a"]
         records.append(record)
-    return sanitize_training_frame(pd.DataFrame(records), feature_cols)
+
+        w = float(r.get("sample_weight", 1.0))
+        knockout = bool(r.get("knockout_round")) or is_knockout_fixture(
+            {"league": {"round": r.get("knockout_round", "")}},
+        )
+        if knockout:
+            w *= 1.3
+        elif int(r.get("league_id") or 0) == 1:
+            w *= 1.1
+        raw_weights.append(w)
+
+    df = sanitize_training_frame(pd.DataFrame(records), feature_cols)
+    if raw_weights:
+        weights = np.array(raw_weights, dtype=float)
+        mean_w = float(weights.mean()) if weights.mean() > 0 else 1.0
+        df["sample_weight"] = weights / mean_w
+    return df
 
 
 def build_combined_training_frame(

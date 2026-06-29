@@ -117,16 +117,31 @@ def total_open_exposure() -> float:
 
 
 def trades_count_by_match(fixture_key: str) -> int:
+    """Open positions/orders plus paper entries today (no double-count)."""
+    seen: set[str] = set()
     count = 0
     for t in _open_trades():
         key = t.get("fixture_key") or f"{t.get('home', '')}|{t.get('away', '')}"
-        if key == fixture_key:
-            count += 1
+        if key != fixture_key:
+            continue
+        tid = t.get("position_id") or t.get("trade_id") or t.get("order_id") or id(t)
+        if tid in seen:
+            continue
+        seen.add(str(tid))
+        count += 1
     paper = _load_json(PAPER_TRADES_PATH, {"trades": []})
     today = _today_str()
     for t in paper.get("trades", []):
-        if t.get("fixture_key") == fixture_key and t.get("opened_at", "")[:10] == today:
-            count += 1
+        if t.get("fixture_key") != fixture_key:
+            continue
+        if t.get("opened_at", "")[:10] != today:
+            continue
+        tid = t.get("trade_id") or t.get("order_id")
+        if tid and str(tid) in seen:
+            continue
+        if tid:
+            seen.add(str(tid))
+        count += 1
     return count
 
 
