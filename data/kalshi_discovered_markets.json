@@ -1,6 +1,6 @@
 {
-  "discovered_at": "2026-06-29T20:22:15.377836+00:00",
-  "discovered_at_ts": 1782764535.3778367,
+  "discovered_at": "2026-06-29T23:14:35.414732+00:00",
+  "discovered_at_ts": 1782774875.4147325,
   "kalshi_wc_url": "https://kalshi.com/category/sports/soccer/fifa-world-cup/world-cup/games",
   "series_scanned": [
     "KXWCGAME",
@@ -9,12 +9,12 @@
     "KXWCADVANCE"
   ],
   "series_counts": {
-    "KXWCGAME": 42,
-    "KXWCBTTS": 14,
-    "KXWCTOTAL": 84,
+    "KXWCGAME": 39,
+    "KXWCBTTS": 13,
+    "KXWCTOTAL": 78,
     "KXWCADVANCE": 28
   },
-  "game_events": 14,
+  "game_events": 13,
   "advance_events": 14,
   "matched_fixtures": 14,
   "unmatched_kalshi_games": 0,
@@ -281,35 +281,6 @@
       "prediction_away": "Ghana"
     },
     {
-      "kalshi_event_ticker": "KXWCGAME-26JUN29GERPAR",
-      "kalshi_title": "Germany vs Paraguay Winner?",
-      "kalshi_url": "https://kalshi.com/markets/kxwcgame/world-cup-game/kxwcgame-26jun29gerpar",
-      "home": "Germany",
-      "away": "Paraguay",
-      "date": "2026-06-29",
-      "fixture_key": "Germany|Paraguay|2026-06-29",
-      "tickers": {
-        "draw": "KXWCGAME-26JUN29GERPAR-TIE",
-        "away_win": "KXWCGAME-26JUN29GERPAR-PAR",
-        "home_win": "KXWCGAME-26JUN29GERPAR-GER",
-        "btts_yes": "KXWCBTTS-26JUN29GERPAR-BTTS",
-        "over_4_5": "KXWCTOTAL-26JUN29GERPAR-5",
-        "over_3_5": "KXWCTOTAL-26JUN29GERPAR-4",
-        "over_2_5": "KXWCTOTAL-26JUN29GERPAR-3",
-        "over_1_5": "KXWCTOTAL-26JUN29GERPAR-2",
-        "over_0_5": "KXWCTOTAL-26JUN29GERPAR-1",
-        "away_advance": "KXWCADVANCE-26JUN29GERPAR-PAR",
-        "home_advance": "KXWCADVANCE-26JUN29GERPAR-GER"
-      },
-      "mapped_markets": 11,
-      "kalshi_advance_url": "https://kalshi.com/markets/kxwcadvance/world-cup-advance/kxwcadvance-26jun29gerpar?op_market_ticker=KXWCADVANCE-26JUN29GERPAR-PAR",
-      "kalshi_advance_event_ticker": "KXWCADVANCE-26JUN29GERPAR",
-      "in_predictions": true,
-      "mn": 1565176,
-      "prediction_home": "Germany",
-      "prediction_away": "Paraguay"
-    },
-    {
       "kalshi_event_ticker": "KXWCGAME-26JUN29NEDMAR",
       "kalshi_title": "Netherlands vs Morocco Winner?",
       "kalshi_url": "https://kalshi.com/markets/kxwcgame/world-cup-game/kxwcgame-26jun29nedmar",
@@ -424,6 +395,28 @@
       "mn": 1567306,
       "prediction_home": "Mexico",
       "prediction_away": "Ecuador"
+    },
+    {
+      "kalshi_event_ticker": "KXWCADVANCE-26JUN29GERPAR",
+      "kalshi_title": "Germany vs Paraguay: To Advance",
+      "kalshi_url": "https://kalshi.com/markets/kxwcgame/world-cup-game/kxwcadvance-26jun29gerpar",
+      "home": "Germany",
+      "away": "Paraguay",
+      "date": "2026-06-29",
+      "fixture_key": "Germany|Paraguay|2026-06-29",
+      "tickers": {
+        "away_win": "KXWCADVANCE-26JUN29GERPAR-PAR",
+        "away_advance": "KXWCADVANCE-26JUN29GERPAR-PAR",
+        "home_win": "KXWCADVANCE-26JUN29GERPAR-GER",
+        "home_advance": "KXWCADVANCE-26JUN29GERPAR-GER"
+      },
+      "mapped_markets": 4,
+      "kalshi_advance_url": "https://kalshi.com/markets/kxwcadvance/world-cup-advance/kxwcadvance-26jun29gerpar?op_market_ticker=KXWCADVANCE-26JUN29GERPAR-PAR",
+      "kalshi_advance_event_ticker": "KXWCADVANCE-26JUN29GERPAR",
+      "in_predictions": true,
+      "mn": 1565176,
+      "prediction_home": "Germany",
+      "prediction_away": "Paraguay"
     }
   ],
   "unmatched_kalshi": []

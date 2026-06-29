@@ -1,11 +1,179 @@
 {
-  "updated_at": "2026-06-29T20:25:15.272696+00:00",
+  "updated_at": "2026-06-29T23:28:25.979266+00:00",
   "live_meta": {
-    "fetched_at": "2026-06-29T20:25:15.272696+00:00",
-    "fixtures_live": 0,
-    "fixtures_updated": 0,
+    "fetched_at": "2026-06-29T23:28:25.979266+00:00",
+    "fixtures_live": 1,
+    "fixtures_updated": 1,
     "poll_interval_seconds": 20,
-    "api_calls_this_cycle": 1
+    "api_calls_this_cycle": 3
   },
-  "matches": {}
+  "matches": {
+    "1565176": {
+      "fixture_id": 1565176,
+      "minute": 120,
+      "status": "P",
+      "score": {
+        "home": 1,
+        "away": 1
+      },
+      "probabilities": {
+        "home_win": 17.8,
+        "draw": 78.2,
+        "away_win": 4.0
+      },
+      "prediction": {
+        "home_win": 0.1783,
+        "draw": 0.7817,
+        "away_win": 0.04,
+        "projected_home_goals": 1.57,
+        "projected_away_goals": 0.28,
+        "over_2_5": 0.0203,
+        "over_3_5": 0.0002,
+        "both_teams_score": 0.1958
+      },
+      "projected_goals": {
+        "home": 1.57,
+        "away": 0.28
+      },
+      "over_under": {
+        "2.5": {
+          "line": 2.5,
+          "over": 0.0203,
+          "under": 0.9797
+        },
+        "3.5": {
+          "line": 3.5,
+          "over": 0.0002,
+          "under": 0.9998
+        },
+        "line": 2.5,
+        "over": 0.0203,
+        "under": 0.9797
+      },
+      "next_goal": {
+        "home": 0.0172,
+        "away": 0.0031,
+        "none": 0.9797
+      },
+      "confidence": {
+        "score": 0.712,
+        "label": "medium"
+      },
+      "momentum": {
+        "home": 74.6,
+        "away": 25.4
+      },
+      "adj_lambda_home": 1.565,
+      "adj_lambda_away": 0.284,
+      "xg_proxy": {
+        "home": 1.49,
+        "away": 0.42
+      },
+      "xg_diff": 1.07,
+      "prematch_probabilities": {
+        "home_win": 82.0,
+        "draw": 10.7,
+        "away_win": 7.3
+      },
+      "weights": {
+        "pre_match": 0.15,
+        "live": 0.85
+      },
+      "explanation": {
+        "top_factors": [
+          "Live xG proxy favors home team",
+          "Live state reduced home win chance vs pre-match"
+        ],
+        "risk_factors": [
+          "Missing lineup data"
+        ]
+      },
+      "data_quality": {
+        "score": 0.65,
+        "checks": {
+          "stats": true,
+          "events": true,
+          "lineups": false,
+          "players": false,
+          "odds": false,
+          "score": true
+        },
+        "missing": [
+          "lineups",
+          "players",
+          "odds"
+        ]
+      },
+      "live": {
+        "is_live": true,
+        "minute": 120,
+        "score": {
+          "home": 1,
+          "away": 1
+        },
+        "momentum": {
+          "home": 74.6,
+          "away": 25.4
+        },
+        "xg_proxy": {
+          "home": 1.49,
+          "away": 0.42
+        }
+      },
+      "_stats": {
+        "home": {
+          "shots_on_goal": 6,
+          "shots_off_goal": 7,
+          "shots_total": 21,
+          "shots_blocked": 8,
+          "corner_kicks": 16,
+          "offsides": 4,
+          "ball_possession": "75%",
+          "yellow_cards": 2,
+          "red_cards": null,
+          "goalkeeper_saves": 2,
+          "total_passes": 799,
+          "passes_accurate": 719,
+          "passes_pct": "90%",
+          "fouls": 18,
+          "expected_goals": "1.49"
+        },
+        "away": {
+          "shots_on_goal": 3,
+          "shots_off_goal": 2,
+          "shots_total": 7,
+          "shots_blocked": 2,
+          "corner_kicks": 6,
+          "offsides": 1,
+          "ball_possession": "25%",
+          "yellow_cards": 2,
+          "red_cards": null,
+          "goalkeeper_saves": 6,
+          "total_passes": 257,
+          "passes_accurate": 161,
+          "passes_pct": "63%",
+          "fouls": 12,
+          "expected_goals": "0.42"
+        }
+      },
+      "home": "Germany",
+      "away": "Paraguay",
+      "home_api": "Germany",
+      "away_api": "Paraguay",
+      "live_stats": {
+        "home_sot": 6,
+        "away_sot": 3,
+        "home_corners": 16,
+        "away_corners": 6,
+        "home_possession": 0.75,
+        "away_possession": 0.25,
+        "home_yellow_cards": 2,
+        "away_yellow_cards": 2,
+        "home_red_cards": 0,
+        "away_red_cards": 0,
+        "xg_proxy_home": 1.49,
+        "xg_proxy_away": 0.42
+      }
+    }
+  }
 }

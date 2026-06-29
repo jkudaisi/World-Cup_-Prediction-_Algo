@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-06-29T20:05:12.740051+00:00",
+  "updated_at": "2026-06-29T21:11:35.087785+00:00",
   "fixtures": {
     "1561329": {
       "fixture_id": 1561329,
@@ -4144,12 +4144,12 @@
   "last_refresh": {
     "status": "ok",
     "force": false,
-    "found": 14,
-    "already_cached": 14,
+    "found": 13,
+    "already_cached": 13,
     "predicted": 0,
     "skipped": [],
     "errors": [],
     "fixture_ids_predicted": [],
-    "completed_at": "2026-06-29T20:05:12.740051+00:00"
+    "completed_at": "2026-06-29T21:11:35.087785+00:00"
   }
 }
