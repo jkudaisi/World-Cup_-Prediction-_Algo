@@ -1,4 +1,4 @@
-"""Smart daily scheduler: morning init + 20s live prediction loop."""
+"""Smart daily scheduler: morning init + live prediction loop (interval from .env)."""
 
 from __future__ import annotations
 
@@ -19,7 +19,7 @@ from apifootball_client import (
     calls_remaining,
 )
 from incremental_trainer import mark_fixture_for_training, process_pending_training
-from live_call_manager import REFRESH_INTERVAL
+from live_call_manager import live_poll_interval_seconds
 from live_updater import mark_fixture_final, run_live_cycle
 from local_schedule import (
     display_timezone_label,
@@ -258,7 +258,7 @@ def run_scheduler() -> None:
             except Exception as exc:
                 log.exception("Live cycle failed: %s", exc)
             _maybe_run_incremental_training()
-            time.sleep(REFRESH_INTERVAL)
+            time.sleep(live_poll_interval_seconds())
         else:
             _maybe_run_incremental_training()
             sleep_secs = _seconds_until_poll_window() if not in_poll_window else 60
@@ -280,7 +280,7 @@ def start_scheduler() -> None:
         target=run_scheduler, daemon=True, name="wc2026-scheduler",
     )
     _scheduler_thread.start()
-    log.info("Scheduler thread started (live poll every %ss)", REFRESH_INTERVAL)
+    log.info("Scheduler thread started (live poll every %ss)", live_poll_interval_seconds())
 
 
 def is_scheduler_running() -> bool:
@@ -296,7 +296,7 @@ def get_scheduler_status() -> dict:
         "date": schedule.date if schedule else local_today_iso(),
         "local_timezone": display_timezone_label(),
         "n_matches": schedule.n_matches if schedule else 0,
-        "live_poll_interval_seconds": REFRESH_INTERVAL,
+        "live_poll_interval_seconds": live_poll_interval_seconds(),
         "api_poll_window_active": in_window,
         "api_poll_pre_match_minutes": int(PRE_MATCH_BUFFER.total_seconds() // 60),
         "api_poll_post_ft_minutes": int(POST_FT_BUFFER.total_seconds() // 60),

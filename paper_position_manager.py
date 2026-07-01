@@ -97,7 +97,7 @@ def exit_stale_positions(fixtures: list[dict]) -> list[dict]:
 
         closed.append(result)
         log.info(
-            "Paper exit (model_reversal) %s vs %s: model dropped %.1%% (entry %.1%% → %.1%%)",
+            "Paper exit (model_reversal) %s vs %s: model dropped %.1f%% (entry %.1f%% -> %.1f%%)",
             t.get("home"),
             t.get("away"),
             drop * 100,
@@ -231,7 +231,14 @@ def _try_enter_fixture(
         )
 
         if edge_result["decision"] != "TRADE":
-            if not (cfg.paper_aggressive and fixture.get("live") and model_p >= 0.52):
+            if not (
+                cfg.paper_aggressive
+                and fixture.get("live")
+                and model_p >= cfg.paper_aggressive_min_model_prob
+            ):
+                continue
+            raw_edge = abs(model_p - kalshi_p)
+            if raw_edge < max(cfg.paper_min_edge, cfg.paper_aggressive_min_edge_floor):
                 continue
             side = "yes" if model_p >= 0.5 else "no"
             edge_result = {

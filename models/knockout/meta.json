@@ -1,6 +1,6 @@
 {
-  "trained_at": "2026-06-29T14:17:36.486051+00:00",
-  "training_samples": 24,
+  "trained_at": "2026-07-01T14:20:22.823930+00:00",
+  "training_samples": 38,
   "feature_cols": [
     "elo_diff",
     "elo_prob_h",
@@ -13,20 +13,20 @@
     "poisson_draw_90",
     "poisson_away_90"
   ],
-  "blend_weight": 0.4897959183673469,
+  "blend_weight": 0.6031746031746031,
   "models": {
     "penalty_winner": {
-      "samples": 8,
+      "samples": 10,
       "brier_score": null,
       "calibration": "shrink_uniform"
     },
     "extra_time_winner": {
-      "samples": 9
+      "samples": 11
     },
     "qualification": {
-      "samples": 24,
-      "brier_score": null,
-      "calibration": "shrink_uniform"
+      "samples": 38,
+      "brier_score": 0.131955,
+      "calibration": "isotonic"
     }
   },
   "status": "trained"

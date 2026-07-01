@@ -264,10 +264,16 @@ class TestKellyStake:
 
 
 class TestRiskManager:
-    def test_approve_kelly_sized_stake(self):
+    def test_approve_kelly_sized_stake(self, monkeypatch):
+        monkeypatch.setattr("risk_manager._daily_pnl", lambda: 0.0)
+        monkeypatch.setattr("risk_manager._consecutive_losses", lambda: 0)
+        monkeypatch.setattr("risk_manager.total_open_exposure", lambda: 0.0)
+        monkeypatch.setattr("risk_manager.exposure_by_match", lambda: {})
+        monkeypatch.setattr("risk_manager.trades_count_by_match", lambda _k: 0)
         max_stake = kelly_stake(20.0, 0.15, 0.65, 0.85)
+        capped = min(max_stake, 2.0, round(20.0 * 0.10, 2))
         r = evaluate_risk(
-            stake=max_stake * 0.5,
+            stake=capped * 0.5,
             fixture_key="A|B|2026-06-11",
             bankroll=20.0,
             edge=0.15,
@@ -275,7 +281,7 @@ class TestRiskManager:
             confidence=0.85,
         )
         assert r["approved"] is True
-        assert r["max_allowed_stake"] == max_stake
+        assert r["max_allowed_stake"] == capped
 
     def test_reject_oversized_stake(self):
         max_stake = kelly_stake(20.0, 0.08, 0.55, 0.60)
@@ -884,6 +890,25 @@ class TestEntryGuards:
         btts = next(o for o in opps if o["market_type"] == "btts_yes")
         assert btts["model_probability"] == pytest.approx(1.0)
         assert btts["recommendation"] == "SKIP"
+
+
+class TestLiveScanModelP:
+    def test_entry_uses_scan_yes_probability_not_goal_markets(self):
+        from position_exits import live_scan_model_p
+
+        fixture = {
+            "live": True,
+            "score_home": 1,
+            "score_away": 0,
+            "goal_markets": {"btts_yes": 0.91},
+        }
+        scan_opp = {
+            "market_type": "btts_yes",
+            "model_yes_probability": 0.42,
+            "model_probability": 0.42,
+            "trade_side": "no",
+        }
+        assert live_scan_model_p(fixture, "btts_yes", scan_opp) == pytest.approx(0.42)
 
 
 class TestPnlHistory:

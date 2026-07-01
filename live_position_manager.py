@@ -195,7 +195,7 @@ def exit_stale_live_positions(
         current_side_p = side_probability(model_yes, side)
         entry_side_p = float(pos.get("model_probability_at_entry") or pos.get("model_probability") or 0.5)
         log.info(
-            "Live exit (model_reversal) %s vs %s: model dropped %.1%% (entry %.1%% → %.1%%)",
+            "Live exit (model_reversal) %s vs %s: model dropped %.1f%% (entry %.1f%% -> %.1f%%)",
             pos.get("home"),
             pos.get("away"),
             drop * 100,

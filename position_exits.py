@@ -73,16 +73,15 @@ def model_for_market(fixture: dict, market_type: str) -> float | None:
 
 
 def live_scan_model_p(fixture: dict, market_type: str, scan_opp: dict) -> float:
-    """Prefer score-aware goal_markets during live play over cached scan envelope."""
-    live_p = model_for_market(fixture, market_type)
-    sh = int(fixture.get("score_home") or 0)
-    sa = int(fixture.get("score_away") or 0)
-    if fixture.get("live") or sh > 0 or sa > 0:
-        if live_p is not None:
-            return float(live_p)
+    """Use the scan row's YES probability so entry matches the displayed edge."""
+    if scan_opp.get("model_yes_probability") is not None:
+        return float(scan_opp["model_yes_probability"])
     if scan_opp.get("model_probability") is not None:
         return float(scan_opp["model_probability"])
-    return float(live_p if live_p is not None else 0.5)
+    live_p = model_for_market(fixture, market_type)
+    if live_p is not None:
+        return float(live_p)
+    return 0.5
 
 
 def market_cents_from_opp(opp: dict) -> float | None:
@@ -119,7 +118,9 @@ def build_marks_for_positions(
         if not bundle:
             continue
         opp = bundle["opps"].get(mt, {})
-        model_p = model_for_market(bundle["fixture"], mt) or opp.get("model_probability")
+        model_p = model_for_market(bundle["fixture"], mt)
+        if model_p is None:
+            model_p = opp.get("model_yes_probability") or opp.get("model_probability")
         market_cents = market_cents_from_opp(opp)
         if model_p is None and market_cents is None:
             continue

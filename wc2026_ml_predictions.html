@@ -646,7 +646,9 @@ a{color:inherit;text-decoration:none}
         </div>
         <span class="trading-help-toggle" onclick="toggleTradingHelp(this)">What do these numbers mean?</span>
         <div class="trading-help-body">
-          <p style="margin-bottom:6px"><strong style="color:var(--text)">Model %</strong> — what our ML predicts. <strong style="color:var(--text)">Market %</strong> — Kalshi price.</p>
+          <p style="margin-bottom:6px"><strong style="color:var(--text)">Side</strong> — YES or NO contract the bot would buy.</p>
+          <p style="margin-bottom:6px"><strong style="color:var(--text)">Bet model</strong> — model probability for that side. <strong style="color:var(--text)">Yes prob</strong> (small text on NO rows) — raw P(YES) on the market.</p>
+          <p style="margin-bottom:6px"><strong style="color:var(--text)">Market %</strong> — Kalshi price for the bet side.</p>
           <p style="margin-bottom:6px"><strong style="color:var(--text)">Edge</strong> — model thinks the bet is cheaper than fair value by this amount.</p>
           <p><strong style="color:var(--text)">Buy</strong> = place trade. <strong style="color:var(--text)">Pass</strong> = skip (no edge or risk limit).</p>
         </div>

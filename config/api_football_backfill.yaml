@@ -1,0 +1,32 @@
+provider: api_football
+
+date_range:
+  from: "2000-01-01"
+  to: "today"
+
+fixture_season_from: 2000
+
+teams_source: "config/world_cup_teams.yaml"
+
+include:
+  friendlies: true
+  world_cup: true
+  world_cup_qualifiers: true
+  continental_championships: true
+  continental_qualifiers: true
+  nations_league: true
+  other_competitive: true
+
+cache:
+  force_refresh: false
+  historical_ttl_days: null
+  metadata_ttl_days: 30
+  live_ttl_seconds: 30
+
+rate_limit:
+  sleep_seconds: 0.25
+  max_retries: 3
+
+coverage:
+  run_discovery_first: true
+  sample_fixtures_per_competition: 5

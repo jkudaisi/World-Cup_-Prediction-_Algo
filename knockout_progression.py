@@ -69,6 +69,7 @@ def build_knockout_progression(
     away_pen_skill: float | None = None,
     home: str | None = None,
     away: str | None = None,
+    fixture_id: int | None = None,
 ) -> dict[str, Any]:
     """
     Full knockout cascade with mathematically consistent qualification probs.
@@ -87,7 +88,9 @@ def build_knockout_progression(
     if home and away:
         try:
             from knockout_models import predict_knockout_adjustments
-            ml_adj = predict_knockout_adjustments(home, away, lambda_h, lambda_a)
+            ml_adj = predict_knockout_adjustments(
+                home, away, lambda_h, lambda_a, fixture_id=fixture_id,
+            )
             if ml_adj.get("available"):
                 home_pen_skill = float(ml_adj.get("home_pen_skill", home_pen_skill))
                 away_pen_skill = 1.0 - home_pen_skill
@@ -152,6 +155,7 @@ def build_knockout_progression(
             "home_win_via_pens": _clamp(p_home_via_pens),
             "away_win_via_pens": _clamp(p_away_via_pens),
             "label": "Penalty shootout (if level after ET)",
+            "goalkeeper_adjustment": ml_adj.get("goalkeeper_penalties"),
         },
         "qualification": {
             "home": p_home_qual,

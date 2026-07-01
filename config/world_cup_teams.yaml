@@ -1,0 +1,289 @@
+teams:
+  - name: Algeria
+    aliases:
+      - Algeria
+      - Algeria National Team
+    api_football_team_id: null
+    fifa_code: ALG
+  - name: Argentina
+    aliases:
+      - Argentina
+      - Argentina National Team
+    api_football_team_id: null
+    fifa_code: ARG
+  - name: Australia
+    aliases:
+      - Australia
+      - Australia National Team
+    api_football_team_id: null
+    fifa_code: AUS
+  - name: Austria
+    aliases:
+      - Austria
+      - Austria National Team
+    api_football_team_id: null
+    fifa_code: AUT
+  - name: Belgium
+    aliases:
+      - Belgium
+      - Belgium National Team
+    api_football_team_id: null
+    fifa_code: BEL
+  - name: Bosnia and Herzegovina
+    aliases:
+      - Bosnia and Herzegovina
+      - Bosnia and Herzegovina National Team
+    api_football_team_id: null
+    fifa_code: null
+  - name: Brazil
+    aliases:
+      - Brazil
+      - Brazil National Team
+    api_football_team_id: null
+    fifa_code: BRA
+  - name: Cabo Verde
+    aliases:
+      - Cabo Verde
+      - Cabo Verde National Team
+    api_football_team_id: null
+    fifa_code: null
+  - name: Canada
+    aliases:
+      - Canada
+      - Canada National Team
+    api_football_team_id: null
+    fifa_code: CAN
+  - name: Colombia
+    aliases:
+      - Colombia
+      - Colombia National Team
+    api_football_team_id: null
+    fifa_code: COL
+  - name: Croatia
+    aliases:
+      - Croatia
+      - Croatia National Team
+    api_football_team_id: null
+    fifa_code: CRO
+  - name: Curacao
+    aliases:
+      - Curacao
+      - Curacao National Team
+    api_football_team_id: null
+    fifa_code: null
+  - name: Czechia
+    aliases:
+      - Czechia
+      - Czechia National Team
+    api_football_team_id: null
+    fifa_code: CZE
+  - name: DRC
+    aliases:
+      - DRC
+      - DRC National Team
+    api_football_team_id: null
+    fifa_code: null
+  - name: Ecuador
+    aliases:
+      - Ecuador
+      - Ecuador National Team
+    api_football_team_id: null
+    fifa_code: ECU
+  - name: Egypt
+    aliases:
+      - Egypt
+      - Egypt National Team
+    api_football_team_id: null
+    fifa_code: EGY
+  - name: England
+    aliases:
+      - England
+      - England National Team
+    api_football_team_id: null
+    fifa_code: ENG
+  - name: France
+    aliases:
+      - France
+      - France National Team
+    api_football_team_id: null
+    fifa_code: FRA
+  - name: Germany
+    aliases:
+      - Germany
+      - Germany National Team
+    api_football_team_id: null
+    fifa_code: GER
+  - name: Ghana
+    aliases:
+      - Ghana
+      - Ghana National Team
+    api_football_team_id: null
+    fifa_code: GHA
+  - name: Haiti
+    aliases:
+      - Haiti
+      - Haiti National Team
+    api_football_team_id: null
+    fifa_code: null
+  - name: IR Iran
+    aliases:
+      - IR Iran
+      - IR Iran National Team
+    api_football_team_id: null
+    fifa_code: IRN
+  - name: Iraq
+    aliases:
+      - Iraq
+      - Iraq National Team
+    api_football_team_id: null
+    fifa_code: null
+  - name: Ivory Coast
+    aliases:
+      - Ivory Coast
+      - Ivory Coast National Team
+    api_football_team_id: null
+    fifa_code: CIV
+  - name: Japan
+    aliases:
+      - Japan
+      - Japan National Team
+    api_football_team_id: null
+    fifa_code: JPN
+  - name: Jordan
+    aliases:
+      - Jordan
+      - Jordan National Team
+    api_football_team_id: null
+    fifa_code: null
+  - name: Mexico
+    aliases:
+      - Mexico
+      - Mexico National Team
+    api_football_team_id: null
+    fifa_code: MEX
+  - name: Morocco
+    aliases:
+      - Morocco
+      - Morocco National Team
+    api_football_team_id: null
+    fifa_code: MAR
+  - name: Netherlands
+    aliases:
+      - Netherlands
+      - Netherlands National Team
+    api_football_team_id: null
+    fifa_code: NED
+  - name: New Zealand
+    aliases:
+      - New Zealand
+      - New Zealand National Team
+    api_football_team_id: null
+    fifa_code: NZL
+  - name: Norway
+    aliases:
+      - Norway
+      - Norway National Team
+    api_football_team_id: null
+    fifa_code: NOR
+  - name: Panama
+    aliases:
+      - Panama
+      - Panama National Team
+    api_football_team_id: null
+    fifa_code: PAN
+  - name: Paraguay
+    aliases:
+      - Paraguay
+      - Paraguay National Team
+    api_football_team_id: null
+    fifa_code: PAR
+  - name: Portugal
+    aliases:
+      - Portugal
+      - Portugal National Team
+    api_football_team_id: null
+    fifa_code: POR
+  - name: Qatar
+    aliases:
+      - Qatar
+      - Qatar National Team
+    api_football_team_id: null
+    fifa_code: QAT
+  - name: Saudi Arabia
+    aliases:
+      - Saudi Arabia
+      - Saudi Arabia National Team
+    api_football_team_id: null
+    fifa_code: KSA
+  - name: Scotland
+    aliases:
+      - Scotland
+      - Scotland National Team
+    api_football_team_id: null
+    fifa_code: SCO
+  - name: Senegal
+    aliases:
+      - Senegal
+      - Senegal National Team
+    api_football_team_id: null
+    fifa_code: SEN
+  - name: South Africa
+    aliases:
+      - South Africa
+      - South Africa National Team
+    api_football_team_id: null
+    fifa_code: null
+  - name: South Korea
+    aliases:
+      - South Korea
+      - South Korea National Team
+    api_football_team_id: null
+    fifa_code: KOR
+  - name: Spain
+    aliases:
+      - Spain
+      - Spain National Team
+    api_football_team_id: null
+    fifa_code: ESP
+  - name: Sweden
+    aliases:
+      - Sweden
+      - Sweden National Team
+    api_football_team_id: null
+    fifa_code: SWE
+  - name: Switzerland
+    aliases:
+      - Switzerland
+      - Switzerland National Team
+    api_football_team_id: null
+    fifa_code: SUI
+  - name: Tunisia
+    aliases:
+      - Tunisia
+      - Tunisia National Team
+    api_football_team_id: null
+    fifa_code: TUN
+  - name: Turkiye
+    aliases:
+      - Turkiye
+      - Turkiye National Team
+    api_football_team_id: null
+    fifa_code: TUR
+  - name: USA
+    aliases:
+      - USA
+      - USA National Team
+    api_football_team_id: null
+    fifa_code: USA
+  - name: Uruguay
+    aliases:
+      - Uruguay
+      - Uruguay National Team
+    api_football_team_id: null
+    fifa_code: URU
+  - name: Uzbekistan
+    aliases:
+      - Uzbekistan
+      - Uzbekistan National Team
+    api_football_team_id: null
+    fifa_code: null

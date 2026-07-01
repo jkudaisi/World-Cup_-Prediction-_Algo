@@ -13,6 +13,7 @@ from apifootball_client import (
     calls_remaining,
     get_all_live_fixtures,
     get_fixture_events,
+    get_fixture_injuries,
     get_fixture_lineups,
     get_fixture_players,
     get_fixture_stats,
@@ -20,7 +21,6 @@ from apifootball_client import (
 
 log = logging.getLogger(__name__)
 
-REFRESH_INTERVAL = 20          # 15–30s: stats + events every refresh
 LINEUP_INTERVAL = 180          # 2–5 min
 PLAYERS_INTERVAL = 180
 RARE_INTERVAL = 600            # 10 min for rarely-changing data
@@ -36,7 +36,8 @@ class FixtureCallState:
     last_rare: float = 0.0
     cached_lineups: dict = field(default_factory=dict)
     cached_players: dict = field(default_factory=dict)
-    cached_rare: dict = field(default_factory=dict)
+    cached_injuries: list = field(default_factory=list)
+    injuries_loaded: bool = False
 
 
 _call_states: dict[int, FixtureCallState] = {}
@@ -52,9 +53,19 @@ def _due(last_ts: float, interval: float) -> bool:
     return (time.monotonic() - last_ts) >= interval
 
 
+def live_poll_interval_seconds() -> int:
+    """Live scheduler + per-fixture stats/events refresh interval (from .env)."""
+    from trading_config import get_config
+    return max(1, int(get_config().live_poll_interval_seconds))
+
+
+# Backward-compatible alias for imports that expect a module constant.
+REFRESH_INTERVAL = 20
+
+
 def should_refresh(fixture_id: int) -> bool:
     st = _state(fixture_id)
-    return _due(st.last_refresh, REFRESH_INTERVAL)
+    return _due(st.last_refresh, live_poll_interval_seconds())
 
 
 def fetch_live_fixtures_list() -> list[dict]:
@@ -81,7 +92,7 @@ def fetch_live_bundle(
         return None
 
     st = _state(fixture_id)
-    if not force and not _due(st.last_refresh, REFRESH_INTERVAL):
+    if not force and not _due(st.last_refresh, live_poll_interval_seconds()):
         return None
 
     calls_used = 0
@@ -125,6 +136,30 @@ def fetch_live_bundle(
             except APIFootballError as exc:
                 log.warning("fixture %s players failed: %s", fixture_id, exc)
 
+    injuries = st.cached_injuries
+    if not st.injuries_loaded:
+        try:
+            from live_context import load_prematch_injuries
+            cached = load_prematch_injuries(fixture_id)
+            if cached is not None:
+                injuries = cached
+                st.cached_injuries = injuries
+                st.injuries_loaded = True
+        except Exception:
+            pass
+    if force or _due(st.last_rare, RARE_INTERVAL):
+        if calls_remaining() > RESERVE_CALLS:
+            try:
+                live_inj = get_fixture_injuries(fixture_id)
+                if live_inj:
+                    injuries = live_inj
+                    st.cached_injuries = injuries
+                st.injuries_loaded = True
+                st.last_rare = time.monotonic()
+                calls_used += 1
+            except APIFootballError as exc:
+                log.warning("fixture %s injuries failed: %s", fixture_id, exc)
+
     st.last_refresh = time.monotonic()
 
     result: dict[str, Any] = {
@@ -132,6 +167,7 @@ def fetch_live_bundle(
         "events": events,
         "lineups": lineups,
         "players": players,
+        "injuries": injuries,
         "api_calls_used": calls_used,
         "fetched_at": datetime.now(timezone.utc).isoformat(),
     }

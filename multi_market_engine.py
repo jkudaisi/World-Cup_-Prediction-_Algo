@@ -237,6 +237,7 @@ def build_multi_market_bundle(
         progression = build_knockout_progression(
             lambda_h, lambda_a, score_h=score_h, score_a=score_a,
             home=home, away=away,
+            fixture_id=ml_match.get("fixture_id"),
         )
         bundle["knockout_progression"] = progression
         bundle["qualification_probability"] = progression["qualification"]
@@ -258,6 +259,7 @@ def build_multi_market_bundle(
             sim_t0 = time.perf_counter()
             sim = simulate_knockout_match(
                 lambda_h, lambda_a, n_simulations=simulation_count, seed=42,
+                home_pen_skill=progression["penalties"]["home_win_skill"],
             )
             bundle["simulation_summary"] = {
                 **sim,

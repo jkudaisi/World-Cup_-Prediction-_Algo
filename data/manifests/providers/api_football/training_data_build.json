@@ -1,0 +1,13 @@
+{
+  "provider": "api_football",
+  "generated_at": "2026-07-01T14:19:03.350257+00:00",
+  "backfill_rows": 5190,
+  "backfill_wc_vs_wc_rows": 1454,
+  "backfill_external_opponent_rows": 3736,
+  "existing_rows": 5193,
+  "merged_rows": 5193,
+  "merge_existing": true,
+  "allow_external_opponents": true,
+  "chronological_features": true,
+  "source": "raw_backfill_training"
+}

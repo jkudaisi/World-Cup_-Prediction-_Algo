@@ -12,6 +12,9 @@ from typing import Any
 from apifootball_client import (
     APIFootballError,
     calls_remaining,
+    get_fixture_events,
+    get_fixture_injuries,
+    get_fixture_lineups,
     get_fixture_stats,
     get_league_coverage,
     get_team_fixtures,
@@ -413,6 +416,40 @@ class BootstrapRunner:
                     )
                     if stats is None:
                         stats = {"home": {}, "away": {}}
+
+                lineups = None
+                injuries = None
+                if not self.dry_run and fid is not None:
+                    try:
+                        from apifootball_client import get_fixture_injuries, get_fixture_lineups
+                        from src.data.api_football_backfill import persist_fixture_bundle
+                        events = self._api_call(
+                            f"get_fixture_events({fid})",
+                            get_fixture_events,
+                            int(fid),
+                        ) or []
+                        if self._can_call():
+                            lineups = self._api_call(
+                                f"get_fixture_lineups({fid})",
+                                get_fixture_lineups,
+                                int(fid),
+                            )
+                        if self._can_call():
+                            injuries = self._api_call(
+                                f"get_fixture_injuries({fid})",
+                                get_fixture_injuries,
+                                int(fid),
+                            )
+                        persist_fixture_bundle(
+                            int(fid),
+                            fixture=fixture,
+                            stats=stats,
+                            events=events,
+                            lineups=lineups,
+                            injuries=injuries,
+                        )
+                    except Exception as exc:
+                        log.debug("Raw persist skipped for %s: %s", fid, exc)
 
                 row = self._fixture_row(fixture, stats=stats, existing_ids=existing_ids)
                 if row:

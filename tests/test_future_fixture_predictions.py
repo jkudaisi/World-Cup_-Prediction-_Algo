@@ -109,7 +109,7 @@ class TestRefresh:
     @patch("future_fixture_predictions.models_exist", return_value=True)
     @patch("future_fixture_predictions.load_artifacts")
     @patch("future_fixture_predictions.fetch_future_world_cup_fixtures")
-    @patch("future_fixture_predictions.predict_single_match")
+    @patch("future_fixture_predictions.predict_match")
     def test_predicts_new_fixture(
         self, mock_predict, mock_fetch, mock_artifacts, mock_models_exist, cache_path, minimal_ml_match,
     ):
@@ -134,7 +134,7 @@ class TestRefresh:
 
     @patch("future_fixture_predictions.models_exist", return_value=True)
     @patch("future_fixture_predictions.fetch_future_world_cup_fixtures")
-    @patch("future_fixture_predictions.predict_single_match")
+    @patch("future_fixture_predictions.predict_match")
     def test_skips_already_cached(
         self, mock_predict, mock_fetch, mock_models_exist, cache_path, minimal_ml_match,
     ):
@@ -153,7 +153,7 @@ class TestRefresh:
     @patch("future_fixture_predictions.models_exist", return_value=True)
     @patch("future_fixture_predictions.load_artifacts")
     @patch("future_fixture_predictions.fetch_future_world_cup_fixtures")
-    @patch("future_fixture_predictions.predict_single_match")
+    @patch("future_fixture_predictions.predict_match")
     def test_force_refresh_repredicts(
         self, mock_predict, mock_fetch, mock_artifacts, mock_models_exist, cache_path, minimal_ml_match,
     ):

@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from live_call_manager import (
-    REFRESH_INTERVAL,
+    live_poll_interval_seconds,
     clear_fixture_state,
     fetch_live_bundle,
     fetch_live_fixtures_list,
@@ -100,6 +100,7 @@ def _build_snapshot_record(
         "events": events,
         "lineups": bundle.get("lineups") or {},
         "players": bundle.get("players") or {},
+        "injuries": bundle.get("injuries") or [],
         "xg_proxy": xg_proxy,
         "momentum": momentum,
         "api_calls_used": bundle.get("api_calls_used", 0),
@@ -279,6 +280,9 @@ def process_fixture_live(
         "score": _extract_score(fixture),
         "stats": bundle.get("stats"),
         "events": bundle.get("events"),
+        "lineups": bundle.get("lineups"),
+        "players": bundle.get("players"),
+        "injuries": bundle.get("injuries"),
         "home_team_id": home.get("id"),
         "away_team_id": away.get("id"),
     }
@@ -367,7 +371,7 @@ def run_live_cycle(*, force: bool = False) -> dict[str, Any]:
             "fetched_at": now,
             "fixtures_live": len(wc_live),
             "fixtures_updated": updated,
-            "poll_interval_seconds": REFRESH_INTERVAL,
+            "poll_interval_seconds": live_poll_interval_seconds(),
             "api_calls_this_cycle": calls_used,
         }
         _save_live_predictions(live_doc)
@@ -393,7 +397,7 @@ def get_live_status() -> dict[str, Any]:
         "last_cycle": _last_cycle_stats,
         "live_meta": live_doc.get("live_meta") or {},
         "active_matches": len(live_doc.get("matches") or {}),
-        "poll_interval_seconds": REFRESH_INTERVAL,
+        "poll_interval_seconds": live_poll_interval_seconds(),
     }
 
 

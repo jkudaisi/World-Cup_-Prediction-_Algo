@@ -16,7 +16,8 @@ from local_schedule import parse_kickoff_utc
 from model_store import load_artifacts, models_exist
 from team_names import resolve_team_name
 from training_store import atomic_write_json, utc_now_iso
-from wc2026_ml_pipeline import TEAM_STATS, predict_single_match
+from wc2026_ml_pipeline import TEAM_STATS
+from src.models.predict_match import predict_match
 
 log = logging.getLogger(__name__)
 
@@ -269,15 +270,26 @@ def predict_and_cache_fixture(
     if not artifacts:
         raise RuntimeError("No trained model artifacts available")
 
-    ml_match = predict_single_match(
+    home_id = fixture["teams"]["home"]["id"]
+    away_id = fixture["teams"]["away"]["id"]
+    kickoff = fixture["fixture"].get("date")
+
+    ml_match = predict_match(
         home,
         away,
+        home_team_id=home_id,
+        away_team_id=away_id,
+        match_date=kickoff,
         group=group,
         match_number=fid,
         trained=artifacts["trained"],
         scaler=artifacts["scaler"],
         feature_cols=artifacts["feature_cols"],
         knockout=knockout,
+        competition_context={
+            "fixture_id": fid,
+            "knockout_stage": 1.0 if knockout else 0.0,
+        },
     )
     ml_match["fixture_id"] = fid
     ml_match["round"] = round_name

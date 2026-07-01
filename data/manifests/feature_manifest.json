@@ -1,0 +1,19 @@
+{
+  "run_id": "20260630T000128Z-180b2478",
+  "created_at": "2026-06-30T00:01:28.877033+00:00",
+  "source": "api-football",
+  "date_range": {
+    "from": null,
+    "to": null
+  },
+  "teams_count": 0,
+  "fixtures_count": 1453,
+  "training_rows_count": 0,
+  "synthetic_rows_count": 0,
+  "features_count": 0,
+  "missing_data_summary": {},
+  "code_version_hash": "1ec9b0bf3fb3",
+  "notes": [
+    "Initial feature manifest"
+  ]
+}

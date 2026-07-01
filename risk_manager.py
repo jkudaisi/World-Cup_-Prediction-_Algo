@@ -13,8 +13,6 @@ ROOT = Path(__file__).parent
 PAPER_TRADES_PATH = ROOT / "data" / "paper_trades.json"
 ORDERS_PATH = ROOT / "data" / "trade_orders.json"
 
-KELLY_BANKROLL_CAP = 0.15
-
 
 def kelly_stake(
     bankroll: float,
@@ -25,9 +23,10 @@ def kelly_stake(
     """
     Fractional Kelly stake for a binary contract.
 
-    Full Kelly fraction is scaled by confidence tier (0.50 / 0.35 / 0.25),
-    then capped at 15% of bankroll.
+    Full Kelly fraction is scaled by confidence tiers from trading config,
+    then capped at kelly_bankroll_cap of bankroll.
     """
+    cfg = get_config()
     bankroll = float(bankroll)
     edge = float(edge)
     model_p = float(model_p)
@@ -40,15 +39,15 @@ def kelly_stake(
     market_p = min(max(model_p - edge, 0.01), 0.99)
     full_kelly = edge / max(1.0 - market_p, 0.01)
 
-    if confidence >= 0.80:
-        fraction = 0.50
-    elif confidence >= 0.70:
-        fraction = 0.35
+    if confidence >= cfg.kelly_confidence_high:
+        fraction = cfg.kelly_fraction_high
+    elif confidence >= cfg.kelly_confidence_mid:
+        fraction = cfg.kelly_fraction_mid
     else:
-        fraction = 0.25
+        fraction = cfg.kelly_fraction_low
 
     stake = bankroll * full_kelly * fraction
-    cap = bankroll * KELLY_BANKROLL_CAP
+    cap = bankroll * cfg.kelly_bankroll_cap
     return round(min(stake, cap), 2)
 
 
@@ -81,20 +80,46 @@ def _open_trades() -> list[dict]:
     return open_paper + open_live + open_orders
 
 
-def _daily_pnl() -> float:
-    paper = _load_json(PAPER_TRADES_PATH, {"trades": []})
+def _settled_trades_today() -> list[dict]:
+    """Paper + live settled trades closed today."""
     today = _today_str()
-    pnl = 0.0
+    rows: list[dict] = []
+    paper = _load_json(PAPER_TRADES_PATH, {"trades": []})
     for t in paper.get("trades", []):
-        if t.get("settled_at", "")[:10] == today:
-            pnl += float(t.get("pnl", 0))
-    return round(pnl, 2)
+        if t.get("status") == "settled" and str(t.get("settled_at", ""))[:10] == today:
+            rows.append(t)
+    live_path = ROOT / "data" / "live_positions.json"
+    live_doc = _load_json(live_path, {"positions": []})
+    for p in live_doc.get("positions", []):
+        if p.get("status") != "closed":
+            continue
+        closed_at = p.get("closed_at") or p.get("settled_at") or p.get("updated_at") or ""
+        if str(closed_at)[:10] == today:
+            rows.append({
+                "pnl": p.get("realized_pnl", p.get("pnl", 0)),
+                "settled_at": closed_at,
+            })
+    return rows
+
+
+def _daily_pnl() -> float:
+    return round(sum(float(t.get("pnl", 0)) for t in _settled_trades_today()), 2)
 
 
 def _consecutive_losses() -> int:
     paper = _load_json(PAPER_TRADES_PATH, {"trades": []})
-    settled = [t for t in paper.get("trades", []) if t.get("status") == "settled"]
-    settled.sort(key=lambda x: x.get("settled_at", ""), reverse=True)
+    live_doc = _load_json(ROOT / "data" / "live_positions.json", {"positions": []})
+    settled: list[dict] = []
+    for t in paper.get("trades", []):
+        if t.get("status") == "settled":
+            settled.append({"pnl": t.get("pnl", 0), "at": t.get("settled_at", "")})
+    for p in live_doc.get("positions", []):
+        if p.get("status") == "closed":
+            settled.append({
+                "pnl": p.get("realized_pnl", p.get("pnl", 0)),
+                "at": p.get("closed_at") or p.get("settled_at") or "",
+            })
+    settled.sort(key=lambda x: x.get("at", ""), reverse=True)
     streak = 0
     for t in settled:
         if float(t.get("pnl", 0)) < 0:
@@ -172,6 +197,8 @@ def evaluate_risk(
     kelly_model_p = float(model_p if model_p is not None else 0.55)
     kelly_conf = float(confidence if confidence is not None else 0.60)
     max_allowed = kelly_stake(br, kelly_edge, kelly_model_p, kelly_conf)
+    max_allowed = min(max_allowed, float(cfg.max_stake_per_trade))
+    max_allowed = min(max_allowed, round(br * float(cfg.max_bankroll_pct_per_trade), 2))
 
     approved = True
     reasons: list[str] = []

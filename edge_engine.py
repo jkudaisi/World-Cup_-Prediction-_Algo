@@ -67,7 +67,7 @@ def evaluate_edge(
         should_trade = False
         reason_parts.append("Market price is stale")
 
-    if mapping_confidence < 0.6 and not paper_mode:
+    if mapping_confidence < cfg.min_mapping_confidence and not paper_mode:
         should_trade = False
         reason_parts.append("Fixture not confidently mapped")
 
@@ -102,7 +102,7 @@ def evaluate_edge(
         decision = "SKIP"
         reason = "SKIP: " + (reason_parts[0] if reason_parts else "Edge too small")
 
-    if live and time_remaining is not None and time_remaining < 5:
+    if live and time_remaining is not None and time_remaining < cfg.live_time_remaining_warn_minutes:
         warnings.append("Very little time remaining in match")
 
     return {

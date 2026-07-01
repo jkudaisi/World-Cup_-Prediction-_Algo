@@ -2,11 +2,13 @@
 
 from __future__ import annotations
 
+import errno
 import hashlib
 import json
 import logging
 import os
 import tempfile
+import time
 from copy import deepcopy
 from datetime import datetime, timezone
 from pathlib import Path
@@ -34,13 +36,31 @@ DEFAULT_TRAINING_STATE: dict[str, Any] = {
 }
 
 
-def atomic_write_json(path: Path, data: Any) -> None:
+_WIN_FILE_LOCK_ERRORS = frozenset({5, 32})  # access denied, sharing violation
+
+
+def is_transient_file_lock_error(exc: OSError) -> bool:
+    """True for Windows/Unix errors when another process briefly holds the target file."""
+    if exc.errno in (errno.EACCES, errno.EPERM):
+        return True
+    return getattr(exc, "winerror", None) in _WIN_FILE_LOCK_ERRORS
+
+
+def atomic_write_json(path: Path, data: Any, *, retries: int = 6) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     fd, tmp = tempfile.mkstemp(dir=path.parent, suffix=".tmp")
     try:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
-        os.replace(tmp, path)
+        for attempt in range(retries):
+            try:
+                os.replace(tmp, path)
+                return
+            except OSError as exc:
+                if attempt + 1 < retries and is_transient_file_lock_error(exc):
+                    time.sleep(0.05 * (2 ** attempt))
+                    continue
+                raise
     except Exception:
         try:
             os.unlink(tmp)

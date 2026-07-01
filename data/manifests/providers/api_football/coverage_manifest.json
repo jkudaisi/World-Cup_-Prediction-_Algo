@@ -1,0 +1,32 @@
+{
+  "provider": "api_football",
+  "run_id": "20260630T010206Z-dc33d57c",
+  "status": "completed",
+  "started_at": "2026-06-30T01:02:06.382606+00:00",
+  "finished_at": null,
+  "date_range": {
+    "from": null,
+    "to": null
+  },
+  "teams_requested": 48,
+  "teams_resolved": 48,
+  "fixtures_discovered": 0,
+  "fixtures_deduplicated": 0,
+  "endpoint_requests": {
+    "/fixtures": 432,
+    "/fixtures/events": 120,
+    "/fixtures/statistics": 120,
+    "/fixtures/players": 120,
+    "/fixtures/lineups": 120,
+    "/injuries": 120
+  },
+  "cache": {
+    "hits": 120,
+    "misses": 1032
+  },
+  "missing_data_summary": {},
+  "failed_requests_count": 0,
+  "notes": [
+    "coverage discovery"
+  ]
+}

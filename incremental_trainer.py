@@ -17,7 +17,7 @@ from apifootball_client import (
     get_fixture_full,
     get_today_fixtures,
 )
-from model_store import load_artifacts, models_exist, save_artifacts
+from model_store import load_artifacts, models_exist, save_artifacts, get_active_models_dir
 from team_names import resolve_team_name
 from training_store import (
     append_wc_matches,
@@ -40,6 +40,8 @@ from wc2026_ml_pipeline import (
     update_team_stats_from_match,
 )
 from feature_builder import build_features, calc_xg_proxy, sample_weight_for_row
+from src.config.pipeline_config import MODELS_REAL
+from src.data.guards import is_production_training
 from knockout_outcomes import is_knockout_fixture, parse_knockout_outcome
 
 log = logging.getLogger(__name__)
@@ -91,14 +93,24 @@ def completed_match_to_training_row(
     fixture: dict,
     stats: dict | None = None,
     events: list | None = None,
+    *,
+    home_stats: dict[str, Any] | None = None,
+    away_stats: dict[str, Any] | None = None,
+    allow_external_opponents: bool = False,
 ) -> dict[str, Any] | None:
     """Convert API-Football fixture + stats into a training row."""
+    from src.ratings.extended_team_stats import fixture_has_wc_pool_team, is_wc_pool_team
+
     home_raw = fixture.get("teams", {}).get("home", {}).get("name", "")
     away_raw = fixture.get("teams", {}).get("away", {}).get("name", "")
     home = resolve_team_name(home_raw)
     away = resolve_team_name(away_raw)
 
-    if home not in TEAM_STATS or away not in TEAM_STATS:
+    if allow_external_opponents:
+        if not fixture_has_wc_pool_team(fixture):
+            log.debug("Skipping match without WC-pool team: %s vs %s", home_raw, away_raw)
+            return None
+    elif home not in TEAM_STATS or away not in TEAM_STATS:
         log.warning("Unknown teams for training row: %s vs %s", home_raw, away_raw)
         return None
 
@@ -110,7 +122,7 @@ def completed_match_to_training_row(
         return None
 
     gh, ga = int(gh), int(ga)
-    feats = build_features(home, away)
+    feats = build_features(home, away, home_stats=home_stats, away_stats=away_stats)
     hs = (stats or {}).get("home") or {}
     aws = (stats or {}).get("away") or {}
 
@@ -154,6 +166,8 @@ def completed_match_to_training_row(
         "home_expected_goals": _float_or(hs.get("expected_goals"), calc_xg_proxy(hs, events, home_id)),
         "away_expected_goals": _float_or(aws.get("expected_goals"), calc_xg_proxy(aws, events, away_id)),
         "source": "world_cup",
+        "home_in_wc_pool": is_wc_pool_team(home),
+        "away_in_wc_pool": is_wc_pool_team(away),
     }
     if is_knockout_fixture(fixture):
         ko = parse_knockout_outcome(fixture)
@@ -340,11 +354,31 @@ def fetch_new_completed_world_cup_matches(
         home_id = fx["teams"]["home"]["id"]
         away_id = fx["teams"]["away"]["id"]
         stats, events = {}, []
+        lineups = None
+        injuries = None
         if fetch_stats:
             try:
+                from apifootball_client import get_fixture_injuries, get_fixture_lineups
                 full = get_fixture_full(fid, home_id, away_id)
                 stats = full.get("stats") or {}
                 events = full.get("events") or []
+                try:
+                    lineups = get_fixture_lineups(fid)
+                except APIFootballError:
+                    pass
+                try:
+                    injuries = get_fixture_injuries(fid)
+                except APIFootballError:
+                    pass
+                from src.data.api_football_backfill import persist_fixture_bundle
+                persist_fixture_bundle(
+                    fid,
+                    fixture=fx,
+                    stats=stats,
+                    events=events,
+                    lineups=lineups,
+                    injuries=injuries,
+                )
             except APIFootballError as exc:
                 log.warning("Stats fetch failed for fixture %s: %s", fid, exc)
         row = completed_match_to_training_row(fx, stats, events)
@@ -362,6 +396,8 @@ def ensure_base_cache(seed: int = 42, n_synthetic: int = 5000) -> pd.DataFrame:
 
     log.info("Generating base synthetic cache (%s rows)...", n_synthetic)
     df = generate_synthetic_dataset(n_synthetic=n_synthetic, seed=seed)
+    if "is_synthetic" not in df.columns:
+        df["is_synthetic"] = True
     save_base_cache({
         "seed": seed,
         "n_synthetic": n_synthetic,
@@ -410,19 +446,47 @@ def wc_rows_to_frame(rows: list[dict[str, Any]]) -> pd.DataFrame:
         weights = np.array(raw_weights, dtype=float)
         mean_w = float(weights.mean()) if weights.mean() > 0 else 1.0
         df["sample_weight"] = weights / mean_w
+    df["is_synthetic"] = False
     return df
+
+
+def build_real_training_frame() -> pd.DataFrame:
+    """Production frame: real WC/API matches only (no synthetic)."""
+    from src.data.guards import assert_no_synthetic_rows
+
+    wc_rows = load_wc_matches()
+    wc_df = wc_rows_to_frame(wc_rows)
+    assert_no_synthetic_rows(wc_df, context="build_real_training_frame")
+    return wc_df
 
 
 def build_combined_training_frame(
     seed: int = 42,
     n_synthetic: int = 5000,
+    *,
+    allow_synthetic: bool | None = None,
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     from feature_builder import sanitize_training_frame
+    from src.data.guards import assert_no_synthetic_rows, is_production_training
 
     feature_cols = get_feature_cols()
-    base_df = sanitize_training_frame(ensure_base_cache(seed=seed, n_synthetic=n_synthetic), feature_cols)
+    if allow_synthetic is None:
+        allow_synthetic = not is_production_training()
+
     wc_rows = load_wc_matches()
     wc_df = wc_rows_to_frame(wc_rows)
+
+    if not allow_synthetic:
+        if wc_df.empty:
+            raise ValueError(
+                "No real historical matches for production training. "
+                "Run historical_bootstrap.py or reset_and_backfill_real_history.py first."
+            )
+        combined = sanitize_training_frame(wc_df, feature_cols)
+        assert_no_synthetic_rows(combined, context="build_combined_training_frame")
+        return combined, wc_df
+
+    base_df = sanitize_training_frame(ensure_base_cache(seed=seed, n_synthetic=n_synthetic), feature_cols)
     if wc_df.empty:
         return base_df, wc_df
     combined = sanitize_training_frame(pd.concat([base_df, wc_df], ignore_index=True), feature_cols)
@@ -495,7 +559,7 @@ def run_incremental_training(
     if fetch_from_api:
         new_rows = fetch_new_completed_world_cup_matches(trained_ids, fetch_stats=True)
 
-    if not new_rows and not force and models_exist():
+    if not new_rows and not force and models_exist(get_active_models_dir()):
         state["last_incremental_run_status"] = "skipped"
         return {
             "status": "skipped",
@@ -503,7 +567,7 @@ def run_incremental_training(
             "training_state": state,
         }
 
-    bootstrap = not models_exist()
+    bootstrap = not models_exist(get_active_models_dir())
     if not new_rows and not bootstrap and not force:
         state["last_incremental_run_status"] = "skipped"
         return {
@@ -521,15 +585,21 @@ def run_incremental_training(
     combined_df, wc_df = build_combined_training_frame(seed=seed, n_synthetic=n_synthetic)
     feature_cols = get_feature_cols()
 
+    from src.data.guards import assert_no_synthetic_rows
+    assert_no_synthetic_rows(combined_df, context="run_incremental_training")
+
     if verbose:
+        mode = "real-only" if wc_df.empty or len(combined_df) == len(wc_df) else "mixed"
         log.info(
-            "Training on %s rows (%s base + %s WC)",
-            len(combined_df), len(combined_df) - len(wc_df), len(wc_df),
+            "Training on %s rows (mode=%s, wc=%s)",
+            len(combined_df), mode, len(wc_df),
         )
 
     try:
         weights = np.ones(len(combined_df), dtype=float)
-        if len(wc_df) > 0:
+        if "sample_weight" in combined_df.columns:
+            weights = combined_df["sample_weight"].fillna(1.0).to_numpy(dtype=float)
+        elif len(wc_df) > 0 and len(combined_df) > len(wc_df):
             wc_rows = load_wc_matches()
             base_len = len(combined_df) - len(wc_df)
             for i, row in enumerate(wc_rows[-len(wc_df):]):
@@ -538,8 +608,22 @@ def run_incremental_training(
             combined_df, feature_cols, verbose=verbose, sample_weight=weights,
         )
         ml_data = predict_all_fixtures(trained, scaler, feature_cols, verbose=verbose)
-        model_versions = {name: "1.0.0" for name in trained}
-        save_artifacts(trained, scaler, feature_cols, model_versions)
+        model_versions = {name: "real-history-1" if is_production_training() else "1.0.0" for name in trained}
+        out_dir = MODELS_REAL if is_production_training() else get_active_models_dir()
+        save_artifacts(trained, scaler, feature_cols, model_versions, models_dir=out_dir)
+
+        if is_production_training():
+            try:
+                from src.data.manifest import write_training_manifest
+                syn = int(combined_df["is_synthetic"].sum()) if "is_synthetic" in combined_df.columns else 0
+                write_training_manifest(
+                    training_rows_count=len(combined_df),
+                    synthetic_rows_count=syn,
+                    features_count=len(feature_cols),
+                    notes=[f"Incremental training → {out_dir}"],
+                )
+            except Exception as exc:
+                log.warning("Training manifest write skipped: %s", exc)
 
         wc_all = load_wc_matches()
         new_count = len(new_rows)

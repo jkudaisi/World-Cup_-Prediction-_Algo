@@ -7,13 +7,13 @@ const MODEL_NAMES = Object.keys(MODEL_COLORS);
 let LIVE_META = null;
 let LAST_LIVE_FETCH = 0;
 let LIVE_POLL_INTERVAL = null;
-const LIVE_POLL_MS = 20000;
+let LIVE_POLL_MS = 3000;
 const DAILY_API_LIMIT = 7500;
 let TODAY_POLL_INTERVAL = null;
 let TODAY_TRADES_OPEN = false;
 let TODAY_TRADES_POLL_INTERVAL = null;
 let TODAY_VIEW_CACHE = null;
-const TODAY_TRADES_POLL_MS = 20000;
+let TODAY_TRADES_POLL_MS = 3000;
 let TEAM_ALIAS_LOOKUP = null;
 
 async function loadTeamAliases() {
@@ -823,7 +823,7 @@ function renderTodayTradesPanel(cache) {
     '<span><b>' + openCount + '</b> open trades</span>' +
     '<span><b>' + signalCount + '</b> live signals</span>' +
     '<span><b>' + matches.length + '</b> matches today</span>' +
-    '<span style="margin-left:auto">Updated ' + esc(updated) + ' · auto-refresh 20s</span>' +
+    '<span style="margin-left:auto">Updated ' + esc(updated) + ' · auto-refresh ' + (LIVE_POLL_MS / 1000) + 's</span>' +
     '<button class="today-trades-btn" style="margin-left:8px" onclick="fetchTodayTradesPanel(true)">↻ Refresh trades</button>' +
     '<button class="today-trades-btn" onclick="runPaperScanForToday()">Run Paper Scan</button>';
 
@@ -911,12 +911,15 @@ async function runPaperScanForToday() {
 }
 
 async function fetchTodayView(forceRefresh) {
-  try {
-    const predRes = await fetch('/api/predictions');
-    if (predRes.ok) applyData(await predRes.json());
+  const metaLabel = document.getElementById('today-meta-label');
+  if (metaLabel) metaLabel.textContent = 'Loading…';
 
-    const url = '/api/today' + (forceRefresh ? '?refresh=1' : '');
-    const res = await fetch(url);
+  const url = '/api/today' + (forceRefresh ? '?refresh=1' : '');
+  const todayPromise = fetch(url);
+  const predPromise = fetch('/api/predictions').catch(() => null);
+
+  try {
+    const res = await todayPromise;
     if (!res.ok) {
       if (res.status === 404) {
         throw new Error(
@@ -927,8 +930,11 @@ async function fetchTodayView(forceRefresh) {
       throw new Error(errBody.error || `Failed to load today's fixtures (HTTP ${res.status})`);
     }
     renderTodayView(await res.json());
+
+    const predRes = await predPromise;
+    if (predRes && predRes.ok) applyData(await predRes.json());
   } catch (e) {
-    document.getElementById('today-meta-label').textContent = 'Could not load fixtures';
+    if (metaLabel) metaLabel.textContent = 'Could not load fixtures';
     document.getElementById('today-content').innerHTML =
       `<div class="today-empty"><p>${e.message}</p></div>`;
   }
@@ -942,7 +948,7 @@ function startTodayPolling() {
       fetchTodayView();
       if (TODAY_TRADES_OPEN) fetchTodayTradesPanel(false);
     }
-  }, 30000);
+  }, LIVE_POLL_MS);
 }
 
 function stopTodayPolling() {
@@ -965,7 +971,8 @@ async function fetchSchedulerStatus() {
     }
     bar.style.display = 'inline-flex';
     const limit = d.daily_limit || DAILY_API_LIMIT;
-    const interval = d.live_poll_interval_seconds || 20;
+    const interval = d.live_poll_interval_seconds || 3;
+    applyPollIntervalSeconds(interval);
     txt.textContent =
       `${d.api_budget_remaining}/${limit} calls · ` +
       `live poll ${interval}s · ` +
@@ -1099,7 +1106,7 @@ function showView(v, btn) {
 }
 
 let TRADING_POLL_INTERVAL = null;
-const TRADING_POLL_MS = 30000;
+let TRADING_POLL_MS = 3000;
 let TRADING_DATA = null;
 let TRADING_TODAY = null;
 let TRADING_TAB = 'now';
@@ -1389,6 +1396,40 @@ function edgeStr(v) {
   return (p >= 0 ? '+' : '') + p.toFixed(1) + '%';
 }
 
+function oppSide(o) {
+  return (o && (o.trade_side || o.side) ? String(o.trade_side || o.side) : 'yes').toUpperCase();
+}
+
+function oppYesModelPct(o) {
+  if (!o) return '—';
+  if (o.model_yes_pct != null) return o.model_yes_pct + '%';
+  return pct(o.model_yes_probability != null ? o.model_yes_probability : o.model_probability);
+}
+
+function oppTradeModelPct(o) {
+  if (!o) return '—';
+  if (o.trade_model_pct != null) return o.trade_model_pct + '%';
+  if (o.trade_model_probability != null) return pct(o.trade_model_probability);
+  return oppYesModelPct(o);
+}
+
+function oppTradeMarketPct(o) {
+  if (!o) return '—';
+  if (o.trade_market_pct != null) return o.trade_market_pct + '%';
+  const side = (o.trade_side || o.side || 'yes').toLowerCase();
+  const yesPct = o.kalshi_yes_pct != null ? o.kalshi_yes_pct : o.kalshi_pct;
+  if (yesPct == null) return '—';
+  if (side === 'no') return (100 - Number(yesPct)).toFixed(1) + '%';
+  return Number(yesPct).toFixed(1) + '%';
+}
+
+function applyPollIntervalSeconds(seconds) {
+  const ms = Math.max(1000, (seconds || 3) * 1000);
+  LIVE_POLL_MS = ms;
+  TODAY_TRADES_POLL_MS = ms;
+  TRADING_POLL_MS = ms;
+}
+
 function todayISO() {
   const d = new Date();
   const y = d.getFullYear();
@@ -1547,10 +1588,13 @@ function buildMatchCard(f, opts) {
     const recCls = o.recommendation === 'TRADE' ? 'rec-trade' : 'rec-skip';
     const rowCls = o.recommendation === 'TRADE' ? 'row-trade' : 'row-skip';
     const shortReason = (o.reason || '').replace(/^SKIP: /, '').replace(/^TRADE: /, '');
+    const side = oppSide(o);
+    const yesNote = side === 'NO' ? '<div style="font-size:9px;color:var(--dim)">yes ' + oppYesModelPct(o) + '</div>' : '';
     return '<tr class="' + rowCls + '">' +
       '<td>' + esc(o.market) + (o.ticker && !compact ? '<br><span style="color:var(--dim);font-size:9px">' + esc(o.ticker) + '</span>' : '') + '</td>' +
-      '<td>' + pct(o.model_probability) + '</td>' +
-      '<td>' + (o.kalshi_pct != null ? o.kalshi_pct + '%' : '—') + '</td>' +
+      '<td><b>' + esc(side) + '</b></td>' +
+      '<td>' + oppTradeModelPct(o) + yesNote + '</td>' +
+      '<td>' + oppTradeMarketPct(o) + '</td>' +
       '<td>' + (o.confidence_pct != null ? o.confidence_pct + '%' : '—') + '</td>' +
       '<td>' + edgeStr(o.edge) + '</td>' +
       '<td class="' + recCls + '">' + esc(recLabel(o.recommendation)) + '</td>' +
@@ -1584,8 +1628,8 @@ function buildMatchCard(f, opts) {
       (upnl != null ? ' · ' + formatPnl(upnl) : '');
   } else if (bestTrade) {
     summaryLine = '<b>Signal:</b> ' + esc(bestTrade.market || marketLabel(bestTrade.market_type)) +
-      ' · model ' + pct(bestTrade.model_probability) + ' vs market ' +
-      (bestTrade.kalshi_pct != null ? bestTrade.kalshi_pct + '%' : '—') +
+      ' <b>' + esc(oppSide(bestTrade)) + '</b>' +
+      ' · model ' + oppTradeModelPct(bestTrade) + ' vs market ' + oppTradeMarketPct(bestTrade) +
       ' · edge ' + edgeStr(bestTrade.edge);
   } else if (mapped === 0) {
     summaryLine = 'Not linked to Kalshi — cannot trade this match yet.';
@@ -1617,7 +1661,7 @@ function buildMatchCard(f, opts) {
     renderMatchPaperTrades(f) +
     '<div class="tmc-section-label">' + oppsLabel + '</div>' +
     (oppsRows
-      ? '<table class="tmc-opps-table"><thead><tr><th>Market</th><th>Model</th><th>Kalshi</th><th>Conf</th><th>Edge</th><th>Action</th><th>Why</th></tr></thead><tbody>' + oppsRows + '</tbody></table>'
+      ? '<table class="tmc-opps-table"><thead><tr><th>Market</th><th>Side</th><th>Bet model</th><th>Market</th><th>Conf</th><th>Edge</th><th>Action</th><th>Why</th></tr></thead><tbody>' + oppsRows + '</tbody></table>'
       : '<div class="tmc-opps-empty">' + (opts.ideasOnly ? 'No buy signals for this match' : 'No markets scanned') + '</div>');
 
   return '<div class="' + cardCls + '" data-mn="' + f.mn + '">' +

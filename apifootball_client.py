@@ -40,6 +40,9 @@ STAT_TYPE_MAP = {
     "Passes %": "passes_pct",
     "Fouls": "fouls",
     "expected_goals": "expected_goals",
+    "Dangerous Attacks": "dangerous_attacks",
+    "Big Chances": "big_chances",
+    "Big Chances Missed": "big_chances_missed",
 }
 
 STAT_DEFAULTS = {v: None for v in STAT_TYPE_MAP.values()}
@@ -209,6 +212,11 @@ def get_fixture_lineups(fixture_id: int) -> dict:
                 "substitutes": block.get("substitutes") or [],
             }
     return out
+
+
+def get_fixture_injuries(fixture_id: int) -> list[dict]:
+    result = _get("/injuries", {"fixture": fixture_id})
+    return result if isinstance(result, list) else []
 
 
 def get_fixture_full(fixture_id: int, home_team_id: int | None = None, away_team_id: int | None = None) -> dict:

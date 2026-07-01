@@ -16,11 +16,18 @@ def _team_stats():
 
 
 # Re-export base team feature builder
-def build_team_features(home: str, away: str) -> dict[str, float]:
+def build_team_features(
+    home: str,
+    away: str,
+    *,
+    home_stats: dict[str, Any] | None = None,
+    away_stats: dict[str, Any] | None = None,
+) -> dict[str, float]:
     """Pre-match features from team database (Elo, xG, form, etc.)."""
-    TEAM_STATS = _team_stats()
-    h = TEAM_STATS[home]
-    a = TEAM_STATS[away]
+    from src.ratings.extended_team_stats import get_team_stats
+
+    h = home_stats if home_stats is not None else get_team_stats(home)
+    a = away_stats if away_stats is not None else get_team_stats(away)
     ep_h = elo_prob(h["elo"], a["elo"])
     ep_a = 1 - ep_h
     atk_h = h["xg"] / max(a["xga"], 0.5)
@@ -76,9 +83,16 @@ def build_team_features(home: str, away: str) -> dict[str, float]:
     }
 
 
-def build_features(home: str, away: str, context: dict[str, Any] | None = None) -> dict[str, float]:
+def build_features(
+    home: str,
+    away: str,
+    context: dict[str, Any] | None = None,
+    *,
+    home_stats: dict[str, Any] | None = None,
+    away_stats: dict[str, Any] | None = None,
+) -> dict[str, float]:
     """Pre-match features + optional match context."""
-    feats = build_team_features(home, away)
+    feats = build_team_features(home, away, home_stats=home_stats, away_stats=away_stats)
     ctx = context or {}
     feats["neutral_venue"] = float(ctx.get("neutral_venue", 1.0))
     feats["knockout_stage"] = float(ctx.get("knockout_stage", 0.0))

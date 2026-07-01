@@ -230,6 +230,7 @@ def predict_knockout_adjustments(
     away: str,
     lambda_h: float,
     lambda_a: float,
+    fixture_id: int | None = None,
 ) -> dict[str, Any]:
     """
     ML adjustments for ET conditional outcomes and penalty skill.
@@ -237,29 +238,38 @@ def predict_knockout_adjustments(
     Returns blend weights and adjusted probabilities to merge with Poisson cascade.
     """
     meta = load_knockout_model_meta()
-    if meta.get("status") != "trained":
-        return {"available": False, "blend_weight": 0.0}
-
-    blend = float(meta.get("blend_weight") or 0.0)
+    blend = float(meta.get("blend_weight") or 0.0) if meta.get("status") == "trained" else 0.0
     X = build_prediction_features(home, away, lambda_h, lambda_a)
     poisson_et = extra_time_outcomes_given_draw(lambda_h, lambda_a)
     out: dict[str, Any] = {
-        "available": True,
+        "available": meta.get("status") == "trained",
         "blend_weight": blend,
-        "meta": meta,
+        "meta": meta if meta.get("status") == "trained" else {},
         "poisson_et": poisson_et,
     }
 
-    pen_model = _load_model("pen_model.pkl")
-    if pen_model is not None:
-        raw = float(pen_model.predict_proba(X)[0, 1])
-        cal_info = _load_calibrator("pen_calibrator.pkl")
-        home_pen = apply_calibrator(raw, cal_info) if cal_info.get("calibrator") else raw
-        out["home_pen_skill"] = round(
-            blend * home_pen + (1 - blend) * DEFAULT_HOME_PEN_SKILL, 4,
+    base_pen = DEFAULT_HOME_PEN_SKILL
+    if meta.get("status") == "trained":
+        pen_model = _load_model("pen_model.pkl")
+        if pen_model is not None:
+            raw = float(pen_model.predict_proba(X)[0, 1])
+            cal_info = _load_calibrator("pen_calibrator.pkl")
+            home_pen = apply_calibrator(raw, cal_info) if cal_info.get("calibrator") else raw
+            base_pen = round(blend * home_pen + (1 - blend) * DEFAULT_HOME_PEN_SKILL, 4)
+
+    try:
+        from src.features.goalkeeper_penalties import blend_pen_skill_with_goalkeepers
+        blended, gk_meta = blend_pen_skill_with_goalkeepers(
+            home, away, base_pen, fixture_id=fixture_id,
         )
-    else:
-        out["home_pen_skill"] = DEFAULT_HOME_PEN_SKILL
+        out["home_pen_skill"] = blended
+        out["goalkeeper_penalties"] = gk_meta
+    except Exception as exc:
+        log.debug("GK pen blend skipped: %s", exc)
+        out["home_pen_skill"] = base_pen
+
+    if meta.get("status") != "trained":
+        return out
 
     et_model = _load_model("et_model.pkl")
     if et_model is not None:

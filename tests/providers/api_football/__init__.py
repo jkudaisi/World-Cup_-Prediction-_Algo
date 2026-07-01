@@ -1,0 +1,1 @@
+"""API-Football provider tests."""

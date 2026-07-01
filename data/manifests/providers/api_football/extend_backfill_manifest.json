@@ -1,0 +1,12 @@
+{
+  "provider": "api_football",
+  "mode": "extend_backfill",
+  "started_at": "2026-07-01T14:16:23.442672+00:00",
+  "teams_processed": 48,
+  "seasons_fetched": 0,
+  "fixtures_discovered": 206,
+  "fixtures_new": 143,
+  "fixtures_backfilled": 0,
+  "endpoint_requests": {},
+  "finished_at": "2026-07-01T14:16:28.107667+00:00"
+}

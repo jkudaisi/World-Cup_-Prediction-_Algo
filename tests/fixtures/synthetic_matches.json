@@ -1,0 +1,12 @@
+[
+  {
+    "fixture_id": -1,
+    "home_team": "Testland",
+    "away_team": "Mockia",
+    "goals_h": 2,
+    "goals_a": 1,
+    "date": "2020-01-01",
+    "is_synthetic": true,
+    "league_id": 1
+  }
+]

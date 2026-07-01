@@ -14,6 +14,11 @@ from ensemble import (
     weighted_ensemble_goals,
 )
 from feature_builder import build_live_features, calc_momentum, calc_xg_pair, score_data_quality
+from live_context import (
+    apply_live_lambda_adjustments,
+    lineup_completeness_score,
+    merge_event_cards_into_stats,
+)
 
 
 def _int_or_zero(val: Any) -> int:
@@ -148,6 +153,16 @@ def _build_explanation(
         top.append("Home red card")
     if live_feats.get("live_away_red_cards", 0):
         top.append("Away red card")
+    ctx = snapshot.get("live_context") or {}
+    if ctx.get("substitutions", {}).get("home", 0) >= 3:
+        top.append("Heavy home substitutions")
+    if ctx.get("substitutions", {}).get("away", 0) >= 3:
+        top.append("Heavy away substitutions")
+    inj = ctx.get("injury_ctx") or {}
+    if inj.get("home_injury_count", 0) >= 2:
+        risk.append("Home injury list")
+    if inj.get("away_injury_count", 0) >= 2:
+        risk.append("Away injury list")
     if prematch.get("home_win", 0) > blended.get("home_win", 0) + 0.08:
         top.append("Live state reduced home win chance vs pre-match")
     elif blended.get("home_win", 0) > prematch.get("home_win", 0) + 0.08:
@@ -178,6 +193,7 @@ def update_live_prediction_from_snapshot(
     base_prediction: dict[str, Any],
 ) -> dict[str, Any]:
     """Blend pre-match model with live score, xG, momentum, and score-state logic."""
+    snapshot = merge_event_cards_into_stats(snapshot)
     minute = _int_or_zero(snapshot.get("minute"))
     status = snapshot.get("status") or "NS"
     score = snapshot.get("score") or {}
@@ -220,6 +236,10 @@ def update_live_prediction_from_snapshot(
         adj_la *= 0.82
         adj_lh *= 1.10
 
+    adj_lh, adj_la, live_context = apply_live_lambda_adjustments(
+        adj_lh, adj_la, snapshot, live_feats=live_feats,
+    )
+
     adj_lh = max(0.1, min(5.0, adj_lh))
     adj_la = max(0.1, min(5.0, adj_la))
 
@@ -243,7 +263,9 @@ def update_live_prediction_from_snapshot(
     conf = compute_confidence(
         model_agreement=base_prediction.get("ensemble", {}).get("model_agreement", 0.5),
         data_quality=dq_score,
-        lineup_completeness=1.0 if snapshot.get("lineups") else 0.3,
+        lineup_completeness=lineup_completeness_score(
+            snapshot.get("lineups"), snapshot.get("players"),
+        ),
         live_stats_completeness=0.9 if hs and aws else 0.2,
         minute=minute,
     )
@@ -292,6 +314,9 @@ def update_live_prediction_from_snapshot(
         },
         "explanation": explanation,
         "data_quality": dq,
+        "live_context": live_context,
+        "lineups_available": bool(snapshot.get("lineups")),
+        "injuries_available": bool(snapshot.get("injuries")),
         "live": {
             "is_live": True,
             "minute": minute,

@@ -18,7 +18,7 @@ from future_fixture_predictions import (
     refresh_future_fixture_predictions_on_startup,
 )
 from live_trainer import get_all_live_states
-from live_updater import build_live_api_response, get_live_status, run_live_cycle
+from live_updater import build_live_api_response, get_live_status
 from live_snapshot_store import load_snapshots
 from incremental_trainer import run_incremental_training
 from training_store import load_training_state
@@ -228,6 +228,44 @@ def api_training_state():
     return jsonify(state)
 
 
+@app.route("/api/pipeline/status")
+def api_pipeline_status():
+    """Real-history pipeline: active models, manifests, production flags."""
+    import json
+    from pathlib import Path
+
+    from model_store import get_active_models_dir, models_exist
+    from src.data.guards import is_production_training
+    from src.models.model_registry import active_model_source
+    from src.config.pipeline_config import DATA_MANIFESTS, DATA_RAW, MODELS_REAL
+
+    manifests = {}
+    for name in ("backfill_manifest.json", "feature_manifest.json", "training_manifest.json", "reset_manifest.json"):
+        p = DATA_MANIFESTS / name
+        if p.exists():
+            try:
+                manifests[name] = json.loads(p.read_text(encoding="utf-8"))
+            except (json.JSONDecodeError, OSError):
+                manifests[name] = {"error": "unreadable"}
+
+    raw_counts = {}
+    for sub in ("fixtures", "lineups", "statistics", "injuries"):
+        d = DATA_RAW / sub
+        raw_counts[sub] = len(list(d.glob("*.json"))) if d.exists() else 0
+
+    active = get_active_models_dir()
+    return jsonify({
+        "production_training": is_production_training(),
+        "model_source": active_model_source(),
+        "models_dir": str(active),
+        "models_loaded": models_exist(active),
+        "real_history_models": models_exist(MODELS_REAL),
+        "legacy_models": models_exist(Path(__file__).parent / "models"),
+        "manifests": manifests,
+        "raw_fixture_layers": raw_counts,
+    })
+
+
 @app.route("/api/bootstrap/status")
 def api_bootstrap_status():
     if BOOTSTRAP_STATE_PATH.exists():
@@ -286,16 +324,8 @@ def api_train_incremental():
 
 @app.route("/api/live")
 def get_live():
-    """Refresh live data if key configured, then return merged predictions."""
+    """Return cached live scores merged into predictions (scheduler refreshes in background)."""
     try:
-        if config.APIFOOTBALL_KEY and scheduler.should_poll_api_football():
-            scheduler.refresh_poll_window_statuses()
-            run_live_cycle()
-            try:
-                from trading_service import refresh_trading_cycle
-                refresh_trading_cycle()
-            except Exception as trade_exc:
-                logging.getLogger(__name__).debug("Trading refresh on /api/live skipped: %s", trade_exc)
         return jsonify(build_live_api_response())
     except Exception as exc:
         logging.exception("api/live failed")
@@ -581,4 +611,4 @@ if __name__ == "__main__":
         print("APIFOOTBALL_KEY not set — live scheduler disabled")
     _boot_kalshi_today_links()
     print("\nOpen http://127.0.0.1:5000 in your browser")
-    app.run(host="127.0.0.1", port=5000, debug=False)
+    app.run(host="127.0.0.1", port=5000, debug=False, threaded=True)

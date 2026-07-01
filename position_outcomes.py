@@ -22,6 +22,8 @@ def yes_leg_outcome(
     score_home: int,
     score_away: int,
     match_final: bool,
+    home_qualifies: bool | None = None,
+    away_qualifies: bool | None = None,
 ) -> bool | None:
     """
     Whether the YES leg of the market won.
@@ -63,6 +65,10 @@ def yes_leg_outcome(
     if mt in ("home_advance", "away_advance"):
         if not match_final:
             return None
+        if home_qualifies is not None or away_qualifies is not None:
+            if mt == "home_advance":
+                return bool(home_qualifies)
+            return bool(away_qualifies)
         if score_home > score_away:
             return mt == "home_advance"
         if score_away > score_home:
@@ -91,6 +97,8 @@ def evaluate_position_outcome(position: dict, fixture: dict | None) -> dict | No
         score_home=sh,
         score_away=sa,
         match_final=is_final,
+        home_qualifies=fixture.get("home_qualifies"),
+        away_qualifies=fixture.get("away_qualifies"),
     )
     if yes_won is None:
         return None

@@ -4,13 +4,15 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import shutil
 import threading
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from training_store import atomic_write_json
+from training_store import atomic_write_json, is_transient_file_lock_error
 
 log = logging.getLogger(__name__)
 
@@ -20,6 +22,11 @@ ORDERS_PATH = ROOT / "data" / "trade_orders.json"
 RESULTS_PATH = ROOT / "data" / "trade_results.json"
 
 _lock = threading.Lock()
+
+
+def decisions_jsonl_path() -> Path:
+    """Append-only decision log (avoids rewriting a large JSON blob on Windows)."""
+    return DECISIONS_PATH.with_suffix(".jsonl")
 
 
 def _ensure_file(path: Path, default: dict) -> None:
@@ -55,6 +62,41 @@ def _append(path: Path, key: str, entry: dict) -> None:
         data = _load_log_file(path, key)
         data.setdefault(key, []).append(entry)
         atomic_write_json(path, data)
+
+
+def _read_jsonl(path: Path) -> list[dict]:
+    if not path.exists():
+        return []
+    rows: list[dict] = []
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                rows.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
+    return rows
+
+
+def _append_decision_jsonl(entry: dict) -> None:
+    """Append one decision line — no full-file replace (OneDrive / read locks safe)."""
+    path = decisions_jsonl_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    line = json.dumps(entry, ensure_ascii=False) + "\n"
+    with _lock:
+        for attempt in range(6):
+            try:
+                with open(path, "a", encoding="utf-8") as f:
+                    f.write(line)
+                    f.flush()
+                return
+            except OSError as exc:
+                if attempt + 1 < 6 and is_transient_file_lock_error(exc):
+                    time.sleep(0.05 * (2 ** attempt))
+                    continue
+                raise
 
 
 def log_decision(
@@ -95,7 +137,7 @@ def log_decision(
     if extra and extra.get("scan") and decision != "TRADE":
         return entry
     try:
-        _append(DECISIONS_PATH, "decisions", entry)
+        _append_decision_jsonl(entry)
     except Exception as exc:
         log.warning("Could not append trading decision log: %s", exc)
     return entry
@@ -120,9 +162,12 @@ def log_result(result: dict) -> dict:
 
 
 def load_decisions(limit: int = 200) -> list[dict]:
-    data = _load_log_file(DECISIONS_PATH, "decisions")
-    decisions = data.get("decisions", [])
-    return decisions[-limit:]
+    legacy: list[dict] = []
+    if DECISIONS_PATH.exists():
+        data = _load_log_file(DECISIONS_PATH, "decisions")
+        legacy = list(data.get("decisions", []))
+    merged = legacy + _read_jsonl(decisions_jsonl_path())
+    return merged[-limit:]
 
 
 def load_orders(limit: int = 200) -> list[dict]:

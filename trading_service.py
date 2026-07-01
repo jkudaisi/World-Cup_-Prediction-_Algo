@@ -63,7 +63,10 @@ MARKET_LABELS = {
 SCAN_MARKETS_1X2 = ("home_win", "draw", "away_win")
 SCAN_MARKETS_GOALS = ("btts_yes", "btts_no", "over_2_5", "over_3_5")
 SCAN_MARKETS_ADVANCE = ("home_advance", "away_advance")
-EXACT_SCORES_TO_SCAN = 3
+
+
+def _exact_scores_to_scan() -> int:
+    return get_config().exact_scores_to_scan
 
 LIVE_STATUSES = frozenset({"1H", "HT", "2H", "ET", "P", "LIVE", "BT"})
 FINAL_STATUSES = frozenset({"FT", "AET", "PEN"})
@@ -82,8 +85,10 @@ def _clamp_prob(p: float) -> float:
     return round(min(1.0, max(0.0, float(p))), 4)
 
 
-def _top_exact_scores_from_envelope(match: dict, goal_mkts: dict, n: int = EXACT_SCORES_TO_SCAN) -> list[dict]:
+def _top_exact_scores_from_envelope(match: dict, goal_mkts: dict, n: int | None = None) -> list[dict]:
     """Top exact scorelines from prediction envelope score_matrix, with goal_mkts fallback."""
+    if n is None:
+        n = _exact_scores_to_scan()
     pred = match.get("prediction") or {}
     sm = pred.get("score_matrix") or {}
     top = sm.get("top_exact_scores")
@@ -140,6 +145,34 @@ def _model_prob_from_envelope(match: dict, goal_mkts: dict, market_type: str) ->
     return model_prob_for_market_type(goal_mkts, mt)
 
 
+def _live_prediction_prob(live_row: dict | None, market_type: str) -> float | None:
+    """Use calibrated live predictor output when available."""
+    if not live_row:
+        return None
+    pred = live_row.get("prediction") or {}
+    mt = market_type.lower()
+    if mt == "home_win":
+        val = pred.get("home_win")
+    elif mt == "draw":
+        val = pred.get("draw")
+    elif mt == "away_win":
+        val = pred.get("away_win")
+    elif mt == "btts_yes":
+        val = pred.get("both_teams_score")
+    elif mt == "btts_no":
+        btts = pred.get("both_teams_score")
+        val = _clamp_prob(1.0 - btts) if btts is not None else None
+    elif mt == "over_2_5":
+        ou = live_row.get("over_under") or pred.get("over_under") or {}
+        val = ou.get("2.5", {}).get("over") if isinstance(ou.get("2.5"), dict) else pred.get("over_2_5")
+    elif mt == "over_3_5":
+        ou = live_row.get("over_under") or pred.get("over_under") or {}
+        val = ou.get("3.5", {}).get("over") if isinstance(ou.get("3.5"), dict) else pred.get("over_3_5")
+    else:
+        val = None
+    return float(val) if val is not None else None
+
+
 def _model_prob_for_scan(
     match: dict,
     goal_mkts: dict,
@@ -149,14 +182,20 @@ def _model_prob_for_scan(
     score_home: int = 0,
     score_away: int = 0,
     qualification_probs: dict[str, float] | None = None,
+    live_row: dict | None = None,
 ) -> float | None:
-    """Use score-aware goal markets in live play; pre-match envelope otherwise."""
+    """Use live predictor when in-play; pre-match envelope otherwise."""
     mt = market_type.lower()
     if mt in SCAN_MARKETS_ADVANCE and qualification_probs:
         if mt == "home_advance":
             return float(qualification_probs["home_qualifies"])
         if mt == "away_advance":
             return float(qualification_probs["away_qualifies"])
+
+    if is_live or score_home > 0 or score_away > 0:
+        live_p = _live_prediction_prob(live_row, mt)
+        if live_p is not None:
+            return live_p
 
     use_live_model = is_live or score_home > 0 or score_away > 0
     if use_live_model:
@@ -231,6 +270,7 @@ def scan_opportunities(
             score_home=sh,
             score_away=sa,
             qualification_probs=qualification_probs,
+            live_row=live_row,
         )
         if model_p is None:
             continue
@@ -256,6 +296,14 @@ def scan_opportunities(
                 spread = pricing.get("spread")
                 liquidity = pricing.get("available_liquidity", 0)
                 stale = pricing.get("stale_price_warning", False)
+
+        time_remaining = None
+        if live_row and is_live:
+            try:
+                cfg = get_config()
+                time_remaining = max(0, cfg.live_match_minutes - int(live_row.get("minute") or 0))
+            except (TypeError, ValueError):
+                time_remaining = None
 
         block_reason = block_live_entry(
             market_type=mt,
@@ -292,17 +340,21 @@ def scan_opportunities(
                 liquidity=liquidity,
                 market_type=mt,
                 match_status=match_status,
+                time_remaining=time_remaining,
                 live=is_live,
                 stale=stale,
                 mapping_confidence=float(mapping.get("match_confidence", 0)),
             )
         if ticker:
+            trade_side = edge_result.get("side")
+            trade_model_p = edge_result.get("model_probability")
+            trade_market_p = edge_result.get("market_probability")
             log_decision(
                 fixture=f"{home} vs {away}",
                 market=market_label(mt),
                 ticker=ticker,
-                model_probability=float(model_p),
-                kalshi_probability=kalshi_p,
+                model_probability=float(trade_model_p) if trade_model_p is not None else float(model_p),
+                kalshi_probability=float(trade_market_p) if trade_market_p is not None else kalshi_p,
                 edge=edge_result.get("edge"),
                 confidence=market_conf,
                 spread=spread,
@@ -310,13 +362,24 @@ def scan_opportunities(
                 decision=edge_result["decision"],
                 reason=edge_result["reason"],
                 risk_approval=None,
-                extra={"scan": True, "mn": mn, "market_type": mt},
+                extra={
+                    "scan": True,
+                    "mn": mn,
+                    "market_type": mt,
+                    "side": trade_side,
+                    "model_yes_probability": float(model_p),
+                    "kalshi_yes_probability": kalshi_p,
+                },
             )
 
         prob_source = None
-        if mt in SCAN_MARKETS_ADVANCE and qualification_probs:
+        if is_live and _live_prediction_prob(live_row, mt) is not None:
+            prob_source = "live_predictor"
+        elif mt in SCAN_MARKETS_ADVANCE and qualification_probs:
             prob_source = "knockout_qualification"
 
+        trade_model_p = edge_result.get("model_probability")
+        trade_market_p = edge_result.get("market_probability")
         row = {
             "mn": mn,
             "match": f"{home} vs {away}",
@@ -326,12 +389,22 @@ def scan_opportunities(
             "market": market_label(mt),
             "market_type": mt,
             "ticker": ticker or None,
+            "model_yes_probability": round(float(model_p), 4),
+            "model_yes_pct": round(float(model_p) * 100, 1),
             "model_probability": round(float(model_p), 4),
             "model_pct": round(float(model_p) * 100, 1),
             "model_prob_source": prob_source,
             "confidence_source": conf_source,
             "kalshi_probability": kalshi_p,
             "kalshi_pct": round(float(kalshi_p) * 100, 1) if kalshi_p is not None else None,
+            "kalshi_yes_probability": kalshi_p,
+            "kalshi_yes_pct": round(float(kalshi_p) * 100, 1) if kalshi_p is not None else None,
+            "trade_side": edge_result.get("side"),
+            "side": edge_result.get("side"),
+            "trade_model_probability": round(float(trade_model_p), 4) if trade_model_p is not None else None,
+            "trade_model_pct": round(float(trade_model_p) * 100, 1) if trade_model_p is not None else None,
+            "trade_market_probability": round(float(trade_market_p), 4) if trade_market_p is not None else None,
+            "trade_market_pct": round(float(trade_market_p) * 100, 1) if trade_market_p is not None else None,
             "edge": edge_result.get("edge"),
             "edge_pct": round(float(edge_result["edge"]) * 100, 1) if edge_result.get("edge") is not None else None,
             "confidence": market_conf,
@@ -341,7 +414,6 @@ def scan_opportunities(
             "liquidity": liquidity,
             "recommendation": edge_result["decision"],
             "reason": edge_result["reason"],
-            "side": edge_result.get("side"),
             "live": is_live,
             "mapping_confidence": mapping.get("match_confidence"),
         }
@@ -505,7 +577,8 @@ def _confidence_for_market(
     mt = market_type.lower()
     if mt in SCAN_MARKETS_ADVANCE and qualification_probs:
         prematch = _prematch_confidence(match)
-        blended = max(base, prematch * 0.88, 0.52)
+        cfg = get_config()
+        blended = max(base, prematch * cfg.advance_confidence_blend_prematch, cfg.advance_confidence_floor)
         return round(blended, 3), "knockout_qualification"
     return round(base, 3), "fixture"
 
@@ -658,7 +731,8 @@ def _should_fetch_prices(
     tradeable = _tradeable_fixture_mns()
     if mn is not None and mn in tradeable:
         return True
-    if float(mapping.get("match_confidence") or 0) >= 0.95:
+    cfg = get_config()
+    if float(mapping.get("match_confidence") or 0) >= cfg.kalshi_prefetch_mapping_confidence:
         return True
     return False
 
@@ -685,7 +759,7 @@ def _prefetch_pricing(
     for i, ticker in enumerate(sorted(tickers)):
         resolve_pricing(client, ticker, cache, cfg)
         if i + 1 < len(tickers):
-            time.sleep(0.08)
+            time.sleep(cfg.kalshi_price_fetch_delay_seconds)
     return cache
 
 
@@ -697,7 +771,7 @@ def _opportunities_cache_stale() -> bool:
     if not data:
         return True
     cache_ts = float(data.get("updated_at") or 0)
-    if time.time() - cache_ts > 120:
+    if time.time() - cache_ts > get_config().opportunities_cache_ttl_seconds:
         return True
     try:
         from kalshi_market_discovery import load_discovery_cache
@@ -815,6 +889,17 @@ def _build_opportunities_inner(
             mapping=mapping, is_live=is_live, mn=mn, in_poll_window=in_poll_window,
         )
 
+        qualification_probs = None
+        tickers = filter_wc_tickers(mapping.get("tickers") or {})
+        if any(tickers.get(mt) for mt in SCAN_MARKETS_ADVANCE):
+            try:
+                from multi_market_cache import qualification_probs_for_match
+                qualification_probs = qualification_probs_for_match(
+                    match, score_h=sh, score_a=sa, live=is_live,
+                )
+            except Exception as exc:
+                log.debug("Advance qualification lookup failed: %s", exc)
+
         fixture_opps = scan_opportunities(
             match=match,
             mapping=mapping,
@@ -827,6 +912,11 @@ def _build_opportunities_inner(
             fetch_prices=fetch_prices,
         )
         opportunities.extend(fixture_opps)
+
+        home_qualifies = away_qualifies = None
+        if match_final and qualification_probs:
+            home_qualifies = qualification_probs.get("home_qualifies")
+            away_qualifies = qualification_probs.get("away_qualifies")
 
         trade_ideas = sum(1 for o in fixture_opps if o.get("recommendation") == "TRADE")
         mapped_markets = sum(
@@ -851,6 +941,9 @@ def _build_opportunities_inner(
             "score_away": sa,
             "match_status": match_status,
             "match_final": match_final,
+            "home_qualifies": home_qualifies,
+            "away_qualifies": away_qualifies,
+            "live_minute": live_row.get("minute") if live_row else None,
             "confidence": round(conf, 3),
             "trade_ideas": trade_ideas,
             "mapped_markets": mapped_markets,

@@ -1,0 +1,149 @@
+{
+  "steps": [
+    {
+      "step": "materialize_training_data",
+      "rows": 5193
+    },
+    {
+      "step": "train_real_history",
+      "status": "success",
+      "rows": 5193,
+      "synthetic_rows": 0,
+      "models_dir": "C:\\Users\\jedid\\Downloads\\wc Prediction\\models\\real_history",
+      "training_manifest": "C:\\Users\\jedid\\Downloads\\wc Prediction\\data\\manifests\\training_manifest.json",
+      "model_manifest": "C:\\Users\\jedid\\Downloads\\wc Prediction\\models\\real_history\\model_manifest.json"
+    },
+    {
+      "step": "goalkeeper_registry",
+      "script": "scripts/build_goalkeeper_registry.py",
+      "exit_code": 0,
+      "stdout": "Goalkeepers indexed: 903\nTeams with pen history: 12\nRegistry: C:\\Users\\jedid\\Downloads\\wc Prediction\\data\\processed\\providers\\api_football\\goalkeeper_registry.json",
+      "stderr": ""
+    },
+    {
+      "step": "knockout_models",
+      "trained_at": "2026-07-01T14:20:22.823930+00:00",
+      "training_samples": 38,
+      "feature_cols": [
+        "elo_diff",
+        "elo_prob_h",
+        "xg_diff",
+        "form_diff",
+        "lambda_h",
+        "lambda_a",
+        "knockout_stage",
+        "poisson_home_90",
+        "poisson_draw_90",
+        "poisson_away_90"
+      ],
+      "blend_weight": 0.6031746031746031,
+      "models": {
+        "penalty_winner": {
+          "samples": 10,
+          "brier_score": null,
+          "calibration": "shrink_uniform"
+        },
+        "extra_time_winner": {
+          "samples": 11
+        },
+        "qualification": {
+          "samples": 38,
+          "brier_score": 0.131955,
+          "calibration": "isotonic"
+        }
+      },
+      "status": "trained"
+    },
+    {
+      "step": "production_predictions",
+      "status": "success",
+      "predictions_path": "C:\\Users\\jedid\\Downloads\\wc Prediction\\predictions.json",
+      "group_stage_matches": 72,
+      "training_rows": 5193,
+      "models_dir": "C:\\Users\\jedid\\Downloads\\wc Prediction\\models\\real_history",
+      "model_source": "real_history",
+      "future_refresh": {
+        "status": "ok",
+        "force": true,
+        "found": 12,
+        "already_cached": 0,
+        "predicted": 12,
+        "skipped": [],
+        "errors": [],
+        "fixture_ids_predicted": [
+          1567307,
+          1567308,
+          1562586,
+          1567311,
+          1567309,
+          1567312,
+          1565178,
+          1565179,
+          1567310,
+          1567824,
+          1569870,
+          1568100
+        ]
+      }
+    }
+  ],
+  "connectivity": {
+    "ok": true,
+    "checks": {
+      "real_history_models": {
+        "ok": true,
+        "detail": {
+          "active_dir": "C:\\Users\\jedid\\Downloads\\wc Prediction\\models\\real_history",
+          "source": "real_history",
+          "model_count": 7
+        }
+      },
+      "api_football_key": {
+        "ok": true,
+        "detail": "configured"
+      },
+      "api_football_budget": {
+        "ok": true,
+        "detail": 7496
+      },
+      "kalshi_auth": {
+        "ok": true,
+        "detail": {
+          "configured": true,
+          "available": true,
+          "dry_run": false,
+          "api_key_id_set": true,
+          "private_key_path": "C:\\\\Users\\\\jedid\\\\Downloads\\\\kalshi_private_key.txt",
+          "base_url": "https://api.elections.kalshi.com/trade-api/v2"
+        }
+      },
+      "predictions_json": {
+        "ok": true,
+        "detail": {
+          "group_matches": 91,
+          "training_mode": "real_history",
+          "model_source": "real_history"
+        }
+      },
+      "future_prediction_cache": {
+        "ok": true,
+        "detail": {
+          "cached_fixtures": 19
+        }
+      },
+      "kalshi_market_discovery": {
+        "ok": true,
+        "detail": {
+          "path": "C:\\Users\\jedid\\Downloads\\wc Prediction\\data\\kalshi_discovered_markets.json",
+          "exists": true
+        }
+      },
+      "training_dataset": {
+        "ok": true,
+        "detail": {
+          "rows": 5193
+        }
+      }
+    }
+  }
+}

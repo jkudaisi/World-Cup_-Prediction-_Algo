@@ -1,0 +1,19 @@
+{
+  "run_id": "20260701T142009Z-ddd86c46",
+  "created_at": "2026-07-01T14:20:09.637837+00:00",
+  "source": "api-football",
+  "date_range": {
+    "from": null,
+    "to": null
+  },
+  "teams_count": 0,
+  "fixtures_count": 0,
+  "training_rows_count": 5193,
+  "synthetic_rows_count": 0,
+  "features_count": 50,
+  "missing_data_summary": {},
+  "code_version_hash": "1ec9b0bf3fb3",
+  "notes": [
+    "Production training on real API-Football history only"
+  ]
+}

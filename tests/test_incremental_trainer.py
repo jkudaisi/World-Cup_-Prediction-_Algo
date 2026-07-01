@@ -308,7 +308,7 @@ class TestFetchNewMatches:
 
 class TestIncrementalTraining:
     def test_skips_when_no_new_matches(self, isolated_training, monkeypatch):
-        monkeypatch.setattr(it, "models_exist", lambda: True)
+        monkeypatch.setattr(it, "models_exist", lambda *a, **k: True)
         monkeypatch.setattr(it, "fetch_new_completed_world_cup_matches", lambda *a, **k: [])
         result = run_incremental_training(force=False, fetch_from_api=False)
         assert result["status"] == "skipped"
@@ -321,7 +321,7 @@ class TestIncrementalTraining:
         self, mock_save, mock_predict, mock_train, isolated_training, monkeypatch,
     ):
         row = completed_match_to_training_row(SAMPLE_FIXTURE, SAMPLE_STATS, [])
-        monkeypatch.setattr(it, "models_exist", lambda: True)
+        monkeypatch.setattr(it, "models_exist", lambda *a, **k: True)
         monkeypatch.setattr(
             it, "fetch_new_completed_world_cup_matches",
             lambda *a, **k: [row],
@@ -331,14 +331,16 @@ class TestIncrementalTraining:
                                        "models": {}, "ens_h": 2, "ens_a": 1, "ens": "2-1",
                                        "group": "K", "home_flag": "", "away_flag": ""}]
 
-        with patch("incremental_trainer.ensure_base_cache") as mock_base:
+        with patch("incremental_trainer.build_combined_training_frame") as mock_combined:
             import pandas as pd
             from wc2026_ml_pipeline import get_feature_cols
             cols = get_feature_cols()
             base = {c: [1.0] for c in cols}
             base["goals_h"] = [1]
             base["goals_a"] = [1]
-            mock_base.return_value = pd.DataFrame(base)
+            base["is_synthetic"] = [False]
+            frame = pd.DataFrame(base)
+            mock_combined.return_value = (frame, frame)
 
             result = run_incremental_training(force=False, fetch_from_api=True, verbose=False)
 

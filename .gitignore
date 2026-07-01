@@ -18,6 +18,9 @@ build/
 # Generated / large runtime data
 data/live_snapshots/
 data/base_training_cache.json
+data/cache/
+data/raw/
+data/trading_decisions.json.corrupt
 
 # Editor / OS
 .DS_Store

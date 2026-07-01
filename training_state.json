@@ -1,6 +1,6 @@
 {
-  "last_trained_at": "2026-06-29T19:10:08.676483+00:00",
-  "last_trained_fixture_date": "2026-06-29",
+  "last_trained_at": "2026-07-01T14:20:39.869106+00:00",
+  "last_trained_fixture_date": "2026-06-30",
   "trained_fixture_ids": [
     1489369,
     1489370,
@@ -75,21 +75,25 @@
     1539017,
     1539074,
     1561329,
-    1562344
+    1562344,
+    1562345,
+    1564789,
+    1565176,
+    1565177
   ],
   "model_versions": {
-    "Poisson Regression": "1.0.0",
-    "Ridge Regression": "1.0.0",
-    "Random Forest": "1.0.0",
-    "Gradient Boosting": "1.0.0",
-    "XGBoost": "1.0.0",
-    "LightGBM": "1.0.0",
-    "Neural Network": "1.0.0"
+    "Poisson Regression": "real-history-1",
+    "Ridge Regression": "real-history-1",
+    "Random Forest": "real-history-1",
+    "Gradient Boosting": "real-history-1",
+    "XGBoost": "real-history-1",
+    "LightGBM": "real-history-1",
+    "Neural Network": "real-history-1"
   },
-  "training_rows_count": 5074,
-  "new_matches_added": 1,
+  "training_rows_count": 5193,
+  "new_matches_added": 4,
   "last_incremental_run_status": "success",
   "errors": [],
-  "dataset_checksum": "8e87dbab5fe4fc82",
-  "total_world_cup_matches_used": 74
+  "dataset_checksum": "6ca9432233dfd1df",
+  "total_world_cup_matches_used": 5193
 }

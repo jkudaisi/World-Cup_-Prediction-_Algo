@@ -219,6 +219,7 @@ def generate_synthetic_dataset(n_synthetic: int = 5000, seed: int = 42) -> "pd.D
         row = feats.copy()
         row["goals_h"] = np.random.poisson(lh_noise)
         row["goals_a"] = np.random.poisson(la_noise)
+        row["is_synthetic"] = True
         rows.append(row)
     return pd.DataFrame(rows)
 
@@ -276,8 +277,15 @@ def train_models_from_frame(df: "pd.DataFrame", feature_cols: list[str] | None =
     from sklearn.preprocessing import StandardScaler
     from feature_builder import sanitize_training_frame
 
+    from feature_builder import sanitize_training_frame
+
     if feature_cols is None:
         feature_cols = get_feature_cols()
+    try:
+        from src.data.guards import assert_no_synthetic_rows
+        assert_no_synthetic_rows(df, context="train_models_from_frame")
+    except ImportError:
+        pass
     sw = None
     if "sample_weight" in df.columns:
         sw = df["sample_weight"].to_numpy().astype(float)
@@ -546,12 +554,12 @@ def run_pipeline(verbose=True, seed=42, n_synthetic=5000):
 def save_predictions(path, data=None, verbose=True, incremental=True, **kwargs):
     """Save predictions — uses incremental training by default."""
     from pathlib import Path
-    from model_store import models_exist
+    from model_store import models_exist, get_active_models_dir
 
     path = Path(path)
     if incremental:
         from incremental_trainer import run_incremental_training
-        force = kwargs.pop("force", not models_exist())
+        force = kwargs.pop("force", not models_exist(get_active_models_dir()))
         result = run_incremental_training(
             force=force,
             fetch_from_api=True,
